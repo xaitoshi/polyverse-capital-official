@@ -1101,15 +1101,15 @@ function computeSignal(
   const factors: SignalFactor[] = [];
 
   // 1. Historical beat rate
-  let beatScore = 0;
+  let beatRateScore = 0;
   if (historyLen >= 4) {
-    if (beatRate >= 75) beatScore = 2;
-    else if (beatRate >= 55) beatScore = 1;
-    else if (beatRate >= 40) beatScore = 0;
-    else if (beatRate >= 25) beatScore = -1;
-    else beatScore = -2;
+    if (beatRate >= 75) beatRateScore = 2;
+    else if (beatRate >= 55) beatRateScore = 1;
+    else if (beatRate >= 40) beatRateScore = 0;
+    else if (beatRate >= 25) beatRateScore = -1;
+    else beatRateScore = -2;
   }
-  factors.push({ label: 'Beat Rate', value: historyLen > 0 ? `${beatRate.toFixed(0)}%` : 'N/A', score: beatScore, detail: `${historyLen} quarters of history` });
+  factors.push({ label: 'Beat Rate', value: historyLen > 0 ? `${beatRate.toFixed(0)}%` : 'N/A', score: beatRateScore, detail: `${historyLen} quarters of history` });
 
   // 2. Recent trend (last 4 quarters)
   let trendScore = 0;
