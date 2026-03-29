@@ -149,40 +149,63 @@ export async function fetchUpcomingEarnings(): Promise<UpcomingEarning[]> {
   }
 }
 
-export async function fetchEarningsHistory(symbol: string): Promise<HistoricalQuarter[]> {
-  if (historyCache.has(symbol)) return historyCache.get(symbol)!;
-  if (!FINNHUB_KEY || !incrementUsage()) return [];
-
+async function fetchEarningsHistoryMassive(symbol: string): Promise<HistoricalQuarter[]> {
+  if (!MASSIVE_KEY) return [];
   try {
-    const res = await fetch(
-      `https://finnhub.io/api/v1/stock/earnings?symbol=${encodeURIComponent(symbol)}&token=${FINNHUB_KEY}`
-    );
+    const url = `${MASSIVE_BASE}/v2/reference/financials/${encodeURIComponent(symbol)}` +
+      `?type=Q&limit=8&apiKey=${MASSIVE_KEY}`;
+    const res = await fetch(url);
     if (!res.ok) return [];
-
     const data = await res.json();
-    if (!Array.isArray(data)) return [];
-
-    const quarters: HistoricalQuarter[] = data
-      .filter((q: any) => q.actual != null && q.estimate != null)
+    const results: any[] = data.results || [];
+    return results
+      .filter((q: any) => q.eps != null && q.epsEstimated != null)
       .map((q: any) => {
-        const actual = q.actual;
-        const estimate = q.estimate;
+        const actual = q.eps;
+        const estimate = q.epsEstimated;
         const surprise = actual - estimate;
         const surprisePct = estimate !== 0 ? (surprise / Math.abs(estimate)) * 100 : 0;
-        return {
-          period: q.period || '',
-          actual,
-          estimate,
-          surprise,
-          surprisePct,
-        };
+        return { period: q.reportPeriod || q.calendarDate || '', actual, estimate, surprise, surprisePct };
       });
-
-    historyCache.set(symbol, quarters);
-    return quarters;
   } catch {
     return [];
   }
+}
+
+export async function fetchEarningsHistory(symbol: string): Promise<HistoricalQuarter[]> {
+  if (historyCache.has(symbol)) return historyCache.get(symbol)!;
+
+  // Try Finnhub first
+  let quarters: HistoricalQuarter[] = [];
+  if (FINNHUB_KEY && incrementUsage()) {
+    try {
+      const res = await fetch(
+        `https://finnhub.io/api/v1/stock/earnings?symbol=${encodeURIComponent(symbol)}&token=${FINNHUB_KEY}`
+      );
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          quarters = data
+            .filter((q: any) => q.actual != null && q.estimate != null)
+            .map((q: any) => {
+              const actual = q.actual;
+              const estimate = q.estimate;
+              const surprise = actual - estimate;
+              const surprisePct = estimate !== 0 ? (surprise / Math.abs(estimate)) * 100 : 0;
+              return { period: q.period || '', actual, estimate, surprise, surprisePct };
+            });
+        }
+      }
+    } catch { /* fall through to Massive */ }
+  }
+
+  // Fall back to Massive (Polygon) if Finnhub returned nothing
+  if (quarters.length === 0) {
+    quarters = await fetchEarningsHistoryMassive(symbol);
+  }
+
+  historyCache.set(symbol, quarters);
+  return quarters;
 }
 
 export async function fetchCompanyProfile(symbol: string): Promise<{ name: string; logo?: string; industry?: string; marketCap?: number; exchange?: string }> {
