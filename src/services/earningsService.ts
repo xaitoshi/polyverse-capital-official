@@ -158,14 +158,15 @@ async function fetchEarningsHistoryMassive(symbol: string): Promise<HistoricalQu
     if (!res.ok) return [];
     const data = await res.json();
     const results: any[] = data.results || [];
+    // Support both Polygon v2 field names and common alternatives
     return results
-      .filter((q: any) => q.eps != null && q.epsEstimated != null)
+      .filter((q: any) => (q.eps ?? q.actual ?? q.epsActual) != null && (q.epsEstimated ?? q.estimate ?? q.epsConsensus) != null)
       .map((q: any) => {
-        const actual = q.eps;
-        const estimate = q.epsEstimated;
+        const actual   = q.eps        ?? q.actual    ?? q.epsActual;
+        const estimate = q.epsEstimated ?? q.estimate ?? q.epsConsensus;
         const surprise = actual - estimate;
         const surprisePct = estimate !== 0 ? (surprise / Math.abs(estimate)) * 100 : 0;
-        return { period: q.reportPeriod || q.calendarDate || '', actual, estimate, surprise, surprisePct };
+        return { period: q.reportPeriod || q.calendarDate || q.period || '', actual, estimate, surprise, surprisePct };
       });
   } catch {
     return [];
@@ -173,9 +174,12 @@ async function fetchEarningsHistoryMassive(symbol: string): Promise<HistoricalQu
 }
 
 export async function fetchEarningsHistory(symbol: string): Promise<HistoricalQuarter[]> {
-  if (historyCache.has(symbol)) return historyCache.get(symbol)!;
+  if (historyCache.has(symbol)) {
+    const cached = historyCache.get(symbol)!;
+    if (cached.length > 0) return cached; // only return cached if non-empty
+  }
   const quarters = await fetchEarningsHistoryMassive(symbol);
-  historyCache.set(symbol, quarters);
+  if (quarters.length > 0) historyCache.set(symbol, quarters); // don't cache empty
   return quarters;
 }
 

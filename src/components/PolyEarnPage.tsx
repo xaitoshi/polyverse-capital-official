@@ -423,59 +423,34 @@ function ProCard({ analysis, shareMode, selected, onToggleSelect, onRef }: {
         </div>
       </div>
 
-      {/* V2 Action row — fair prob vs market + decision */}
-      {analysis.polymarket ? (
-        <div className={`mt-3 px-3 py-2.5 rounded-lg border flex items-center gap-3 flex-wrap ${
-          analysis.marketAction === 'BUY_YES'         ? 'bg-blue-500/10 border-blue-500/30'
-          : analysis.marketAction === 'MAYBE_BUY_YES' ? 'bg-blue-500/5 border-blue-500/20'
-          : analysis.marketAction === 'MAYBE_BUY_NO'  ? 'bg-red-500/5 border-red-500/20'
-          : 'bg-red-500/10 border-red-500/30'
+      {/* Action row — purely score-based */}
+      <div className={`mt-3 px-3 py-2.5 rounded-lg border flex items-center gap-3 flex-wrap ${
+        analysis.marketAction === 'BUY_YES'         ? 'bg-blue-500/10 border-blue-500/30'
+        : analysis.marketAction === 'MAYBE_BUY_YES' ? 'bg-blue-500/5 border-blue-500/20'
+        : analysis.marketAction === 'MAYBE_BUY_NO'  ? 'bg-red-500/5 border-red-500/20'
+        : 'bg-red-500/10 border-red-500/30'
+      }`}>
+        <span className={`text-xs font-black font-mono px-2.5 py-1 rounded ${
+          analysis.marketAction === 'BUY_YES'         ? 'bg-blue-500/20 text-blue-300 border border-blue-500/40'
+          : analysis.marketAction === 'MAYBE_BUY_YES' ? 'bg-blue-500/10 text-blue-400/70 border border-blue-500/25'
+          : analysis.marketAction === 'MAYBE_BUY_NO'  ? 'bg-red-500/10 text-red-400/70 border border-red-500/25'
+          : 'bg-red-500/20 text-red-300 border border-red-500/40'
         }`}>
-          {/* Action badge */}
-          <span className={`text-xs font-black font-mono px-2.5 py-1 rounded ${
-            analysis.marketAction === 'BUY_YES'         ? 'bg-blue-500/20 text-blue-300 border border-blue-500/40'
-            : analysis.marketAction === 'MAYBE_BUY_YES' ? 'bg-blue-500/10 text-blue-400/70 border border-blue-500/25'
-            : analysis.marketAction === 'MAYBE_BUY_NO'  ? 'bg-red-500/10 text-red-400/70 border border-red-500/25'
-            : 'bg-red-500/20 text-red-300 border border-red-500/40'
-          }`}>
-            {analysis.marketAction === 'BUY_YES'         ? '▲ BUY YES'
-             : analysis.marketAction === 'MAYBE_BUY_YES' ? '△ MAYBE BUY YES'
-             : analysis.marketAction === 'MAYBE_BUY_NO'  ? '▽ MAYBE BUY NO'
-             : '▼ BUY NO'}
-          </span>
-          {/* Fair prob vs market */}
-          <div className="flex items-center gap-1.5 text-[11px] font-mono">
-            <span className="text-gray-500">Fair</span>
-            <span className="text-white font-bold">{analysis.fairProbability}%</span>
-            <span className="text-gray-600">vs</span>
+          {analysis.marketAction === 'BUY_YES'         ? '▲ BUY YES'
+           : analysis.marketAction === 'MAYBE_BUY_YES' ? '△ MAYBE BUY YES'
+           : analysis.marketAction === 'MAYBE_BUY_NO'  ? '▽ MAYBE BUY NO'
+           : '▼ BUY NO'}
+        </span>
+        <span className="text-[11px] font-mono text-gray-600">score {analysis.beatScore}/10</span>
+        {analysis.polymarket && (
+          <span className="ml-auto text-[11px] font-mono">
+            <span className="text-gray-600">Poly </span>
             <span className={`font-bold ${analysis.polymarket.yesPct >= 50 ? 'text-blue-400' : 'text-red-400'}`}>
-              {analysis.polymarket.yesPct.toFixed(0)}% mkt
+              {analysis.polymarket.yesPct.toFixed(0)}% YES
             </span>
-          </div>
-          {/* Edge */}
-          {analysis.edge != null && analysis.edge >= 1 && (
-            <div className="flex items-center gap-1 text-[11px] font-mono ml-auto">
-              <span className="text-gray-600">edge</span>
-              <span className="font-bold text-yellow-400">
-                {analysis.edge.toFixed(0)}pt
-              </span>
-              {analysis.sizing && (
-                <span className={`text-[10px] px-1.5 py-0.5 rounded font-mono ${
-                  analysis.sizing === 'HIGH'   ? 'bg-yellow-500/15 text-yellow-400'
-                  : analysis.sizing === 'MEDIUM' ? 'bg-blue-500/15 text-blue-400'
-                  : 'bg-gray-700/40 text-gray-500'
-                }`}>
-                  {analysis.sizing}
-                </span>
-              )}
-            </div>
-          )}
-        </div>
-      ) : (
-        <div className="mt-3 px-3 py-2 rounded-lg border border-gray-800/60 bg-gray-900/30 text-[11px] font-mono text-gray-600">
-          No Polymarket listing — score {analysis.beatScore}/10 · fair {analysis.fairProbability}% YES
-        </div>
-      )}
+          </span>
+        )}
+      </div>
 
       {/* Quick metrics row */}
       <div className="flex items-center gap-3 mt-3 flex-wrap">
