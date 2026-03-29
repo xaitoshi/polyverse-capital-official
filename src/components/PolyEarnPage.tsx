@@ -538,14 +538,6 @@ function ProCard({ analysis, shareMode, selected, onToggleSelect, onRef }: {
                     )}
                   </p>
                 </div>
-                {analysis.estimateDispersionPct !== null && (
-                  <div>
-                    <p className="text-[9px] font-mono text-gray-600 uppercase tracking-wider">Analyst Spread</p>
-                    <p className={`text-[11px] font-mono ${analysis.estimateDispersionPct < 10 ? 'text-blue-500' : analysis.estimateDispersionPct < 25 ? 'text-yellow-500' : 'text-red-500'}`}>
-                      {analysis.estimateDispersionPct.toFixed(0)}% {analysis.estimateDispersionPct < 10 ? '· tight' : analysis.estimateDispersionPct < 25 ? '· moderate' : '· wide'}
-                    </p>
-                  </div>
-                )}
               </>
             )}
             {analysis.analystBuyPct !== null && (
@@ -556,19 +548,6 @@ function ProCard({ analysis, shareMode, selected, onToggleSelect, onRef }: {
                   <span className={`ml-1 ${analysis.analystBuyPct >= 60 ? 'text-blue-400' : analysis.analystBuyPct < 40 ? 'text-red-400' : 'text-gray-500'}`}>
                     ({analysis.analystBuyPct.toFixed(0)}% buy)
                   </span>
-                </p>
-              </div>
-            )}
-            {analysis.priceTargetMean !== null && analysis.priceCurrent !== null && (
-              <div>
-                <p className="text-[9px] font-mono text-gray-600 uppercase tracking-wider">Price Target</p>
-                <p className="text-[11px] font-mono text-gray-300">
-                  ${analysis.priceTargetMean.toFixed(2)} vs ${analysis.priceCurrent.toFixed(2)} now
-                  {analysis.priceTargetUpside !== null && (
-                    <span className={`ml-1 ${analysis.priceTargetUpside >= 0 ? 'text-blue-400' : 'text-red-400'}`}>
-                      ({analysis.priceTargetUpside >= 0 ? '+' : ''}{analysis.priceTargetUpside.toFixed(1)}%)
-                    </span>
-                  )}
                 </p>
               </div>
             )}
@@ -1078,12 +1057,12 @@ export default function PolyEarnPage({ onClose }: PolyEarnPageProps) {
                       </button>
                     </span>
                   ))}
-                  {watchlist.length > 1 && (
+                  {watchlist.length > 0 && (
                     <button
                       onClick={() => { setWatchlist([]); saveWatchlist([]); setEarnings([]); }}
-                      className="text-[10px] font-mono text-gray-600 hover:text-red-400 transition-colors px-2"
+                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono text-red-500/60 hover:text-red-400 hover:bg-red-500/10 border border-red-500/20 transition-colors"
                     >
-                      Clear all
+                      <Trash2 className="w-3 h-3" /> Clear all
                     </button>
                   )}
                 </div>
