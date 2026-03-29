@@ -664,6 +664,37 @@ function PriceTrendsView({ allMarkets }: { allMarkets: MarketItem[] }) {
   );
 }
 
+function BarSnapshot({ snap, cats }: { snap: DailySnap; cats: CatData[] }) {
+  const maxVal = Math.max(...cats.map(c => snap.byCategory[c.label] ?? 0), 1);
+  return (
+    <div>
+      <div className="space-y-2">
+        {cats.filter(c => (snap.byCategory[c.label] ?? 0) > 0).map(cat => {
+          const val = snap.byCategory[cat.label] ?? 0;
+          const pct = (val / maxVal) * 100;
+          return (
+            <div key={cat.label} className="flex items-center gap-2">
+              <div className="w-20 text-right text-[9px] font-mono shrink-0" style={{ color: cat.color }}>{cat.label}</div>
+              <div className="flex-1 h-4 bg-white/5 rounded-sm overflow-hidden">
+                <div className="h-full rounded-sm transition-all" style={{ width: `${pct}%`, backgroundColor: cat.color, opacity: 0.75 }} />
+              </div>
+              <div className="w-20 text-[9px] font-mono text-gray-500 shrink-0">{fmtUSD(val)}</div>
+            </div>
+          );
+        })}
+      </div>
+      <div className="flex flex-wrap gap-x-4 gap-y-1 mt-3">
+        {cats.map(c => (
+          <div key={c.label} className="flex items-center gap-1.5">
+            <div className="w-2 h-2 rounded-sm" style={{ backgroundColor: c.color }} />
+            <span className="text-[9px] font-mono text-gray-600">{c.label}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function LineChart({ snaps, cats }: { snaps: DailySnap[]; cats: CatData[] }) {
   if (snaps.length < 2) return null;
   const W = 800, H = 160, pL = 64, pR = 16, pT = 12, pB = 28;
@@ -1233,17 +1264,19 @@ export default function LiquidityDashboard({ onClose }: { onClose: () => void })
               <div>
                 <div className="text-[10px] text-blue-500/50 tracking-widest mb-1">LIQUIDITY BY CATEGORY OVER TIME</div>
                 <div className="text-[9px] text-gray-700 mb-3 font-mono">
-                  Recorded each session · {snaps.length}/30 days · for price trends see the Price Trends view
+                  {snaps.length >= 2
+                    ? `${snaps.length}/30 days recorded · line chart · for price trends see the Price Trends view`
+                    : `Day 1 of 30 captured · return tomorrow for trend line · showing today's snapshot`}
                 </div>
                 {snaps.length >= 2 ? (
                   <div className="border border-blue-500/15 rounded p-4 bg-blue-500/5">
                     <LineChart snaps={snaps} cats={catData} />
                   </div>
-                ) : (
-                  <div className="border border-blue-500/10 rounded p-3 text-[10px] text-blue-500/30 font-mono">
-                    Day 1 of 30 captured · revisit tomorrow for trend data — Polymarket's public API does not expose historical aggregate liquidity
+                ) : snaps.length === 1 ? (
+                  <div className="border border-blue-500/15 rounded p-4 bg-blue-500/5">
+                    <BarSnapshot snap={snaps[0]} cats={catData} />
                   </div>
-                )}
+                ) : null}
               </div>
 
               {/* Top markets table */}
