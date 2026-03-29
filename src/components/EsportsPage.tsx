@@ -244,6 +244,14 @@ export default function EsportsPage() {
   // Player search tab
   const [playerSearch, setPlayerSearch] = useState('');
 
+  // Gemini scan
+  const [geminiKey, setGeminiKey] = useState(() => localStorage.getItem('pvs_gemini_key') ?? '');
+  const [scanImg, setScanImg] = useState<string | null>(null);
+  const [scanLoading, setScanLoading] = useState(false);
+  const [scanError, setScanError] = useState<string | null>(null);
+  const [scanResult, setScanResult] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   // Champion images from DDragon
   const [champImgs, setChampImgs] = useState<Record<string, string>>({});
 
@@ -280,6 +288,83 @@ export default function EsportsPage() {
     champImgs[name]
     ?? champImgs[name.toLowerCase().replace(/[^a-z0-9]/g, '')]
     ?? null;
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => { setScanImg(reader.result as string); setScanError(null); setScanResult(null); };
+    reader.readAsDataURL(file);
+  };
+
+  const scanWithGemini = async () => {
+    if (!scanImg || !geminiKey) return;
+    setScanLoading(true); setScanError(null); setScanResult(null);
+    try {
+      const base64 = scanImg.split(',')[1];
+      const mimeType = scanImg.split(';')[0].split(':')[1];
+      const prompt = `You are analyzing a League of Legends esports champion pick/ban phase screenshot.
+Extract the following and respond ONLY with valid JSON (no markdown, no explanation):
+{
+  "teamA": {
+    "name": "team name or empty string",
+    "players": [
+      {"name": "player name or empty string", "champion": "exact champion name as in the game", "position": "Top"},
+      {"name": "", "champion": "", "position": "Jungle"},
+      {"name": "", "champion": "", "position": "Mid"},
+      {"name": "", "champion": "", "position": "Bot"},
+      {"name": "", "champion": "", "position": "Support"}
+    ]
+  },
+  "teamB": {
+    "name": "team name or empty string",
+    "players": [
+      {"name": "", "champion": "", "position": "Top"},
+      {"name": "", "champion": "", "position": "Jungle"},
+      {"name": "", "champion": "", "position": "Mid"},
+      {"name": "", "champion": "", "position": "Bot"},
+      {"name": "", "champion": "", "position": "Support"}
+    ]
+  }
+}
+Always return all 5 players for each team. Use empty strings for anything not visible. Champion names must be exact game names (e.g. "K'Sante", "Bel'Veth", "Aurelion Sol").`;
+
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ inline_data: { mime_type: mimeType, data: base64 } }, { text: prompt }] }],
+            generationConfig: { temperature: 0.1 },
+          }),
+        }
+      );
+      if (!res.ok) { const t = await res.text(); throw new Error(`Gemini ${res.status}: ${t}`); }
+      const data = await res.json();
+      const text = data.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
+      // strip possible markdown fences
+      const clean = text.replace(/```json|```/g, '').trim();
+      const parsed = JSON.parse(clean);
+      setScanResult(clean);
+
+      // Auto-populate teams
+      if (parsed.teamA?.name) setTeamA(parsed.teamA.name);
+      if (parsed.teamB?.name) setTeamB(parsed.teamB.name);
+      if (parsed.teamA?.players) {
+        setRosterA(parsed.teamA.players.map((p: any) => p.name ?? ''));
+        setChampsA(parsed.teamA.players.map((p: any) => p.champion ?? ''));
+      }
+      if (parsed.teamB?.players) {
+        setRosterB(parsed.teamB.players.map((p: any) => p.name ?? ''));
+        setChampsB(parsed.teamB.players.map((p: any) => p.champion ?? ''));
+      }
+    } catch (e: any) {
+      setScanError(e.message ?? 'Unknown error');
+    } finally {
+      setScanLoading(false);
+    }
+  };
 
   // Reset roster when team changes
   useEffect(() => {
@@ -358,6 +443,62 @@ export default function EsportsPage() {
                 <div className="text-[10px] text-gray-600 tracking-wider">{s.label}</div>
               </div>
             ))}
+          </div>
+        </div>
+
+        {/* ── Gemini Scan ── */}
+        <div className="bg-white/[0.02] border border-white/10 rounded-2xl p-6 space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="text-[10px] text-blue-400 tracking-widest">SCAN CHAMPION SELECT — powered by Gemini</div>
+            <span className="text-[9px] text-gray-600">upload a screenshot to auto-fill the draft</span>
+          </div>
+
+          {/* API key */}
+          <div className="flex items-center gap-3">
+            <label className="text-[10px] text-gray-500 shrink-0 w-24">Gemini API Key</label>
+            <input
+              type="password"
+              value={geminiKey}
+              onChange={e => { setGeminiKey(e.target.value); localStorage.setItem('pvs_gemini_key', e.target.value); }}
+              placeholder="AIza…"
+              className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-xs font-mono text-gray-300 placeholder:text-gray-700 focus:outline-none focus:border-blue-500/50"
+            />
+          </div>
+
+          {/* Upload area */}
+          <div
+            onClick={() => fileInputRef.current?.click()}
+            className="border border-dashed border-white/20 rounded-xl p-6 text-center cursor-pointer hover:border-blue-500/40 hover:bg-blue-500/5 transition-all"
+          >
+            {scanImg ? (
+              <img src={scanImg} alt="champion select screenshot" className="max-h-48 mx-auto rounded-lg object-contain" />
+            ) : (
+              <div className="space-y-2">
+                <div className="text-3xl">📸</div>
+                <div className="text-xs text-gray-500">Click to upload champion select screenshot</div>
+                <div className="text-[10px] text-gray-700">PNG, JPG, WebP supported</div>
+              </div>
+            )}
+          </div>
+          <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+
+          {/* Scan button */}
+          <div className="flex items-center gap-3">
+            <button
+              onClick={scanWithGemini}
+              disabled={!scanImg || !geminiKey || scanLoading}
+              className="px-5 py-2 rounded-lg bg-blue-500/20 border border-blue-500/40 text-blue-400 text-xs font-mono hover:bg-blue-500/30 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
+            >
+              {scanLoading ? (
+                <><span className="animate-spin inline-block w-3 h-3 border border-blue-400 border-t-transparent rounded-full" />analysing…</>
+              ) : '✦ Scan with Gemini'}
+            </button>
+            {scanImg && (
+              <button onClick={() => { setScanImg(null); setScanResult(null); setScanError(null); if (fileInputRef.current) fileInputRef.current.value = ''; }}
+                className="text-[10px] text-gray-600 hover:text-gray-400 transition-colors">clear</button>
+            )}
+            {scanError && <span className="text-[10px] text-red-400">{scanError}</span>}
+            {scanResult && !scanError && <span className="text-[10px] text-green-400">✓ Draft populated</span>}
           </div>
         </div>
 
