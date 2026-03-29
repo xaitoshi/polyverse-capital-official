@@ -1088,14 +1088,10 @@ async function fetchBasicFinancialsData(symbol: string): Promise<{ revenueGrowth
 function computeSignal(
   beatRate: number,
   historyLen: number,
-  recentTrend: ('beat' | 'miss' | 'meet')[],
   avgSurprisePct: number,
   analystBuyPct: number | null,
-  priceTargetUpside: number | null,
-  estimateDispersionPct: number | null,
   insiderNetValue: number | null,
   revenueGrowthTTM: number | null,
-  sectorReturns: EtfReturns | null,
   optionsIV: OptionsIVData | null,
 ): { signal: 'BULLISH' | 'BEARISH' | 'NEUTRAL'; signalScore: number; signalFactors: SignalFactor[]; beatScore: number } {
   const factors: SignalFactor[] = [];
@@ -1111,19 +1107,7 @@ function computeSignal(
   }
   factors.push({ label: 'Beat Rate', value: historyLen > 0 ? `${beatRate.toFixed(0)}%` : 'N/A', score: beatRateScore, detail: `${historyLen} quarters of history` });
 
-  // 2. Recent trend (last 4 quarters)
-  let trendScore = 0;
-  const recentBeats = recentTrend.filter(r => r === 'beat').length;
-  if (recentTrend.length >= 3) {
-    if (recentBeats >= 4) trendScore = 2;
-    else if (recentBeats === 3) trendScore = 1;
-    else if (recentBeats === 2) trendScore = 0;
-    else if (recentBeats === 1) trendScore = -1;
-    else trendScore = -2;
-  }
-  factors.push({ label: 'Recent Trend', value: recentTrend.length > 0 ? `${recentBeats}/${recentTrend.length} beats` : 'N/A', score: trendScore, detail: 'Last 4 quarters' });
-
-  // 3. Average EPS surprise
+  // 2. Average EPS surprise
   let surpriseScore = 0;
   if (historyLen >= 2) {
     if (avgSurprisePct >= 5) surpriseScore = 2;
@@ -1144,31 +1128,7 @@ function computeSignal(
   }
   factors.push({ label: 'Analyst Buys', value: analystBuyPct !== null ? `${analystBuyPct.toFixed(0)}%` : 'N/A', score: analystScore, detail: 'Buy + Strong Buy %' });
 
-  // 5. Price target upside
-  let ptScore = 0;
-  if (priceTargetUpside !== null) {
-    if (priceTargetUpside >= 20) ptScore = 2;
-    else if (priceTargetUpside >= 10) ptScore = 1;
-    else if (priceTargetUpside >= 0) ptScore = 0;
-    else ptScore = -1;
-  }
-  factors.push({ label: 'PT Upside', value: priceTargetUpside !== null ? `${priceTargetUpside >= 0 ? '+' : ''}${priceTargetUpside.toFixed(1)}%` : 'N/A', score: ptScore, detail: 'Analyst price target vs current price' });
-
-  // 6. Estimate dispersion — tight spread = confident analysts = less miss risk
-  let dispScore = 0;
-  if (estimateDispersionPct !== null) {
-    if (estimateDispersionPct < 10) dispScore = 1;
-    else if (estimateDispersionPct < 25) dispScore = 0;
-    else dispScore = -1;
-  }
-  factors.push({
-    label: 'Est. Dispersion',
-    value: estimateDispersionPct !== null ? `${estimateDispersionPct.toFixed(0)}%` : 'N/A',
-    score: dispScore,
-    detail: 'Analyst high/low spread — tight = confident consensus',
-  });
-
-  // 7. Insider activity — net $ bought/sold in last 90 days
+  // 5. Insider activity — net $ bought/sold in last 90 days
   let insiderScore = 0;
   if (insiderNetValue !== null) {
     if (insiderNetValue >= 1_000_000) insiderScore = 2;
@@ -1182,7 +1142,7 @@ function computeSignal(
     : `-$${(Math.abs(insiderNetValue) / 1000).toFixed(0)}K net sell`;
   factors.push({ label: 'Insider Activity', value: insiderLabel, score: insiderScore, detail: 'Insider net buy/sell (90 days)' });
 
-  // 8. Revenue growth TTM YoY
+  // 6. Revenue growth TTM YoY
   let revScore = 0;
   if (revenueGrowthTTM !== null) {
     if (revenueGrowthTTM >= 20) revScore = 2;
@@ -1198,24 +1158,7 @@ function computeSignal(
     detail: 'TTM revenue growth YoY',
   });
 
-  // 9. Sector ETF momentum — use 30d return for scoring
-  let sectorScore = 0;
-  const r30 = sectorReturns?.d30 ?? null;
-  if (r30 !== null) {
-    if (r30 >= 5) sectorScore = 1;
-    else if (r30 <= -5) sectorScore = -1;
-  }
-  const sectorVal = sectorReturns
-    ? `30d ${sectorReturns.d30 >= 0 ? '+' : ''}${sectorReturns.d30.toFixed(1)}% / 60d ${sectorReturns.d60 >= 0 ? '+' : ''}${sectorReturns.d60.toFixed(1)}%`
-    : 'N/A';
-  factors.push({
-    label: 'Sector Momentum',
-    value: sectorVal,
-    score: sectorScore,
-    detail: 'Sector ETF 30d & 60d return',
-  });
-
-  // 10. ATM Implied Volatility — low IV = less uncertainty = easier to beat
+  // 6. ATM Implied Volatility — low IV = less uncertainty = easier to beat
   let ivScore = 0;
   if (optionsIV?.atmIV != null) {
     if (optionsIV.atmIV < 30)       ivScore =  1;
@@ -1230,7 +1173,7 @@ function computeSignal(
     detail: 'ATM implied volatility pre-earnings',
   });
 
-  // 11. Put skew — positive = market buying put protection = downside fear
+  // 7. Put skew — positive = market buying put protection = downside fear
   let skewScore = 0;
   if (optionsIV?.putSkew != null) {
     if (optionsIV.putSkew < -1)      skewScore =  1;  // calls > puts = bullish positioning
@@ -1248,13 +1191,14 @@ function computeSignal(
   });
 
   const signalScore = factors.reduce((s, f) => s + f.score, 0);
-  // Max: 9×(±2) + 1×(±1) = ±19; keep thresholds at ±6
+  // 7 factors × max ±2 = ±14 theoretical; practical range ≈ ±8
+  // BULLISH threshold ±4 → beatScore ≥8 / ≤2 when using ±8 normalisation
   const signal: 'BULLISH' | 'BEARISH' | 'NEUTRAL' =
-    signalScore >= 6 ? 'BULLISH' : signalScore <= -6 ? 'BEARISH' : 'NEUTRAL';
+    signalScore >= 4 ? 'BULLISH' : signalScore <= -4 ? 'BEARISH' : 'NEUTRAL';
 
-  // Normalise raw score (practical range ≈ −12 to +12) → beatScore 0–10
-  // Using ±12 so BULLISH (≥+6) → beatScore ≥8 and BEARISH (≤−6) → beatScore ≤2
-  const beatScore = Math.min(10, Math.max(0, Math.round(((signalScore + 12) / 24) * 10)));
+  // Normalise (±8 practical range) → beatScore 0–10
+  // signalScore +4 → beatScore 8 (BUY_YES eligible), -4 → beatScore 2 (BUY_NO eligible)
+  const beatScore = Math.min(10, Math.max(0, Math.round(((signalScore + 8) / 16) * 10)));
 
   return { signal, signalScore, signalFactors: factors, beatScore };
 }
@@ -1366,12 +1310,10 @@ export async function fetchProAnalysisList(
         ? ((epsEst.high - epsEst.low) / Math.abs(epsEst.avg)) * 100 : null;
 
       const { signal, signalScore, signalFactors, beatScore } = computeSignal(
-        beatRate, history.length, recentTrend, avgSurprisePct,
-        analystBuyPct, priceTargetUpside,
-        estimateDispersionPct,
+        beatRate, history.length, avgSurprisePct,
+        analystBuyPct,
         insider?.netValue ?? null,
         basics?.revenueGrowthTTM ?? null,
-        sectorReturns,
         optionsIV,
       );
 
