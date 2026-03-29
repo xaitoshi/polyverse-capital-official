@@ -1252,8 +1252,9 @@ function computeSignal(
   const signal: 'BULLISH' | 'BEARISH' | 'NEUTRAL' =
     signalScore >= 6 ? 'BULLISH' : signalScore <= -6 ? 'BEARISH' : 'NEUTRAL';
 
-  // Normalise raw score (range ≈ −18 to +18) → beatScore 0–10
-  const beatScore = Math.min(10, Math.max(0, Math.round(((signalScore + 18) / 36) * 10)));
+  // Normalise raw score (practical range ≈ −12 to +12) → beatScore 0–10
+  // Using ±12 so BULLISH (≥+6) → beatScore ≥8 and BEARISH (≤−6) → beatScore ≤2
+  const beatScore = Math.min(10, Math.max(0, Math.round(((signalScore + 12) / 24) * 10)));
 
   return { signal, signalScore, signalFactors: factors, beatScore };
 }
