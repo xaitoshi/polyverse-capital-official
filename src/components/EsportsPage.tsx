@@ -126,24 +126,58 @@ function Autocomplete({
 
 // ── ChampSelect ────────────────────────────────────────────────────────────────
 function ChampSelect({
-  player, champs, value, onChange
-}: { player: string; champs: Record<string, ChampStat>; value: string; onChange: (v: string) => void }) {
-  const sorted = Object.entries(champs)
-    .sort((a, b) => b[1].total - a[1].total);
+  champs, value, onChange
+}: { champs: Record<string, ChampStat>; value: string; onChange: (v: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState(value);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => { setQuery(value); }, [value]);
+
+  useEffect(() => {
+    const fn = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+        // commit whatever is typed as the value
+        if (query !== value) onChange(query);
+      }
+    };
+    document.addEventListener('mousedown', fn);
+    return () => document.removeEventListener('mousedown', fn);
+  }, [query, value, onChange]);
+
+  const sorted = Object.entries(champs).sort((a, b) => b[1].total - a[1].total);
+  const filtered = query.length < 1
+    ? sorted.slice(0, 15)
+    : sorted.filter(([c]) => c.toLowerCase().includes(query.toLowerCase())).slice(0, 15);
+
+  const knownChamp = champs[value];
 
   return (
-    <select
-      value={value}
-      onChange={e => onChange(e.target.value)}
-      className="bg-white/5 border border-white/10 rounded px-2 py-1 text-xs font-mono text-gray-300 focus:outline-none focus:border-blue-500/50 w-full"
-    >
-      <option value="">— pick champ —</option>
-      {sorted.map(([champ, stat]) => (
-        <option key={champ} value={champ}>
-          {champ} ({pctStr(stat.wins, stat.total)} / {stat.total}g)
-        </option>
-      ))}
-    </select>
+    <div ref={ref} className="relative flex-1">
+      <input
+        value={query}
+        onChange={e => { setQuery(e.target.value); onChange(e.target.value); setOpen(true); }}
+        onFocus={() => setOpen(true)}
+        placeholder="champion…"
+        className="w-full bg-white/5 border border-white/10 rounded px-2 py-1 text-xs font-mono text-gray-300 placeholder:text-gray-700 focus:outline-none focus:border-blue-500/50"
+      />
+      {open && filtered.length > 0 && (
+        <div className="absolute z-50 top-full mt-0.5 left-0 right-0 bg-[#0d0d0d] border border-white/10 rounded-lg max-h-44 overflow-y-auto shadow-xl">
+          {filtered.map(([champ, stat]) => (
+            <button key={champ} onMouseDown={() => { onChange(champ); setQuery(champ); setOpen(false); }}
+              className="w-full text-left px-3 py-1.5 text-xs font-mono text-gray-300 hover:bg-blue-500/10 hover:text-blue-300 transition-colors flex justify-between">
+              <span>{champ}</span>
+              <span className="text-gray-600">{pctStr(stat.wins, stat.total)} · {stat.total}g</span>
+            </button>
+          ))}
+        </div>
+      )}
+      {/* show "no data" tag if champ is typed but unknown */}
+      {value && !knownChamp && (
+        <div className="absolute right-2 top-1/2 -translate-y-1/2 text-[8px] text-yellow-600 pointer-events-none">no data</div>
+      )}
+    </div>
   );
 }
 
@@ -361,7 +395,6 @@ export default function EsportsPage() {
                       {playerData && (
                         <div className="flex items-center gap-2 pl-14">
                           <ChampSelect
-                            player={selectedPlayer}
                             champs={playerData.champs}
                             value={champsA[i]}
                             onChange={v => { const nc = [...champsA]; nc[i] = v; setChampsA(nc); }}
@@ -370,6 +403,9 @@ export default function EsportsPage() {
                             <span className="text-[9px] text-green-400 shrink-0">
                               {pctStr(playerData.champs[champsA[i]].wins, playerData.champs[champsA[i]].total)}
                             </span>
+                          )}
+                          {champsA[i] && !playerData.champs[champsA[i]] && (
+                            <span className="text-[9px] text-yellow-600 shrink-0">no data</span>
                           )}
                         </div>
                       )}
@@ -406,7 +442,6 @@ export default function EsportsPage() {
                       {playerData && (
                         <div className="flex items-center gap-2 pl-14">
                           <ChampSelect
-                            player={selectedPlayer}
                             champs={playerData.champs}
                             value={champsB[i]}
                             onChange={v => { const nc = [...champsB]; nc[i] = v; setChampsB(nc); }}
@@ -415,6 +450,9 @@ export default function EsportsPage() {
                             <span className="text-[9px] text-orange-400 shrink-0">
                               {pctStr(playerData.champs[champsB[i]].wins, playerData.champs[champsB[i]].total)}
                             </span>
+                          )}
+                          {champsB[i] && !playerData.champs[champsB[i]] && (
+                            <span className="text-[9px] text-yellow-600 shrink-0">no data</span>
                           )}
                         </div>
                       )}
