@@ -817,7 +817,7 @@ export default function PolyEarnPage({ onClose }: PolyEarnPageProps) {
         }
       })();
     } else if (viewMode === 'pro') {
-      const cached = getCached<ProAnalysis[]>('polyearn_pro');
+      const cached = getCached<ProAnalysis[]>('polyearn_pro_v2');
       if (cached) { setProData(cached); setLoading(false); return; }
       setLoading(true);
       setProData([]);
@@ -839,7 +839,7 @@ export default function PolyEarnPage({ onClose }: PolyEarnPageProps) {
             if (mounted) setProData(finalPro);
           });
           if (mounted) {
-            setCache('polyearn_pro', finalPro);
+            setCache('polyearn_pro_v2', finalPro);
             setLoading(false);
           }
         } catch {
@@ -1113,7 +1113,7 @@ export default function PolyEarnPage({ onClose }: PolyEarnPageProps) {
                 )}
                 {proData.length > 0 && (
                   <button
-                    onClick={() => { setProData([]); localStorage.removeItem('polyearn_pro'); }}
+                    onClick={() => { setProData([]); localStorage.removeItem('polyearn_pro_v2'); localStorage.removeItem('polyearn_pro'); }}
                     className="flex items-center gap-1 px-2.5 py-1.5 bg-red-500/10 border border-red-500/30 text-red-400/70 rounded-lg text-xs font-mono hover:bg-red-500/20 hover:text-red-400 transition-colors"
                   >
                     <Trash2 className="w-3 h-3" /> Clear all

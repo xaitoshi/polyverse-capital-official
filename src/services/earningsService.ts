@@ -149,24 +149,25 @@ export async function fetchUpcomingEarnings(): Promise<UpcomingEarning[]> {
   }
 }
 
-async function fetchEarningsHistoryMassive(symbol: string): Promise<HistoricalQuarter[]> {
-  if (!MASSIVE_KEY) return [];
+async function fetchEarningsHistoryFinnhub(symbol: string): Promise<HistoricalQuarter[]> {
+  if (!FINNHUB_KEY) return [];
   try {
-    const url = `${MASSIVE_BASE}/v2/reference/financials/${encodeURIComponent(symbol)}` +
-      `?type=Q&limit=8&apiKey=${MASSIVE_KEY}`;
-    const res = await fetch(url);
+    const res = await finnhubFetch(
+      `https://finnhub.io/api/v1/stock/earnings?symbol=${encodeURIComponent(symbol)}&limit=8&token=${FINNHUB_KEY}`
+    );
     if (!res.ok) return [];
     const data = await res.json();
-    const results: any[] = data.results || [];
-    // Support both Polygon v2 field names and common alternatives
-    return results
-      .filter((q: any) => (q.eps ?? q.actual ?? q.epsActual) != null && (q.epsEstimated ?? q.estimate ?? q.epsConsensus) != null)
+    const items: any[] = Array.isArray(data) ? data : [];
+    return items
+      .filter((q: any) => q.actual != null && q.estimate != null)
       .map((q: any) => {
-        const actual   = q.eps        ?? q.actual    ?? q.epsActual;
-        const estimate = q.epsEstimated ?? q.estimate ?? q.epsConsensus;
-        const surprise = actual - estimate;
-        const surprisePct = estimate !== 0 ? (surprise / Math.abs(estimate)) * 100 : 0;
-        return { period: q.reportPeriod || q.calendarDate || q.period || '', actual, estimate, surprise, surprisePct };
+        const actual = q.actual as number;
+        const estimate = q.estimate as number;
+        const surprise = q.surprise != null ? q.surprise : actual - estimate;
+        const surprisePct = q.surprisePercent != null
+          ? q.surprisePercent
+          : estimate !== 0 ? (surprise / Math.abs(estimate)) * 100 : 0;
+        return { period: q.period || '', actual, estimate, surprise, surprisePct };
       });
   } catch {
     return [];
@@ -178,7 +179,7 @@ export async function fetchEarningsHistory(symbol: string): Promise<HistoricalQu
     const cached = historyCache.get(symbol)!;
     if (cached.length > 0) return cached; // only return cached if non-empty
   }
-  const quarters = await fetchEarningsHistoryMassive(symbol);
+  const quarters = await fetchEarningsHistoryFinnhub(symbol);
   if (quarters.length > 0) historyCache.set(symbol, quarters); // don't cache empty
   return quarters;
 }
