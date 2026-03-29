@@ -1111,6 +1111,14 @@ export default function PolyEarnPage({ onClose }: PolyEarnPageProps) {
                     {proTickerLoading ? '' : 'Add'}
                   </button>
                 )}
+                {proData.length > 0 && (
+                  <button
+                    onClick={() => { setProData([]); localStorage.removeItem('polyearn_pro'); }}
+                    className="flex items-center gap-1 px-2.5 py-1.5 bg-red-500/10 border border-red-500/30 text-red-400/70 rounded-lg text-xs font-mono hover:bg-red-500/20 hover:text-red-400 transition-colors"
+                  >
+                    <Trash2 className="w-3 h-3" /> Clear all
+                  </button>
+                )}
               </div>
               <span className="text-[11px] font-mono text-gray-600">Sort:</span>
               {([
