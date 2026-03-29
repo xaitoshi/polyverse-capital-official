@@ -5,6 +5,10 @@
       "destination": "/index.html"
     },
     {
+      "source": "/liquidity",
+      "destination": "/index.html"
+    },
+    {
       "source": "/api/poly-web/:path*",
       "destination": "https://polymarket.com/:path*"
     },

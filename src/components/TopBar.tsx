@@ -102,7 +102,7 @@ export default function TopBar({ onOpenEcosystem, onOpenPolyEarn, onOpenOsint, o
             POLYVERSE CAPITAL
           </div>
           <div className="flex items-center bg-black/60 border border-blue-500/30 backdrop-blur-md rounded-lg overflow-hidden p-1 gap-1">
-            <button onClick={onOpenLiquidity}
+            <button onClick={() => { window.location.href = '/liquidity'; }}
               className="px-4 py-1.5 border border-blue-500/50 text-blue-400 rounded-md text-sm font-medium flex items-center gap-2 hover:bg-blue-500/10 transition-colors">
               <Droplets className="w-4 h-4" /> Liquidity
             </button>
@@ -176,7 +176,7 @@ export default function TopBar({ onOpenEcosystem, onOpenPolyEarn, onOpenOsint, o
         {/* Mobile nav grid */}
         {mobileMenuOpen && (
           <div className="grid grid-cols-2 gap-2 bg-black/80 border border-blue-500/20 backdrop-blur-md rounded-xl p-3">
-            <button onClick={() => { onOpenLiquidity(); closeAll(); }}
+            <button onClick={() => { closeAll(); window.location.href = '/liquidity'; }}
               className="flex items-center justify-center gap-2 py-3 bg-blue-500/10 border border-blue-500/30 text-blue-400 rounded-lg text-sm font-mono hover:bg-blue-500/20 transition-colors">
               <Droplets className="w-4 h-4" /> Liquidity
             </button>
