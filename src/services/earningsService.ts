@@ -888,7 +888,7 @@ export interface ProAnalysis {
   // V2 framework — fair probability & market edge
   beatScore: number;                               // 0–10 normalised beat probability score
   fairProbability: number;                         // fair YES% derived from beatScore
-  marketAction: 'BUY_YES' | 'BUY_NO' | 'PASS';
+  marketAction: 'BUY_YES' | 'MAYBE_BUY_YES' | 'MAYBE_BUY_NO' | 'BUY_NO' | 'PASS';
   edge: number | null;                             // pts between fair prob and market price (positive = edge exists)
   sizing: 'HIGH' | 'MEDIUM' | 'LOW' | null;
 }
@@ -1265,7 +1265,7 @@ const FAIR_PROB_TABLE = [15, 22, 29, 36, 43, 50, 57, 64, 71, 78, 85]; // index =
 export function computeMarketEdge(
   beatScore: number,
   polyYesPct: number | null,
-): { fairProbability: number; marketAction: 'BUY_YES' | 'BUY_NO' | 'PASS'; edge: number | null; sizing: 'HIGH' | 'MEDIUM' | 'LOW' | null } {
+): { fairProbability: number; marketAction: 'BUY_YES' | 'MAYBE_BUY_YES' | 'MAYBE_BUY_NO' | 'BUY_NO' | 'PASS'; edge: number | null; sizing: 'HIGH' | 'MEDIUM' | 'LOW' | null } {
   const fairProbability = FAIR_PROB_TABLE[beatScore] ?? 50;
 
   if (polyYesPct == null) {
@@ -1274,14 +1274,20 @@ export function computeMarketEdge(
 
   const diff = fairProbability - polyYesPct; // positive = market underpricing YES
 
-  let marketAction: 'BUY_YES' | 'BUY_NO' | 'PASS' = 'PASS';
+  let marketAction: 'BUY_YES' | 'MAYBE_BUY_YES' | 'MAYBE_BUY_NO' | 'BUY_NO' | 'PASS' = 'PASS';
   let edge: number | null = null;
 
   if (beatScore >= 8 && diff >= 5) {
     marketAction = 'BUY_YES';
     edge = diff;
+  } else if (beatScore >= 5 && diff >= 5) {
+    marketAction = 'MAYBE_BUY_YES';
+    edge = diff;
   } else if (beatScore <= 3 && diff <= -5) {
     marketAction = 'BUY_NO';
+    edge = Math.abs(diff);
+  } else if (beatScore <= 4 && diff <= -5) {
+    marketAction = 'MAYBE_BUY_NO';
     edge = Math.abs(diff);
   } else {
     edge = Math.abs(diff);

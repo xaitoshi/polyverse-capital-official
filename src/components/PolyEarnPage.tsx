@@ -426,18 +426,24 @@ function ProCard({ analysis, shareMode, selected, onToggleSelect, onRef }: {
       {/* V2 Action row — fair prob vs market + decision */}
       {analysis.polymarket ? (
         <div className={`mt-3 px-3 py-2.5 rounded-lg border flex items-center gap-3 flex-wrap ${
-          analysis.marketAction === 'BUY_YES' ? 'bg-blue-500/10 border-blue-500/30'
-          : analysis.marketAction === 'BUY_NO'  ? 'bg-red-500/10 border-red-500/30'
+          analysis.marketAction === 'BUY_YES'       ? 'bg-blue-500/10 border-blue-500/30'
+          : analysis.marketAction === 'MAYBE_BUY_YES' ? 'bg-blue-500/5 border-blue-500/20'
+          : analysis.marketAction === 'BUY_NO'        ? 'bg-red-500/10 border-red-500/30'
+          : analysis.marketAction === 'MAYBE_BUY_NO'  ? 'bg-red-500/5 border-red-500/20'
           : 'bg-gray-800/40 border-gray-700/40'
         }`}>
           {/* Action badge */}
           <span className={`text-xs font-black font-mono px-2.5 py-1 rounded ${
-            analysis.marketAction === 'BUY_YES' ? 'bg-blue-500/20 text-blue-300 border border-blue-500/40'
-            : analysis.marketAction === 'BUY_NO'  ? 'bg-red-500/20 text-red-300 border border-red-500/40'
+            analysis.marketAction === 'BUY_YES'       ? 'bg-blue-500/20 text-blue-300 border border-blue-500/40'
+            : analysis.marketAction === 'MAYBE_BUY_YES' ? 'bg-blue-500/10 text-blue-400/70 border border-blue-500/25'
+            : analysis.marketAction === 'BUY_NO'        ? 'bg-red-500/20 text-red-300 border border-red-500/40'
+            : analysis.marketAction === 'MAYBE_BUY_NO'  ? 'bg-red-500/10 text-red-400/70 border border-red-500/25'
             : 'bg-gray-700/40 text-gray-400 border border-gray-600/40'
           }`}>
-            {analysis.marketAction === 'BUY_YES' ? '▲ BUY YES'
-             : analysis.marketAction === 'BUY_NO' ? '▼ BUY NO'
+            {analysis.marketAction === 'BUY_YES'       ? '▲ BUY YES'
+             : analysis.marketAction === 'MAYBE_BUY_YES' ? '△ MAYBE BUY YES'
+             : analysis.marketAction === 'BUY_NO'        ? '▼ BUY NO'
+             : analysis.marketAction === 'MAYBE_BUY_NO'  ? '▽ MAYBE BUY NO'
              : '— PASS'}
           </span>
           {/* Fair prob vs market */}
