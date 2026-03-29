@@ -174,36 +174,7 @@ async function fetchEarningsHistoryMassive(symbol: string): Promise<HistoricalQu
 
 export async function fetchEarningsHistory(symbol: string): Promise<HistoricalQuarter[]> {
   if (historyCache.has(symbol)) return historyCache.get(symbol)!;
-
-  // Try Finnhub first
-  let quarters: HistoricalQuarter[] = [];
-  if (FINNHUB_KEY && incrementUsage()) {
-    try {
-      const res = await fetch(
-        `https://finnhub.io/api/v1/stock/earnings?symbol=${encodeURIComponent(symbol)}&token=${FINNHUB_KEY}`
-      );
-      if (res.ok) {
-        const data = await res.json();
-        if (Array.isArray(data)) {
-          quarters = data
-            .filter((q: any) => q.actual != null && q.estimate != null)
-            .map((q: any) => {
-              const actual = q.actual;
-              const estimate = q.estimate;
-              const surprise = actual - estimate;
-              const surprisePct = estimate !== 0 ? (surprise / Math.abs(estimate)) * 100 : 0;
-              return { period: q.period || '', actual, estimate, surprise, surprisePct };
-            });
-        }
-      }
-    } catch { /* fall through to Massive */ }
-  }
-
-  // Fall back to Massive (Polygon) if Finnhub returned nothing
-  if (quarters.length === 0) {
-    quarters = await fetchEarningsHistoryMassive(symbol);
-  }
-
+  const quarters = await fetchEarningsHistoryMassive(symbol);
   historyCache.set(symbol, quarters);
   return quarters;
 }
