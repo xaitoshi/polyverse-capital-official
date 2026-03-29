@@ -9,6 +9,10 @@
       "destination": "/index.html"
     },
     {
+      "source": "/esports",
+      "destination": "/index.html"
+    },
+    {
       "source": "/api/poly-web/:path*",
       "destination": "https://polymarket.com/:path*"
     },
