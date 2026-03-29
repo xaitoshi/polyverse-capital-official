@@ -409,53 +409,24 @@ export default function EsportsPage() {
           </div>
         </div>
 
-        {/* ── Gemini Scan ── */}
-        <div className="bg-white/[0.02] border border-white/10 rounded-2xl p-6 space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="text-[10px] text-blue-400 tracking-widest">SCAN CHAMPION SELECT — powered by Gemini</div>
-            <span className="text-[9px] text-gray-600">upload a screenshot to auto-fill the draft</span>
-          </div>
-
-          {/* Upload area */}
-          <div
-            onClick={() => fileInputRef.current?.click()}
-            className="border border-dashed border-white/20 rounded-xl p-6 text-center cursor-pointer hover:border-blue-500/40 hover:bg-blue-500/5 transition-all"
-          >
-            {scanImg ? (
-              <img src={scanImg} alt="champion select screenshot" className="max-h-48 mx-auto rounded-lg object-contain" />
-            ) : (
-              <div className="space-y-2">
-                <div className="text-3xl">📸</div>
-                <div className="text-xs text-gray-500">Click to upload champion select screenshot</div>
-                <div className="text-[10px] text-gray-700">PNG, JPG, WebP supported</div>
-              </div>
-            )}
-          </div>
-          <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
-
-          {/* Scan button */}
-          <div className="flex items-center gap-3">
-            <button
-              onClick={scanWithGemini}
-              disabled={!scanImg || scanLoading}
-              className="px-5 py-2 rounded-lg bg-blue-500/20 border border-blue-500/40 text-blue-400 text-xs font-mono hover:bg-blue-500/30 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
-            >
-              {scanLoading ? (
-                <><span className="animate-spin inline-block w-3 h-3 border border-blue-400 border-t-transparent rounded-full" />analysing…</>
-              ) : '✦ Scan with Gemini'}
-            </button>
-            {scanImg && (
-              <button onClick={() => { setScanImg(null); setScanResult(null); setScanError(null); if (fileInputRef.current) fileInputRef.current.value = ''; }}
-                className="text-[10px] text-gray-600 hover:text-gray-400 transition-colors">clear</button>
-            )}
-            {scanError && <span className="text-[10px] text-red-400">{scanError}</span>}
-            {scanResult && !scanError && <span className="text-[10px] text-green-400">✓ Draft populated</span>}
-          </div>
-        </div>
-
         {/* ── Matchup Predictor ── */}
         <div className="bg-white/[0.02] border border-white/10 rounded-2xl p-6 space-y-6">
-          <div className="text-[10px] text-blue-400 tracking-widest">MATCHUP PREDICTOR</div>
+          <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+          <div className="flex items-center gap-3">
+            <div className="text-[10px] text-blue-400 tracking-widest flex-1">MATCHUP PREDICTOR</div>
+            <button onClick={() => fileInputRef.current?.click()}
+              className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-gray-400 text-[10px] font-mono hover:bg-white/10 hover:text-white transition-colors flex items-center gap-1.5">
+              📸 {scanImg ? 'change image' : 'upload image'}
+            </button>
+            <button onClick={scanWithGemini} disabled={!scanImg || scanLoading}
+              className="px-3 py-1.5 rounded-lg bg-blue-500/20 border border-blue-500/40 text-blue-400 text-[10px] font-mono hover:bg-blue-500/30 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5">
+              {scanLoading
+                ? <><span className="animate-spin inline-block w-2.5 h-2.5 border border-blue-400 border-t-transparent rounded-full" />scanning…</>
+                : '✦ scan'}
+            </button>
+            {scanError && <span className="text-[10px] text-red-400">{scanError}</span>}
+            {scanResult && !scanError && <span className="text-[10px] text-green-400">✓ populated</span>}
+          </div>
 
           {/* Team selectors */}
           <div className="grid grid-cols-2 gap-4">
