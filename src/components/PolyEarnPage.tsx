@@ -415,13 +415,64 @@ function ProCard({ analysis, shareMode, selected, onToggleSelect, onRef }: {
             )}
           </div>
         </div>
-        {/* Signal badge */}
+        {/* Beat score badge */}
         <div className={`flex-shrink-0 px-3 py-1.5 rounded-lg border text-center ${signalColors.badge}`}>
-          <div className={`text-xs font-bold font-mono ${signalColors.text}`}>{analysis.signal}</div>
-          <div className={`text-lg font-black font-mono leading-tight ${signalColors.text}`}>{scoreDisplay}</div>
+          <div className="text-[9px] text-gray-500 font-mono uppercase tracking-wider">Beat</div>
+          <div className={`text-lg font-black font-mono leading-tight ${signalColors.text}`}>{analysis.beatScore}</div>
           <div className="text-[9px] text-gray-600 font-mono">/10</div>
         </div>
       </div>
+
+      {/* V2 Action row — fair prob vs market + decision */}
+      {analysis.polymarket ? (
+        <div className={`mt-3 px-3 py-2.5 rounded-lg border flex items-center gap-3 flex-wrap ${
+          analysis.marketAction === 'BUY_YES' ? 'bg-blue-500/10 border-blue-500/30'
+          : analysis.marketAction === 'BUY_NO'  ? 'bg-red-500/10 border-red-500/30'
+          : 'bg-gray-800/40 border-gray-700/40'
+        }`}>
+          {/* Action badge */}
+          <span className={`text-xs font-black font-mono px-2.5 py-1 rounded ${
+            analysis.marketAction === 'BUY_YES' ? 'bg-blue-500/20 text-blue-300 border border-blue-500/40'
+            : analysis.marketAction === 'BUY_NO'  ? 'bg-red-500/20 text-red-300 border border-red-500/40'
+            : 'bg-gray-700/40 text-gray-400 border border-gray-600/40'
+          }`}>
+            {analysis.marketAction === 'BUY_YES' ? '▲ BUY YES'
+             : analysis.marketAction === 'BUY_NO' ? '▼ BUY NO'
+             : '— PASS'}
+          </span>
+          {/* Fair prob vs market */}
+          <div className="flex items-center gap-1.5 text-[11px] font-mono">
+            <span className="text-gray-500">Fair</span>
+            <span className="text-white font-bold">{analysis.fairProbability}%</span>
+            <span className="text-gray-600">vs</span>
+            <span className={`font-bold ${analysis.polymarket.yesPct >= 50 ? 'text-blue-400' : 'text-red-400'}`}>
+              {analysis.polymarket.yesPct.toFixed(0)}% mkt
+            </span>
+          </div>
+          {/* Edge */}
+          {analysis.edge != null && analysis.edge >= 1 && (
+            <div className="flex items-center gap-1 text-[11px] font-mono ml-auto">
+              <span className="text-gray-600">edge</span>
+              <span className={`font-bold ${analysis.marketAction !== 'PASS' ? 'text-yellow-400' : 'text-gray-500'}`}>
+                {analysis.edge.toFixed(0)}pt
+              </span>
+              {analysis.sizing && (
+                <span className={`text-[10px] px-1.5 py-0.5 rounded font-mono ${
+                  analysis.sizing === 'HIGH'   ? 'bg-yellow-500/15 text-yellow-400'
+                  : analysis.sizing === 'MEDIUM' ? 'bg-blue-500/15 text-blue-400'
+                  : 'bg-gray-700/40 text-gray-500'
+                }`}>
+                  {analysis.sizing}
+                </span>
+              )}
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="mt-3 px-3 py-2 rounded-lg border border-gray-800/60 bg-gray-900/30 text-[11px] font-mono text-gray-600">
+          No Polymarket listing — score {analysis.beatScore}/10 · fair {analysis.fairProbability}% YES
+        </div>
+      )}
 
       {/* Quick metrics row */}
       <div className="flex items-center gap-3 mt-3 flex-wrap">
@@ -430,16 +481,11 @@ function ProCard({ analysis, shareMode, selected, onToggleSelect, onRef }: {
             href={`https://polymarket.com/event/${analysis.polymarket.slug}`}
             target="_blank" rel="noopener noreferrer"
             onClick={e => e.stopPropagation()}
-            className="flex items-center gap-1.5 px-2 py-1 rounded border border-blue-500/40 bg-blue-500/10 hover:bg-blue-500/20 transition-colors"
+            className="flex items-center gap-1 text-[10px] font-mono text-blue-400/50 hover:text-blue-400 transition-colors"
           >
-            <span className="text-[10px] font-mono text-blue-400/70 uppercase">Poly</span>
-            <span className={`text-sm font-black font-mono ${analysis.polymarket.yesPct >= 50 ? 'text-blue-400' : 'text-red-400'}`}>
-              {analysis.polymarket.yesPct.toFixed(0)}%
-            </span>
-            <span className="text-[10px] font-mono text-gray-600">
-              ${analysis.polymarket.volume >= 1000 ? `${(analysis.polymarket.volume / 1000).toFixed(0)}K` : Math.round(analysis.polymarket.volume)} vol
-            </span>
-            <ExternalLink className="w-2.5 h-2.5 text-blue-400/50" />
+            <ExternalLink className="w-2.5 h-2.5" />
+            Polymarket
+            <span className="text-gray-600 ml-0.5">${analysis.polymarket.volume >= 1000 ? `${(analysis.polymarket.volume / 1000).toFixed(0)}K` : Math.round(analysis.polymarket.volume)} vol</span>
           </a>
         )}
         <div className="flex items-center gap-1">

@@ -885,6 +885,12 @@ export interface ProAnalysis {
   signal: 'BULLISH' | 'BEARISH' | 'NEUTRAL';
   signalScore: number;
   signalFactors: SignalFactor[];
+  // V2 framework — fair probability & market edge
+  beatScore: number;                               // 0–10 normalised beat probability score
+  fairProbability: number;                         // fair YES% derived from beatScore
+  marketAction: 'BUY_YES' | 'BUY_NO' | 'PASS';
+  edge: number | null;                             // pts between fair prob and market price (positive = edge exists)
+  sizing: 'HIGH' | 'MEDIUM' | 'LOW' | null;
 }
 
 const recCache      = new Map<string, { data: { buy: number; hold: number; sell: number } | null; ts: number }>();
@@ -1246,7 +1252,48 @@ function computeSignal(
   const signal: 'BULLISH' | 'BEARISH' | 'NEUTRAL' =
     signalScore >= 6 ? 'BULLISH' : signalScore <= -6 ? 'BEARISH' : 'NEUTRAL';
 
-  return { signal, signalScore, signalFactors: factors };
+  // Normalise raw score (range ≈ −18 to +18) → beatScore 0–10
+  const beatScore = Math.min(10, Math.max(0, Math.round(((signalScore + 18) / 36) * 10)));
+
+  return { signal, signalScore, signalFactors: factors, beatScore };
+}
+
+// V2 framework helpers
+const FAIR_PROB_TABLE = [15, 22, 29, 36, 43, 50, 57, 64, 71, 78, 85]; // index = beatScore 0–10
+
+export function computeMarketEdge(
+  beatScore: number,
+  polyYesPct: number | null,
+): { fairProbability: number; marketAction: 'BUY_YES' | 'BUY_NO' | 'PASS'; edge: number | null; sizing: 'HIGH' | 'MEDIUM' | 'LOW' | null } {
+  const fairProbability = FAIR_PROB_TABLE[beatScore] ?? 50;
+
+  if (polyYesPct == null) {
+    return { fairProbability, marketAction: 'PASS', edge: null, sizing: null };
+  }
+
+  const diff = fairProbability - polyYesPct; // positive = market underpricing YES
+
+  let marketAction: 'BUY_YES' | 'BUY_NO' | 'PASS' = 'PASS';
+  let edge: number | null = null;
+
+  if (beatScore >= 8 && diff >= 5) {
+    marketAction = 'BUY_YES';
+    edge = diff;
+  } else if (beatScore <= 3 && diff <= -5) {
+    marketAction = 'BUY_NO';
+    edge = Math.abs(diff);
+  } else {
+    edge = Math.abs(diff);
+  }
+
+  const sizing: 'HIGH' | 'MEDIUM' | 'LOW' | null =
+    edge == null ? null
+    : edge >= 15 ? 'HIGH'
+    : edge >= 10 ? 'MEDIUM'
+    : edge >= 7  ? 'LOW'
+    : null;
+
+  return { fairProbability, marketAction, edge, sizing };
 }
 
 const proCache = new Map<string, { data: ProAnalysis; ts: number }>();
@@ -1311,7 +1358,7 @@ export async function fetchProAnalysisList(
       const estimateDispersionPct = epsEst && Math.abs(epsEst.avg) > 0.001
         ? ((epsEst.high - epsEst.low) / Math.abs(epsEst.avg)) * 100 : null;
 
-      const { signal, signalScore, signalFactors } = computeSignal(
+      const { signal, signalScore, signalFactors, beatScore } = computeSignal(
         beatRate, history.length, recentTrend, avgSurprisePct,
         analystBuyPct, priceTargetUpside,
         estimateDispersionPct,
@@ -1354,6 +1401,8 @@ export async function fetchProAnalysisList(
         sectorEtf,
         sectorReturns,
         signal, signalScore, signalFactors,
+        beatScore,
+        ...computeMarketEdge(beatScore, polymarket?.yesPct ?? null),
       };
 
       proCache.set(symbol, { data: analysis, ts: Date.now() });
