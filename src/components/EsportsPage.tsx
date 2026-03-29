@@ -431,7 +431,7 @@ Always return all 5 players for each team. Use empty strings for anything not vi
           <h1 className="text-2xl font-bold tracking-tight text-white mb-1">
             POLYVERSE <span className="text-blue-400">/ESPORTS</span>
           </h1>
-          <p className="text-gray-500 text-sm">Team matchup predictor · player champion stats · OraclesElixir data</p>
+          <p className="text-gray-500 text-sm">Team matchup predictor · player champion stats</p>
           <div className="flex items-center justify-center gap-6 mt-4">
             {[
               { label: 'TEAMS', val: Object.keys(db.teams).length },
