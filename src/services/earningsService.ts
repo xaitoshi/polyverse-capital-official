@@ -1280,13 +1280,13 @@ export function computeMarketEdge(
   if (beatScore >= 8 && diff >= 5) {
     marketAction = 'BUY_YES';
     edge = diff;
-  } else if (beatScore >= 5 && diff >= 5) {
-    marketAction = 'MAYBE_BUY_YES';
-    edge = diff;
-  } else if (beatScore <= 3 && diff <= -5) {
+  } else if (beatScore <= 2 && diff <= -5) {
     marketAction = 'BUY_NO';
     edge = Math.abs(diff);
-  } else if (beatScore <= 4 && diff <= -5) {
+  } else if (beatScore >= 5) {
+    marketAction = 'MAYBE_BUY_YES';
+    edge = Math.abs(diff);
+  } else if (beatScore <= 4) {
     marketAction = 'MAYBE_BUY_NO';
     edge = Math.abs(diff);
   } else {
