@@ -126,8 +126,11 @@ function Autocomplete({
 
 // ── ChampSelect ────────────────────────────────────────────────────────────────
 function ChampSelect({
-  champs, value, onChange
-}: { champs: Record<string, ChampStat>; value: string; onChange: (v: string) => void }) {
+  champs, value, onChange, getImg,
+}: {
+  champs: Record<string, ChampStat>; value: string;
+  onChange: (v: string) => void; getImg: (name: string) => string | null;
+}) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState(value);
   const ref = useRef<HTMLDivElement>(null);
@@ -138,7 +141,6 @@ function ChampSelect({
     const fn = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) {
         setOpen(false);
-        // commit whatever is typed as the value
         if (query !== value) onChange(query);
       }
     };
@@ -152,30 +154,42 @@ function ChampSelect({
     : sorted.filter(([c]) => c.toLowerCase().includes(query.toLowerCase())).slice(0, 15);
 
   const knownChamp = champs[value];
+  const selectedImg = value ? getImg(value) : null;
 
   return (
     <div ref={ref} className="relative flex-1">
-      <input
-        value={query}
-        onChange={e => { setQuery(e.target.value); onChange(e.target.value); setOpen(true); }}
-        onFocus={() => setOpen(true)}
-        placeholder="champion…"
-        className="w-full bg-white/5 border border-white/10 rounded px-2 py-1 text-xs font-mono text-gray-300 placeholder:text-gray-700 focus:outline-none focus:border-blue-500/50"
-      />
+      <div className="flex items-center gap-1.5 bg-white/5 border border-white/10 rounded px-2 py-1 focus-within:border-blue-500/50">
+        {selectedImg && (
+          <img src={selectedImg} alt={value} className="w-5 h-5 rounded-sm object-cover shrink-0" />
+        )}
+        <input
+          value={query}
+          onChange={e => { setQuery(e.target.value); onChange(e.target.value); setOpen(true); }}
+          onFocus={() => setOpen(true)}
+          placeholder="champion…"
+          className="flex-1 bg-transparent text-xs font-mono text-gray-300 placeholder:text-gray-700 focus:outline-none min-w-0"
+        />
+        {value && !knownChamp && (
+          <span className="text-[8px] text-yellow-600 shrink-0">no data</span>
+        )}
+      </div>
       {open && filtered.length > 0 && (
-        <div className="absolute z-50 top-full mt-0.5 left-0 right-0 bg-[#0d0d0d] border border-white/10 rounded-lg max-h-44 overflow-y-auto shadow-xl">
-          {filtered.map(([champ, stat]) => (
-            <button key={champ} onMouseDown={() => { onChange(champ); setQuery(champ); setOpen(false); }}
-              className="w-full text-left px-3 py-1.5 text-xs font-mono text-gray-300 hover:bg-blue-500/10 hover:text-blue-300 transition-colors flex justify-between">
-              <span>{champ}</span>
-              <span className="text-gray-600">{pctStr(stat.wins, stat.total)} · {stat.total}g</span>
-            </button>
-          ))}
+        <div className="absolute z-50 top-full mt-0.5 left-0 right-0 bg-[#0d0d0d] border border-white/10 rounded-lg max-h-52 overflow-y-auto shadow-xl">
+          {filtered.map(([champ, stat]) => {
+            const img = getImg(champ);
+            return (
+              <button key={champ} onMouseDown={() => { onChange(champ); setQuery(champ); setOpen(false); }}
+                className="w-full text-left px-2 py-1.5 text-xs font-mono text-gray-300 hover:bg-blue-500/10 hover:text-blue-300 transition-colors flex items-center gap-2">
+                {img
+                  ? <img src={img} alt={champ} className="w-6 h-6 rounded-sm object-cover shrink-0" />
+                  : <div className="w-6 h-6 rounded-sm bg-white/10 shrink-0" />
+                }
+                <span className="flex-1">{champ}</span>
+                <span className="text-gray-600 text-[10px]">{pctStr(stat.wins, stat.total)} · {stat.total}g</span>
+              </button>
+            );
+          })}
         </div>
-      )}
-      {/* show "no data" tag if champ is typed but unknown */}
-      {value && !knownChamp && (
-        <div className="absolute right-2 top-1/2 -translate-y-1/2 text-[8px] text-yellow-600 pointer-events-none">no data</div>
       )}
     </div>
   );
@@ -230,12 +244,42 @@ export default function EsportsPage() {
   // Player search tab
   const [playerSearch, setPlayerSearch] = useState('');
 
+  // Champion images from DDragon
+  const [champImgs, setChampImgs] = useState<Record<string, string>>({});
+
   useEffect(() => {
     fetch('/esports.json')
       .then(r => r.json())
       .then((data: EsportsDB) => { setDb(data); setLoading(false); })
       .catch(e => { setError(e.message); setLoading(false); });
   }, []);
+
+  useEffect(() => {
+    fetch('https://ddragon.leagueoflegends.com/api/versions.json')
+      .then(r => r.json())
+      .then((versions: string[]) => versions[0])
+      .then(version =>
+        fetch(`https://ddragon.leagueoflegends.com/cdn/${version}/data/en_US/champion.json`)
+          .then(r => r.json())
+          .then(data => {
+            const map: Record<string, string> = {};
+            Object.values(data.data as Record<string, { id: string; name: string }>).forEach(champ => {
+              const url = `https://ddragon.leagueoflegends.com/cdn/${version}/img/champion/${champ.id}.png`;
+              map[champ.name] = url;
+              map[champ.id]   = url;
+              // normalised key: lowercase, strip non-alphanumeric (handles "K'Sante" → "ksante" etc.)
+              map[champ.name.toLowerCase().replace(/[^a-z0-9]/g, '')] = url;
+            });
+            setChampImgs(map);
+          })
+      )
+      .catch(() => {}); // silently fail — icons are cosmetic
+  }, []);
+
+  const getImg = (name: string): string | null =>
+    champImgs[name]
+    ?? champImgs[name.toLowerCase().replace(/[^a-z0-9]/g, '')]
+    ?? null;
 
   // Reset roster when team changes
   useEffect(() => {
@@ -398,14 +442,12 @@ export default function EsportsPage() {
                             champs={playerData.champs}
                             value={champsA[i]}
                             onChange={v => { const nc = [...champsA]; nc[i] = v; setChampsA(nc); }}
+                            getImg={getImg}
                           />
                           {champsA[i] && playerData.champs[champsA[i]] && (
                             <span className="text-[9px] text-green-400 shrink-0">
                               {pctStr(playerData.champs[champsA[i]].wins, playerData.champs[champsA[i]].total)}
                             </span>
-                          )}
-                          {champsA[i] && !playerData.champs[champsA[i]] && (
-                            <span className="text-[9px] text-yellow-600 shrink-0">no data</span>
                           )}
                         </div>
                       )}
@@ -445,14 +487,12 @@ export default function EsportsPage() {
                             champs={playerData.champs}
                             value={champsB[i]}
                             onChange={v => { const nc = [...champsB]; nc[i] = v; setChampsB(nc); }}
+                            getImg={getImg}
                           />
                           {champsB[i] && playerData.champs[champsB[i]] && (
                             <span className="text-[9px] text-orange-400 shrink-0">
                               {pctStr(playerData.champs[champsB[i]].wins, playerData.champs[champsB[i]].total)}
                             </span>
-                          )}
-                          {champsB[i] && !playerData.champs[champsB[i]] && (
-                            <span className="text-[9px] text-yellow-600 shrink-0">no data</span>
                           )}
                         </div>
                       )}
@@ -538,7 +578,14 @@ export default function EsportsPage() {
                         const color = wr >= 0.6 ? '#22c55e' : wr >= 0.5 ? '#3b82f6' : wr >= 0.4 ? '#f97316' : '#ef4444';
                         return (
                           <tr key={champ} className={`border-b border-white/5 hover:bg-white/[0.03] ${i % 2 === 0 ? '' : 'bg-white/[0.015]'}`}>
-                            <td className="px-4 py-2.5 font-bold text-white">{champ}</td>
+                            <td className="px-4 py-2.5 font-bold text-white">
+                              <div className="flex items-center gap-2">
+                                {getImg(champ) && (
+                                  <img src={getImg(champ)!} alt={champ} className="w-7 h-7 rounded-sm object-cover shrink-0" />
+                                )}
+                                {champ}
+                              </div>
+                            </td>
                             <td className="px-4 py-2.5 text-gray-400">{stat.total}</td>
                             <td className="px-4 py-2.5 text-green-400">{stat.wins}</td>
                             <td className="px-4 py-2.5 text-red-400">{stat.total - stat.wins}</td>
