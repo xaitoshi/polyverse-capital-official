@@ -245,7 +245,6 @@ export default function EsportsPage() {
   const [playerSearch, setPlayerSearch] = useState('');
 
   // Gemini scan
-  const [geminiKey, setGeminiKey] = useState(() => localStorage.getItem('pvs_gemini_key') ?? '');
   const [scanImg, setScanImg] = useState<string | null>(null);
   const [scanLoading, setScanLoading] = useState(false);
   const [scanError, setScanError] = useState<string | null>(null);
@@ -298,55 +297,21 @@ export default function EsportsPage() {
   };
 
   const scanWithGemini = async () => {
-    if (!scanImg || !geminiKey) return;
+    if (!scanImg) return;
     setScanLoading(true); setScanError(null); setScanResult(null);
     try {
       const base64 = scanImg.split(',')[1];
       const mimeType = scanImg.split(';')[0].split(':')[1];
-      const prompt = `You are analyzing a League of Legends esports champion pick/ban phase screenshot.
-Extract the following and respond ONLY with valid JSON (no markdown, no explanation):
-{
-  "teamA": {
-    "name": "team name or empty string",
-    "players": [
-      {"name": "player name or empty string", "champion": "exact champion name as in the game", "position": "Top"},
-      {"name": "", "champion": "", "position": "Jungle"},
-      {"name": "", "champion": "", "position": "Mid"},
-      {"name": "", "champion": "", "position": "Bot"},
-      {"name": "", "champion": "", "position": "Support"}
-    ]
-  },
-  "teamB": {
-    "name": "team name or empty string",
-    "players": [
-      {"name": "", "champion": "", "position": "Top"},
-      {"name": "", "champion": "", "position": "Jungle"},
-      {"name": "", "champion": "", "position": "Mid"},
-      {"name": "", "champion": "", "position": "Bot"},
-      {"name": "", "champion": "", "position": "Support"}
-    ]
-  }
-}
-Always return all 5 players for each team. Use empty strings for anything not visible. Champion names must be exact game names (e.g. "K'Sante", "Bel'Veth", "Aurelion Sol").`;
 
-      const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ parts: [{ inline_data: { mime_type: mimeType, data: base64 } }, { text: prompt }] }],
-            generationConfig: { temperature: 0.1 },
-          }),
-        }
-      );
-      if (!res.ok) { const t = await res.text(); throw new Error(`Gemini ${res.status}: ${t}`); }
-      const data = await res.json();
-      const text = data.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
-      // strip possible markdown fences
-      const clean = text.replace(/```json|```/g, '').trim();
-      const parsed = JSON.parse(clean);
-      setScanResult(clean);
+      const res = await fetch('/api/gemini-scan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ base64, mimeType }),
+      });
+      if (!res.ok) { const t = await res.text(); throw new Error(`${res.status}: ${t}`); }
+      const parsed = await res.json();
+      if (parsed.error) throw new Error(parsed.error);
+      setScanResult(JSON.stringify(parsed));
 
       // Auto-populate teams
       if (parsed.teamA?.name) setTeamA(parsed.teamA.name);
@@ -453,18 +418,6 @@ Always return all 5 players for each team. Use empty strings for anything not vi
             <span className="text-[9px] text-gray-600">upload a screenshot to auto-fill the draft</span>
           </div>
 
-          {/* API key */}
-          <div className="flex items-center gap-3">
-            <label className="text-[10px] text-gray-500 shrink-0 w-24">Gemini API Key</label>
-            <input
-              type="password"
-              value={geminiKey}
-              onChange={e => { setGeminiKey(e.target.value); localStorage.setItem('pvs_gemini_key', e.target.value); }}
-              placeholder="AIza…"
-              className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-xs font-mono text-gray-300 placeholder:text-gray-700 focus:outline-none focus:border-blue-500/50"
-            />
-          </div>
-
           {/* Upload area */}
           <div
             onClick={() => fileInputRef.current?.click()}
@@ -486,7 +439,7 @@ Always return all 5 players for each team. Use empty strings for anything not vi
           <div className="flex items-center gap-3">
             <button
               onClick={scanWithGemini}
-              disabled={!scanImg || !geminiKey || scanLoading}
+              disabled={!scanImg || scanLoading}
               className="px-5 py-2 rounded-lg bg-blue-500/20 border border-blue-500/40 text-blue-400 text-xs font-mono hover:bg-blue-500/30 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
             >
               {scanLoading ? (
