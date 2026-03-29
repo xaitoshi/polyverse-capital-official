@@ -27,14 +27,6 @@
     {
       "source": "/api/clob/:path*",
       "destination": "https://clob.polymarket.com/:path*"
-    },
-    {
-      "source": "/earn",
-      "destination": "/index.html"
-    },
-    {
-      "source": "/earn/(.*)",
-      "destination": "/index.html"
     }
   ]
 }
