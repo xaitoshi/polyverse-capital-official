@@ -1097,7 +1097,7 @@ function computeSignal(
   revenueGrowthTTM: number | null,
   sectorReturns: EtfReturns | null,
   optionsIV: OptionsIVData | null,
-): { signal: 'BULLISH' | 'BEARISH' | 'NEUTRAL'; signalScore: number; signalFactors: SignalFactor[] } {
+): { signal: 'BULLISH' | 'BEARISH' | 'NEUTRAL'; signalScore: number; signalFactors: SignalFactor[]; beatScore: number } {
   const factors: SignalFactor[] = [];
 
   // 1. Historical beat rate
