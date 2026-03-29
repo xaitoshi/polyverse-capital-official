@@ -313,16 +313,14 @@ export default function EsportsPage() {
       if (parsed.error) throw new Error(parsed.error);
       setScanResult(JSON.stringify(parsed));
 
-      // Auto-populate teams
-      if (parsed.teamA?.name) setTeamA(parsed.teamA.name);
-      if (parsed.teamB?.name) setTeamB(parsed.teamB.name);
-      if (parsed.teamA?.players) {
-        setRosterA(parsed.teamA.players.map((p: any) => p.name ?? ''));
-        setChampsA(parsed.teamA.players.map((p: any) => p.champion ?? ''));
+      // Auto-populate from blue/red format
+      if (parsed.blue?.length) {
+        setRosterA(Array.from({ length: 5 }, (_, i) => parsed.blue[i]?.player ?? ''));
+        setChampsA(Array.from({ length: 5 }, (_, i) => parsed.blue[i]?.champion ?? ''));
       }
-      if (parsed.teamB?.players) {
-        setRosterB(parsed.teamB.players.map((p: any) => p.name ?? ''));
-        setChampsB(parsed.teamB.players.map((p: any) => p.champion ?? ''));
+      if (parsed.red?.length) {
+        setRosterB(Array.from({ length: 5 }, (_, i) => parsed.red[i]?.player ?? ''));
+        setChampsB(Array.from({ length: 5 }, (_, i) => parsed.red[i]?.champion ?? ''));
       }
     } catch (e: any) {
       setScanError(e.message ?? 'Unknown error');

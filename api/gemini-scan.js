@@ -7,31 +7,17 @@ export default async function handler(req, res) {
   const key = process.env.GEMINI_API_KEY;
   if (!key) return res.status(500).json({ error: 'GEMINI_API_KEY not configured' });
 
-  const prompt = `You are analyzing a League of Legends esports champion pick/ban phase screenshot.
-Extract the following and respond ONLY with valid JSON (no markdown, no explanation):
+  const prompt = `This is a League of Legends esports broadcast screenshot.
+Extract the following for both Blue and Red team:
+- Player name (in-game name)
+- Champion name (exact spelling)
+- Role if visible (Top, Jungle, Mid, ADC, Support)
+
+Return ONLY clean JSON:
 {
-  "teamA": {
-    "name": "team name or empty string",
-    "players": [
-      {"name": "player name or empty string", "champion": "exact champion name as in the game", "position": "Top"},
-      {"name": "", "champion": "", "position": "Jungle"},
-      {"name": "", "champion": "", "position": "Mid"},
-      {"name": "", "champion": "", "position": "Bot"},
-      {"name": "", "champion": "", "position": "Support"}
-    ]
-  },
-  "teamB": {
-    "name": "team name or empty string",
-    "players": [
-      {"name": "", "champion": "", "position": "Top"},
-      {"name": "", "champion": "", "position": "Jungle"},
-      {"name": "", "champion": "", "position": "Mid"},
-      {"name": "", "champion": "", "position": "Bot"},
-      {"name": "", "champion": "", "position": "Support"}
-    ]
-  }
-}
-Always return all 5 players for each team. Use empty strings for anything not visible. Champion names must be exact game names (e.g. "K'Sante", "Bel'Veth", "Aurelion Sol").`;
+  "blue": [{"player": "...", "champion": "..."}, ...],
+  "red": [{"player": "...", "champion": "..."}, ...]
+}`;
 
   try {
     const geminiRes = await fetch(
