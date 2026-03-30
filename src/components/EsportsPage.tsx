@@ -651,7 +651,7 @@ export default function EsportsPage() {
 
           {/* Rosters + Champ Picks */}
           {teamA && teamB && (
-            <div className="grid grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Team A roster */}
               <div className="space-y-2">
                 <div className="text-[10px] text-blue-400 tracking-wider mb-2">{teamA} · ROSTER</div>
@@ -678,7 +678,7 @@ export default function EsportsPage() {
                         />
                       </div>
                       {playerData && (
-                        <div className="flex items-center gap-2 pl-14">
+                        <div className="flex items-center gap-2 pl-2 sm:pl-14">
                           <ChampSelect
                             champs={playerData.champs}
                             value={champsA[i]}
@@ -723,7 +723,7 @@ export default function EsportsPage() {
                         />
                       </div>
                       {playerData && (
-                        <div className="flex items-center gap-2 pl-14">
+                        <div className="flex items-center gap-2 pl-2 sm:pl-14">
                           <ChampSelect
                             champs={playerData.champs}
                             value={champsB[i]}
