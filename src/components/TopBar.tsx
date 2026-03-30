@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Search, Globe2, Droplets, Activity, Layers, TrendingUp, ExternalLink, Menu, X } from 'lucide-react';
+import { Search, Globe2, Droplets, Activity, Layers, TrendingUp, Menu, X, Gamepad2, Bot } from 'lucide-react';
 import { MarketData } from '../data/mockData';
 
 interface SearchResult {
@@ -136,12 +136,12 @@ export default function TopBar({ onOpenEcosystem, onOpenPolyEarn, onOpenOsint, o
             <a href="https://t.me/oddiepmbot" target="_blank" rel="noopener noreferrer"
               onClick={() => setDesktopMenuOpen(false)}
               className="flex items-center justify-center gap-2 py-3 px-6 bg-white/5 border border-blue-500/20 text-gray-300 rounded-lg text-sm font-mono hover:bg-blue-500/10 hover:text-blue-400 transition-colors">
-              🤖 Oddie
+              <Bot className="w-4 h-4" /> Oddie
             </a>
             <a href="/esports"
               onClick={() => setDesktopMenuOpen(false)}
               className="flex items-center justify-center gap-2 py-3 px-6 bg-white/5 border border-blue-500/20 text-gray-300 rounded-lg text-sm font-mono hover:bg-blue-500/10 hover:text-blue-400 transition-colors">
-              🎮 Esports
+              <Gamepad2 className="w-4 h-4" /> Esports
             </a>
           </div>
         )}
@@ -204,11 +204,11 @@ export default function TopBar({ onOpenEcosystem, onOpenPolyEarn, onOpenOsint, o
             <a href="https://t.me/oddiepmbot" target="_blank" rel="noopener noreferrer"
               onClick={closeAll}
               className="flex items-center justify-center gap-2 py-3 bg-white/5 border border-blue-500/20 text-gray-300 rounded-lg text-sm font-mono hover:bg-blue-500/10 hover:text-blue-400 transition-colors">
-              🤖 Oddie
+              <Bot className="w-4 h-4" /> Oddie
             </a>
             <a href="/esports" onClick={closeAll}
               className="flex items-center justify-center gap-2 py-3 bg-white/5 border border-blue-500/20 text-gray-300 rounded-lg text-sm font-mono hover:bg-blue-500/10 hover:text-blue-400 transition-colors">
-              🎮 Esports
+              <Gamepad2 className="w-4 h-4" /> Esports
             </a>
           </div>
         )}
