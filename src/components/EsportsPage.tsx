@@ -11,6 +11,7 @@ interface EsportsDB {
   players: Record<string, PlayerData>;
   teamPlayers: Record<string, string[]>;
 }
+type SynergyDB = Record<string, { wins: number; total: number }>;
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 const pct = (w: number, t: number) => t === 0 ? 0 : w / t;
@@ -18,6 +19,29 @@ const pctStr = (w: number, t: number) => t === 0 ? 'N/A' : `${Math.round((w / t)
 
 function h2hKey(a: string, b: string) {
   return `${[a,b].sort().join('|||')}`;
+}
+
+function synergyKey(a: string, b: string) {
+  return `${[a,b].sort().join('+')}`;
+}
+
+interface SynergyPair { pair: string; wins: number; total: number }
+function getSynergyData(synergies: SynergyDB, champs: string[]): { bonus: number; pairs: SynergyPair[] } {
+  const filled = champs.filter(Boolean);
+  const pairs: SynergyPair[] = [];
+  let totalBonus = 0; let count = 0;
+  for (let i = 0; i < filled.length; i++) {
+    for (let j = i + 1; j < filled.length; j++) {
+      const rec = synergies[synergyKey(filled[i], filled[j])];
+      if (rec && rec.total > 0) {
+        totalBonus += (rec.wins / rec.total) - 0.5;
+        count++;
+        pairs.push({ pair: `${filled[i]} + ${filled[j]}`, wins: rec.wins, total: rec.total });
+      }
+    }
+  }
+  pairs.sort((a, b) => b.wins / b.total - a.wins / a.total);
+  return { bonus: count > 0 ? totalBonus / count : 0, pairs };
 }
 
 function getH2H(db: EsportsDB, a: string, b: string) {
@@ -29,9 +53,10 @@ function getH2H(db: EsportsDB, a: string, b: string) {
 }
 
 // Win probability model
-// Weights: team overall 30% | h2h 25% | champ scores 45%
+// Weights: team overall 30% | h2h 25% | champ scores 45% | synergy bonus additive
 function calcProb(
   db: EsportsDB,
+  synergies: SynergyDB | null,
   teamA: string, teamB: string,
   champsA: string[], champsB: string[],
   rosterA: string[], rosterB: string[],
@@ -61,16 +86,25 @@ function calcProb(
   const csA = champScoreFor(rosterA, champsA);
   const csB = champScoreFor(rosterB, champsB);
 
-  const wA = hasChamps ? 0.30 * wrA + 0.25 * h2hA + 0.45 * csA
-                       : 0.55 * wrA + 0.45 * h2hA;
-  const wB = hasChamps ? 0.30 * wrB + 0.25 * h2hB + 0.45 * csB
-                       : 0.55 * wrB + 0.45 * h2hB;
+  // Synergy bonus — additive offset based on champion pair win rates vs 50% baseline
+  const synDataA = synergies && hasChamps ? getSynergyData(synergies, champsA) : { bonus: 0, pairs: [] };
+  const synDataB = synergies && hasChamps ? getSynergyData(synergies, champsB) : { bonus: 0, pairs: [] };
+  const hasSynergy = synDataA.pairs.length > 0 || synDataB.pairs.length > 0;
+
+  const baseA = hasChamps ? 0.30 * wrA + 0.25 * h2hA + 0.45 * csA
+                          : 0.55 * wrA + 0.45 * h2hA;
+  const baseB = hasChamps ? 0.30 * wrB + 0.25 * h2hB + 0.45 * csB
+                          : 0.55 * wrB + 0.45 * h2hB;
+
+  const wA = baseA + (hasSynergy ? 0.1 * synDataA.bonus : 0);
+  const wB = baseB + (hasSynergy ? 0.1 * synDataB.bonus : 0);
 
   const total = wA + wB;
   return {
     probA: total === 0 ? 0.5 : wA / total,
     probB: total === 0 ? 0.5 : wB / total,
     wrA, wrB, h2hA, h2hB, csA, csB, hasChamps,
+    synDataA, synDataB, hasSynergy,
     score: Math.round((total === 0 ? 0.5 : wA / total) * 100),
   };
 }
@@ -227,6 +261,7 @@ const POSITIONS = ['Top', 'Jungle', 'Mid', 'Bot', 'Support'];
 // ── Main Page ──────────────────────────────────────────────────────────────────
 export default function EsportsPage() {
   const [db, setDb] = useState<EsportsDB | null>(null);
+  const [synergies, setSynergies] = useState<SynergyDB | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -259,6 +294,13 @@ export default function EsportsPage() {
       .then(r => r.json())
       .then((data: EsportsDB) => { setDb(data); setLoading(false); })
       .catch(e => { setError(e.message); setLoading(false); });
+  }, []);
+
+  useEffect(() => {
+    fetch('/synergies.json')
+      .then(r => r.json())
+      .then((data: SynergyDB) => setSynergies(data))
+      .catch(() => {}); // silently fail — synergies are supplementary
   }, []);
 
   useEffect(() => {
@@ -536,8 +578,8 @@ export default function EsportsPage() {
 
   const prediction = useMemo(() => {
     if (!db || !teamA || !teamB) return null;
-    return calcProb(db, teamA, teamB, champsA, champsB, rosterA, rosterB);
-  }, [db, teamA, teamB, champsA, champsB, rosterA, rosterB]);
+    return calcProb(db, synergies, teamA, teamB, champsA, champsB, rosterA, rosterB);
+  }, [db, synergies, teamA, teamB, champsA, champsB, rosterA, rosterB]);
 
   const searchedPlayer = useMemo(() => {
     if (!db || !playerSearch) return null;
@@ -795,6 +837,63 @@ export default function EsportsPage() {
                   <div className="text-[9px] text-gray-700 mt-0.5">45% weight</div>
                 </div>
               </div>
+
+              {/* Synergy Analysis */}
+              {prediction.hasSynergy && (
+                <div className="pt-3 border-t border-white/5 space-y-3">
+                  <div className="text-[9px] text-purple-400 tracking-widest">SYNERGY ANALYSIS <span className="text-gray-700 ml-1">· additive bonus</span></div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {/* Team A synergies */}
+                    <div>
+                      <div className="text-[9px] text-blue-400 mb-1.5">{teamA}</div>
+                      {prediction.synDataA.pairs.length > 0 ? (
+                        <div className="space-y-1">
+                          {prediction.synDataA.pairs.map(p => {
+                            const wr = Math.round((p.wins / p.total) * 100);
+                            const color = wr >= 60 ? '#a855f7' : wr >= 50 ? '#6366f1' : '#9ca3af';
+                            return (
+                              <div key={p.pair} className="flex items-center justify-between text-[10px] font-mono bg-white/[0.02] rounded px-2 py-1">
+                                <span className="text-gray-400 truncate flex-1">{p.pair}</span>
+                                <span className="ml-2 shrink-0 font-bold" style={{ color }}>{wr}%</span>
+                                <span className="ml-1.5 text-gray-700 shrink-0">{p.total}g</span>
+                              </div>
+                            );
+                          })}
+                          <div className="text-[9px] mt-1" style={{ color: prediction.synDataA.bonus >= 0 ? '#a855f7' : '#9ca3af' }}>
+                            avg synergy: {prediction.synDataA.bonus >= 0 ? '+' : ''}{(prediction.synDataA.bonus * 100).toFixed(1)}%
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-[9px] text-gray-700">no synergy data for selected champs</div>
+                      )}
+                    </div>
+                    {/* Team B synergies */}
+                    <div>
+                      <div className="text-[9px] text-orange-400 mb-1.5">{teamB}</div>
+                      {prediction.synDataB.pairs.length > 0 ? (
+                        <div className="space-y-1">
+                          {prediction.synDataB.pairs.map(p => {
+                            const wr = Math.round((p.wins / p.total) * 100);
+                            const color = wr >= 60 ? '#a855f7' : wr >= 50 ? '#6366f1' : '#9ca3af';
+                            return (
+                              <div key={p.pair} className="flex items-center justify-between text-[10px] font-mono bg-white/[0.02] rounded px-2 py-1">
+                                <span className="text-gray-400 truncate flex-1">{p.pair}</span>
+                                <span className="ml-2 shrink-0 font-bold" style={{ color }}>{wr}%</span>
+                                <span className="ml-1.5 text-gray-700 shrink-0">{p.total}g</span>
+                              </div>
+                            );
+                          })}
+                          <div className="text-[9px] mt-1" style={{ color: prediction.synDataB.bonus >= 0 ? '#a855f7' : '#9ca3af' }}>
+                            avg synergy: {prediction.synDataB.bonus >= 0 ? '+' : ''}{(prediction.synDataB.bonus * 100).toFixed(1)}%
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-[9px] text-gray-700">no synergy data for selected champs</div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
