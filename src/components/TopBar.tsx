@@ -26,6 +26,7 @@ export default function TopBar({ onOpenEcosystem, onOpenPolyEarn, onOpenOsint, o
   const [isOpen, setIsOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+  const [desktopMenuOpen, setDesktopMenuOpen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const mobileSearchRef = useRef<HTMLInputElement>(null);
 
@@ -95,47 +96,55 @@ export default function TopBar({ onOpenEcosystem, onOpenPolyEarn, onOpenOsint, o
     <div className="absolute top-0 left-0 right-0 z-10 p-3 md:p-4">
 
       {/* ── Desktop layout (lg+) ─────────────────────────────────────────── */}
-      <div className="hidden lg:flex items-center justify-between pointer-events-none">
-        <div className="flex items-center gap-4 pointer-events-auto">
-          <div className="flex items-center gap-2 bg-black/60 border border-blue-500/30 backdrop-blur-md px-4 py-2 rounded-lg text-blue-400 font-mono font-bold text-xl tracking-wider">
-            <Globe2 className="w-6 h-6" />
-            POLYVERSE CAPITAL
+      <div className="hidden lg:flex flex-col gap-2 pointer-events-auto">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 bg-black/60 border border-blue-500/30 backdrop-blur-md px-4 py-2 rounded-lg text-blue-400 font-mono font-bold text-xl tracking-wider">
+              <Globe2 className="w-6 h-6" />
+              POLYVERSE CAPITAL
+            </div>
+            <button onClick={() => setDesktopMenuOpen(v => !v)}
+              className={`p-2 backdrop-blur-md rounded-lg border transition-colors ${desktopMenuOpen ? 'bg-blue-500/20 border-blue-500/50 text-blue-400' : 'bg-black/60 border-blue-500/30 text-blue-400 hover:bg-blue-500/10'}`}>
+              {desktopMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
           </div>
-          <div className="flex items-center bg-black/60 border border-blue-500/30 backdrop-blur-md rounded-lg overflow-hidden p-1 gap-1">
-            <button onClick={() => { window.location.href = '/liquidity'; }}
-              className="px-4 py-1.5 border border-blue-500/50 text-blue-400 rounded-md text-sm font-medium flex items-center gap-2 hover:bg-blue-500/10 transition-colors">
+          <div className="flex items-center gap-4">
+            <button onClick={() => {}}
+              className="bg-black/60 border border-blue-500/30 backdrop-blur-md px-4 py-2 rounded-lg text-blue-400 font-mono text-sm flex items-center gap-2 cursor-pointer hover:border-blue-500/60 hover:bg-blue-500/10 transition-colors">
+              $PLVS <span className="text-xs bg-blue-500/20 px-1.5 py-0.5 rounded">COMING SOON</span>
+            </button>
+            <div className="relative" ref={wrapperRef}>
+              <Search className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-blue-500/50 z-10" />
+              <input type="text" placeholder="Search markets..." value={query}
+                onChange={(e) => handleSearch(e.target.value)}
+                onFocus={() => { if (results.length > 0) setIsOpen(true); }}
+                className="bg-black/60 border border-blue-500/30 backdrop-blur-md rounded-lg pl-10 pr-4 py-2 text-sm text-blue-50 focus:outline-none focus:border-blue-500 w-64 placeholder:text-blue-500/30 transition-colors" />
+              <SearchDropdown />
+            </div>
+          </div>
+        </div>
+
+        {/* Desktop nav grid */}
+        {desktopMenuOpen && (
+          <div className="grid grid-cols-4 gap-2 bg-black/80 border border-blue-500/20 backdrop-blur-md rounded-xl p-3 w-fit">
+            <button onClick={() => { setDesktopMenuOpen(false); window.location.href = '/liquidity'; }}
+              className="flex items-center justify-center gap-2 py-3 px-6 bg-blue-500/10 border border-blue-500/30 text-blue-400 rounded-lg text-sm font-mono hover:bg-blue-500/20 transition-colors">
               <Droplets className="w-4 h-4" /> Liquidity
             </button>
-            <button onClick={onOpenOsint}
-              className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center gap-2 ${isOsintOpen ? 'border border-blue-500/50 text-blue-400 bg-blue-500/10' : 'text-gray-400 hover:text-blue-400'}`}>
+            <button onClick={() => { onOpenOsint(); setDesktopMenuOpen(false); }}
+              className={`flex items-center justify-center gap-2 py-3 px-6 border rounded-lg text-sm font-mono transition-colors ${isOsintOpen ? 'bg-blue-500/20 border-blue-500/50 text-blue-400' : 'bg-white/5 border-blue-500/20 text-gray-300 hover:bg-blue-500/10 hover:text-blue-400'}`}>
               <Activity className="w-4 h-4" /> Poly AI
             </button>
-          </div>
-          <div className="flex items-center bg-black/60 border border-blue-500/30 backdrop-blur-md rounded-lg px-2 py-1 gap-1">
-            <button onClick={onOpenEcosystem}
-              className="text-gray-300 hover:text-blue-400 hover:bg-blue-500/10 px-3 py-1.5 rounded text-sm font-mono flex items-center gap-2 transition-colors">
+            <button onClick={() => { onOpenEcosystem(); setDesktopMenuOpen(false); }}
+              className="flex items-center justify-center gap-2 py-3 px-6 bg-white/5 border border-blue-500/20 text-gray-300 rounded-lg text-sm font-mono hover:bg-blue-500/10 hover:text-blue-400 transition-colors">
               <Layers className="w-4 h-4" /> Ecosystem
             </button>
-            <button onClick={onOpenPolyEarn}
-              className="text-gray-300 hover:text-blue-400 hover:bg-blue-500/10 px-3 py-1.5 rounded text-sm font-mono flex items-center gap-2 transition-colors">
+            <button onClick={() => { onOpenPolyEarn(); setDesktopMenuOpen(false); }}
+              className="flex items-center justify-center gap-2 py-3 px-6 bg-white/5 border border-blue-500/20 text-gray-300 rounded-lg text-sm font-mono hover:bg-blue-500/10 hover:text-blue-400 transition-colors">
               <TrendingUp className="w-4 h-4" /> PolyEarn
             </button>
           </div>
-        </div>
-        <div className="flex items-center gap-4 pointer-events-auto">
-          <button onClick={() => {}}
-            className="bg-black/60 border border-blue-500/30 backdrop-blur-md px-4 py-2 rounded-lg text-blue-400 font-mono text-sm flex items-center gap-2 cursor-pointer hover:border-blue-500/60 hover:bg-blue-500/10 transition-colors">
-            $PLVS <span className="text-xs bg-blue-500/20 px-1.5 py-0.5 rounded">COMING SOON</span>
-          </button>
-          <div className="relative" ref={wrapperRef}>
-            <Search className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-blue-500/50 z-10" />
-            <input type="text" placeholder="Search markets..." value={query}
-              onChange={(e) => handleSearch(e.target.value)}
-              onFocus={() => { if (results.length > 0) setIsOpen(true); }}
-              className="bg-black/60 border border-blue-500/30 backdrop-blur-md rounded-lg pl-10 pr-4 py-2 text-sm text-blue-50 focus:outline-none focus:border-blue-500 w-64 placeholder:text-blue-500/30 transition-colors" />
-            <SearchDropdown />
-          </div>
-        </div>
+        )}
       </div>
 
       {/* ── Mobile layout (< lg) ─────────────────────────────────────────── */}
