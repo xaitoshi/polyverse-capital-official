@@ -288,6 +288,184 @@ export default function EsportsPage() {
     ?? champImgs[name.toLowerCase().replace(/[^a-z0-9]/g, '')]
     ?? null;
 
+  const downloadPrediction = async () => {
+    if (!prediction || !teamA || !teamB) return;
+
+    const W = 900, H = 520;
+    const canvas = document.createElement('canvas');
+    canvas.width = W * 2; canvas.height = H * 2;
+    const ctx = canvas.getContext('2d')!;
+    ctx.scale(2, 2);
+
+    // Background
+    ctx.fillStyle = '#050505';
+    ctx.fillRect(0, 0, W, H);
+
+    // Subtle grid lines
+    ctx.strokeStyle = 'rgba(59,130,246,0.06)';
+    ctx.lineWidth = 1;
+    for (let y = 0; y < H; y += 40) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+
+    // Header
+    ctx.font = 'bold 11px monospace';
+    ctx.fillStyle = '#3b82f6';
+    ctx.fillText('POLYVERSE', 30, 36);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText(' /ESPORTS', 97, 36);
+    ctx.font = '9px monospace';
+    ctx.fillStyle = 'rgba(255,255,255,0.2)';
+    ctx.fillText('polyverse.capital/esports', W - 30 - ctx.measureText('polyverse.capital/esports').width, 36);
+
+    // Divider
+    ctx.fillStyle = 'rgba(59,130,246,0.15)';
+    ctx.fillRect(30, 44, W - 60, 1);
+
+    // Team names
+    const pA = Math.round(prediction.probA * 100);
+    const pB = 100 - pA;
+    ctx.font = 'bold 22px monospace';
+    ctx.fillStyle = '#3b82f6';
+    ctx.fillText(teamA, 30, 82);
+    ctx.fillStyle = 'rgba(255,255,255,0.3)';
+    ctx.font = '14px monospace';
+    ctx.fillText('vs', W / 2 - 10, 82);
+    ctx.font = 'bold 22px monospace';
+    ctx.fillStyle = '#f97316';
+    const tbW = ctx.measureText(teamB).width;
+    ctx.fillText(teamB, W - 30 - tbW, 82);
+
+    // Win probability bar
+    const barX = 30, barY = 100, barW = W - 60, barH = 36;
+    const blueW = (pA / 100) * barW;
+
+    ctx.fillStyle = pA >= 60 ? '#22c55e' : pA >= 50 ? '#3b82f6' : '#f97316';
+    ctx.beginPath();
+    ctx.roundRect(barX, barY, blueW, barH, [6, 0, 0, 6]);
+    ctx.fill();
+
+    ctx.fillStyle = '#f97316';
+    ctx.beginPath();
+    ctx.roundRect(barX + blueW, barY, barW - blueW, barH, [0, 6, 6, 0]);
+    ctx.fill();
+
+    ctx.font = 'bold 15px monospace';
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText(`${pA}%`, barX + 12, barY + 24);
+    const pbStr = `${pB}%`;
+    ctx.fillText(pbStr, barX + barW - ctx.measureText(pbStr).width - 12, barY + 24);
+
+    // Factor breakdown
+    const factors = [
+      { label: 'TEAM WIN RATE', a: Math.round(prediction.wrA * 100), b: Math.round(prediction.wrB * 100), weight: '30%' },
+      { label: 'HEAD-TO-HEAD',  a: Math.round(prediction.h2hA * 100), b: Math.round(prediction.h2hB * 100), weight: '25%' },
+      { label: 'CHAMP SCORE',   a: prediction.hasChamps ? Math.round(prediction.csA * 100) : null, b: prediction.hasChamps ? Math.round(prediction.csB * 100) : null, weight: '45%' },
+    ];
+    const colW = (W - 60) / 3;
+    factors.forEach((f, i) => {
+      const cx = 30 + i * colW + colW / 2;
+      ctx.font = '8px monospace';
+      ctx.fillStyle = 'rgba(255,255,255,0.3)';
+      ctx.textAlign = 'center';
+      ctx.fillText(f.label, cx, 162);
+      ctx.font = 'bold 13px monospace';
+      if (f.a !== null) {
+        ctx.fillStyle = '#3b82f6';
+        ctx.fillText(`${f.a}%`, cx - 22, 180);
+        ctx.fillStyle = 'rgba(255,255,255,0.2)';
+        ctx.font = '10px monospace';
+        ctx.fillText('vs', cx, 180);
+        ctx.font = 'bold 13px monospace';
+        ctx.fillStyle = '#f97316';
+        ctx.fillText(`${f.b}%`, cx + 22, 180);
+      } else {
+        ctx.fillStyle = 'rgba(255,255,255,0.2)';
+        ctx.font = '9px monospace';
+        ctx.fillText('—', cx, 180);
+      }
+      ctx.font = '8px monospace';
+      ctx.fillStyle = 'rgba(255,255,255,0.15)';
+      ctx.fillText(`weight ${f.weight}`, cx, 193);
+    });
+    ctx.textAlign = 'left';
+
+    // Divider
+    ctx.fillStyle = 'rgba(255,255,255,0.05)';
+    ctx.fillRect(30, 206, W - 60, 1);
+
+    // Champion picks — load images async
+    const loadImg = (src: string): Promise<HTMLImageElement | null> =>
+      new Promise(resolve => {
+        const img = new Image(); img.crossOrigin = 'anonymous';
+        img.onload = () => resolve(img);
+        img.onerror = () => resolve(null);
+        img.src = src;
+      });
+
+    const iconSize = 36;
+    const slotW = (W - 60) / 5;
+
+    // Draw team labels
+    ctx.font = 'bold 9px monospace';
+    ctx.fillStyle = '#3b82f6';
+    ctx.fillText(`${teamA} (BLUE)`, 30, 228);
+    ctx.fillStyle = '#f97316';
+    const tbLabel = `${teamB} (RED)`;
+    ctx.fillText(tbLabel, 30, 360);
+
+    // Draw champ icons + names for each team
+    const drawTeamChamps = async (champs: string[], players: string[], yBase: number) => {
+      for (let i = 0; i < 5; i++) {
+        const champ = champs[i];
+        const player = players[i];
+        const x = 30 + i * slotW;
+
+        // Icon box background
+        ctx.fillStyle = 'rgba(255,255,255,0.04)';
+        ctx.beginPath(); ctx.roundRect(x, yBase, slotW - 8, iconSize + 28, 4); ctx.fill();
+
+        if (champ) {
+          const imgUrl = getImg(champ);
+          if (imgUrl) {
+            const img = await loadImg(imgUrl);
+            if (img) {
+              ctx.save();
+              ctx.beginPath(); ctx.roundRect(x + 2, yBase + 2, iconSize, iconSize, 4); ctx.clip();
+              ctx.drawImage(img, x + 2, yBase + 2, iconSize, iconSize);
+              ctx.restore();
+            }
+          }
+          ctx.font = 'bold 8px monospace';
+          ctx.fillStyle = '#ffffff';
+          // truncate champion name
+          const champLabel = champ.length > 10 ? champ.slice(0, 9) + '…' : champ;
+          ctx.fillText(champLabel, x + 2, yBase + iconSize + 12);
+        }
+        if (player) {
+          ctx.font = '7px monospace';
+          ctx.fillStyle = 'rgba(255,255,255,0.4)';
+          const playerLabel = player.length > 10 ? player.slice(0, 9) + '…' : player;
+          ctx.fillText(playerLabel, x + 2, yBase + iconSize + 23);
+        }
+      }
+    };
+
+    await drawTeamChamps(champsA, rosterA, 234);
+    await drawTeamChamps(champsB, rosterB, 366);
+
+    // Footer
+    ctx.fillStyle = 'rgba(255,255,255,0.08)';
+    ctx.fillRect(30, H - 30, W - 60, 1);
+    ctx.font = '8px monospace';
+    ctx.fillStyle = 'rgba(255,255,255,0.2)';
+    ctx.fillText('polyverse.capital/esports · powered by commonstack ai', 30, H - 14);
+
+    // Download
+    const link = document.createElement('a');
+    link.download = `${teamA}-vs-${teamB}-prediction.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  };
+
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -569,6 +747,18 @@ export default function EsportsPage() {
           {/* Prediction result */}
           {prediction && teamA && teamB && (
             <div className="border border-white/10 rounded-xl p-5 bg-white/[0.02] space-y-4">
+              <div className="flex items-center gap-2 justify-end">
+                <button onClick={downloadPrediction}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-gray-400 text-[10px] font-mono hover:bg-white/10 hover:text-white transition-colors">
+                  ↓ download
+                </button>
+                <a
+                  href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(`${teamA} vs ${teamB} — ${Math.round(prediction.probA * 100)}% / ${Math.round(prediction.probB * 100)}% win probability\n\npolyverse.capital/esports`)}`}
+                  target="_blank" rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-gray-400 text-[10px] font-mono hover:bg-blue-400/20 hover:text-blue-300 transition-colors">
+                  𝕏 share
+                </a>
+              </div>
               <WinBar probA={prediction.probA} teamA={teamA} teamB={teamB} />
 
               {/* Factor breakdown */}
