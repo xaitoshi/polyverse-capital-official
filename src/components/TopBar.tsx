@@ -116,7 +116,7 @@ export default function TopBar({ onOpenEcosystem, onOpenPolyEarn, onOpenOsint, o
 
         {/* Desktop nav grid — drops from the right */}
         {desktopMenuOpen && (
-          <div className="grid grid-cols-4 gap-2 bg-black/80 border border-blue-500/20 backdrop-blur-md rounded-xl p-3 w-fit self-end">
+          <div className="grid grid-cols-3 gap-2 bg-black/80 border border-blue-500/20 backdrop-blur-md rounded-xl p-3 w-fit self-end">
             <button onClick={() => { setDesktopMenuOpen(false); window.location.href = '/liquidity'; }}
               className="flex items-center justify-center gap-2 py-3 px-6 bg-blue-500/10 border border-blue-500/30 text-blue-400 rounded-lg text-sm font-mono hover:bg-blue-500/20 transition-colors">
               <Droplets className="w-4 h-4" /> Liquidity
@@ -133,6 +133,16 @@ export default function TopBar({ onOpenEcosystem, onOpenPolyEarn, onOpenOsint, o
               className="flex items-center justify-center gap-2 py-3 px-6 bg-white/5 border border-blue-500/20 text-gray-300 rounded-lg text-sm font-mono hover:bg-blue-500/10 hover:text-blue-400 transition-colors">
               <TrendingUp className="w-4 h-4" /> PolyEarn
             </button>
+            <a href="https://t.me/oddiepmbot" target="_blank" rel="noopener noreferrer"
+              onClick={() => setDesktopMenuOpen(false)}
+              className="flex items-center justify-center gap-2 py-3 px-6 bg-white/5 border border-blue-500/20 text-gray-300 rounded-lg text-sm font-mono hover:bg-blue-500/10 hover:text-blue-400 transition-colors">
+              <ExternalLink className="w-4 h-4" /> Oddie
+            </a>
+            <a href="/esports"
+              onClick={() => setDesktopMenuOpen(false)}
+              className="flex items-center justify-center gap-2 py-3 px-6 bg-white/5 border border-blue-500/20 text-gray-300 rounded-lg text-sm font-mono hover:bg-blue-500/10 hover:text-blue-400 transition-colors">
+              <TrendingUp className="w-4 h-4" /> Esports
+            </a>
           </div>
         )}
       </div>
@@ -191,6 +201,15 @@ export default function TopBar({ onOpenEcosystem, onOpenPolyEarn, onOpenOsint, o
               className="flex items-center justify-center gap-2 py-3 bg-white/5 border border-blue-500/20 text-gray-300 rounded-lg text-sm font-mono hover:bg-blue-500/10 hover:text-blue-400 transition-colors">
               <TrendingUp className="w-4 h-4" /> PolyEarn
             </button>
+            <a href="https://t.me/oddiepmbot" target="_blank" rel="noopener noreferrer"
+              onClick={closeAll}
+              className="flex items-center justify-center gap-2 py-3 bg-white/5 border border-blue-500/20 text-gray-300 rounded-lg text-sm font-mono hover:bg-blue-500/10 hover:text-blue-400 transition-colors">
+              <ExternalLink className="w-4 h-4" /> Oddie
+            </a>
+            <a href="/esports" onClick={closeAll}
+              className="flex items-center justify-center gap-2 py-3 bg-white/5 border border-blue-500/20 text-gray-300 rounded-lg text-sm font-mono hover:bg-blue-500/10 hover:text-blue-400 transition-colors">
+              <TrendingUp className="w-4 h-4" /> Esports
+            </a>
           </div>
         )}
       </div>
