@@ -65,6 +65,17 @@ const SUGGESTED_PROMPTS = [
 ];
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
+// Extract wallet address from a Polymarket URL or raw address
+// Handles: https://polymarket.com/profile/0x... | polymarket.com/p/0x... | raw 0x...
+function parsePolymarketInput(raw: string): string {
+  const s = raw.trim();
+  // Try to extract 0x address from URL path
+  const match = s.match(/0x[a-fA-F0-9]{40}/);
+  if (match) return match[0];
+  // Return as-is (might be a raw address the user is still typing)
+  return s;
+}
+
 const truncAddr = (a: string) => `${a.slice(0, 6)}…${a.slice(-4)}`;
 const fmtPct   = (v: number | null) => v == null ? 'N/A' : `${Math.round(v * 100)}%`;
 const fmtUsd   = (v: number | null) => v == null ? 'N/A' : `${v >= 0 ? '+' : ''}$${Math.abs(v).toFixed(2)}`;
@@ -612,12 +623,16 @@ export default function PolyLakePage() {
             </div>
             <div className="space-y-3">
               <div>
-                <div className="text-[10px] text-gray-600 mb-1.5 tracking-wider">WALLET ADDRESS *</div>
+                <div className="text-[10px] text-gray-600 mb-1.5 tracking-wider">WALLET ADDRESS OR POLYMARKET LINK *</div>
                 <input
-                  value={addAddress} onChange={e => setAddAddress(e.target.value)}
-                  placeholder="0x…"
+                  value={addAddress}
+                  onChange={e => setAddAddress(parsePolymarketInput(e.target.value))}
+                  placeholder="0x… or polymarket.com/profile/0x…"
                   className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white font-mono placeholder:text-gray-700 focus:outline-none focus:border-blue-500/50"
                 />
+                {addAddress && !addAddress.startsWith('0x') && (
+                  <div className="text-[10px] text-yellow-500 mt-1">⚠ Paste the full URL or a 0x address</div>
+                )}
               </div>
               <div>
                 <div className="text-[10px] text-gray-600 mb-1.5 tracking-wider">LABEL (optional)</div>
