@@ -65,14 +65,18 @@ const SUGGESTED_PROMPTS = [
 ];
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-// Extract wallet address from a Polymarket URL or raw address
-// Handles: https://polymarket.com/profile/0x... | polymarket.com/p/0x... | raw 0x...
+// Extract wallet address or username from a Polymarket URL or raw input
+// Handles: 0x address | polymarket.com/profile/0x... | polymarket.com/@username
 function parsePolymarketInput(raw: string): string {
   const s = raw.trim();
-  // Try to extract 0x address from URL path
-  const match = s.match(/0x[a-fA-F0-9]{40}/);
-  if (match) return match[0];
-  // Return as-is (might be a raw address the user is still typing)
+  // Extract 0x address if present in URL
+  const addrMatch = s.match(/0x[a-fA-F0-9]{40}/);
+  if (addrMatch) return addrMatch[0];
+  // Extract @username from URL like polymarket.com/@jimmyhasballs
+  const userMatch = s.match(/polymarket\.com\/@([\w.-]+)/i);
+  if (userMatch) return `@${userMatch[1]}`;
+  // Bare @username
+  if (s.startsWith('@')) return s;
   return s;
 }
 
@@ -627,11 +631,14 @@ export default function PolyLakePage() {
                 <input
                   value={addAddress}
                   onChange={e => setAddAddress(parsePolymarketInput(e.target.value))}
-                  placeholder="0x… or polymarket.com/profile/0x…"
+                  placeholder="0x… or polymarket.com/@username"
                   className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white font-mono placeholder:text-gray-700 focus:outline-none focus:border-blue-500/50"
                 />
-                {addAddress && !addAddress.startsWith('0x') && (
-                  <div className="text-[10px] text-yellow-500 mt-1">⚠ Paste the full URL or a 0x address</div>
+                {addAddress && !addAddress.startsWith('0x') && !addAddress.startsWith('@') && (
+                  <div className="text-[10px] text-yellow-500 mt-1">⚠ Paste the full URL, @username, or a 0x address</div>
+                )}
+                {addAddress.startsWith('@') && (
+                  <div className="text-[10px] text-blue-400 mt-1">↗ will resolve username to wallet address</div>
                 )}
               </div>
               <div>

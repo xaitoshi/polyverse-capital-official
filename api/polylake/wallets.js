@@ -30,8 +30,30 @@ export default async function handler(req, res) {
 
   // POST — add new wallet
   if (req.method === 'POST') {
-    const { address, label, category } = req.body;
+    let { address, label, category } = req.body;
     if (!address) return res.status(400).json({ error: 'address required' });
+
+    // Resolve @username to wallet address via Polymarket profiles API
+    if (address.startsWith('@')) {
+      const username = address.slice(1);
+      try {
+        const r = await fetch(
+          `https://data-api.polymarket.com/profiles?username=${username}`,
+          { headers: { Accept: 'application/json' } }
+        );
+        if (r.ok) {
+          const data = await r.json();
+          const profile = Array.isArray(data) ? data[0] : data;
+          const resolved = profile?.address || profile?.proxyWallet || profile?.walletAddress;
+          if (!resolved) return res.status(404).json({ error: `Could not resolve @${username} to a wallet address` });
+          address = resolved;
+        } else {
+          return res.status(404).json({ error: `Polymarket username @${username} not found` });
+        }
+      } catch (e) {
+        return res.status(500).json({ error: `Failed to resolve username: ${e.message}` });
+      }
+    }
 
     // Check duplicate
     const check = await fetch(
