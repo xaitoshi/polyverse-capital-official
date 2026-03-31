@@ -293,9 +293,14 @@ export default function PolyLakePage() {
   const fetchWallets = useCallback(async () => {
     try {
       const r = await fetch('/api/polylake/wallets');
-      const data = await r.json();
+      const text = await r.text();
+      let data: any;
+      try { data = JSON.parse(text); } catch { data = null; }
+      console.log('[PolyLake] fetchWallets', r.status, data);
       setWallets(Array.isArray(data) ? data : []);
-    } catch {}
+    } catch (e) {
+      console.error('[PolyLake] fetchWallets error', e);
+    }
     setLoading(false);
   }, []);
 
@@ -311,18 +316,34 @@ export default function PolyLakePage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ address: addAddress.trim(), label: addLabel || null, category: addCategory }),
       });
-      const data = await r.json();
-      if (!r.ok) { setAddError(data.error || 'Failed to add wallet'); setAddLoading(false); return; }
+
+      let data: any = null;
+      const text = await r.text();
+      try { data = JSON.parse(text); } catch { data = { error: `Server returned non-JSON (${r.status}): ${text.slice(0, 200)}` }; }
+
+      console.log('[PolyLake] add wallet response', r.status, data);
+
+      if (!r.ok) {
+        setAddError(data?.error || data?.message || `Error ${r.status}`);
+        setAddLoading(false);
+        return;
+      }
+
+      const address = data?.address || addAddress.trim();
       setAddOpen(false); setAddAddress(''); setAddLabel(''); setAddCategory('Uncategorized');
       await fetchWallets();
-      // Auto-refresh the newly added wallet
-      await fetch('/api/polylake/refresh', {
+
+      // Auto-refresh in background — don't block modal close
+      fetch('/api/polylake/refresh', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ address: data.address || addAddress.trim() }),
-      });
-      await fetchWallets();
-    } catch (e: any) { setAddError(e.message); }
+        body: JSON.stringify({ address }),
+      }).then(() => fetchWallets()).catch(console.error);
+
+    } catch (e: any) {
+      console.error('[PolyLake] add wallet error', e);
+      setAddError(e.message || 'Network error');
+    }
     setAddLoading(false);
   };
 
@@ -599,7 +620,11 @@ export default function PolyLakePage() {
                 </select>
               </div>
             </div>
-            {addError && <div className="text-xs text-red-400">{addError}</div>}
+            {addError && (
+              <div className="bg-red-500/10 border border-red-500/30 rounded-lg px-3 py-2.5 text-xs text-red-400 break-all">
+                ⚠ {addError}
+              </div>
+            )}
             <div className="flex gap-2 pt-1">
               <button onClick={() => { setAddOpen(false); setAddError(null); }}
                 className="flex-1 py-2 rounded-lg bg-white/5 border border-white/10 text-gray-400 text-sm hover:bg-white/10 transition-colors">
