@@ -30,11 +30,11 @@ export default async function handler(req, res) {
   if (!address) return res.status(400).json({ error: 'address required' });
 
   try {
-    // ── Fetch trades from Polymarket ──────────────────────────────────────────
+    // ── Fetch trades from Polymarket (up to 500 for win rate accuracy) ─────────
     let trades = [];
     try {
       const r = await fetch(
-        `https://data-api.polymarket.com/activity?user=${address}&limit=50`,
+        `https://data-api.polymarket.com/activity?user=${address}&limit=500`,
         { headers: { Accept: 'application/json' } }
       );
       if (r.ok) trades = await r.json();
@@ -50,9 +50,10 @@ export default async function handler(req, res) {
       if (r.ok) positions = await r.json();
     } catch {}
 
-    // ── Upsert trades ─────────────────────────────────────────────────────────
-    if (trades.length > 0) {
-      const tradeRows = trades.map(t => ({
+    // ── Upsert trades (store last 100 for display) ────────────────────────────
+    const tradesToStore = trades.slice(0, 100);
+    if (tradesToStore.length > 0) {
+      const tradeRows = tradesToStore.map(t => ({
         wallet_address: address,
         trade_id: t.id || t.transactionHash || `${address}-${t.timestamp}`,
         timestamp: t.timestamp ? new Date(Number(t.timestamp) * 1000).toISOString() : null,
@@ -91,15 +92,12 @@ export default async function handler(req, res) {
     }
 
     // ── Compute summary stats ─────────────────────────────────────────────────
-    const closed = positions.filter(p => p.closed);
-    // winningOutcome is not in the raw Polymarket API — use cashPnl > 0 as proxy for wins
-    const wins = closed.filter(p => {
-      if (p.winningOutcome && p.outcome) {
-        return p.winningOutcome.toLowerCase() === p.outcome.toLowerCase();
-      }
-      return (p.cashPnl || 0) > 0;
-    });
-    const win_rate = closed.length > 0 ? wins.length / closed.length : null;
+    // Win rate from activity: REDEEM = won, unique BUY slugs = total entered
+    // (Positions API filters out size=0 losses so can't be used for win rate)
+    const buyMarkets  = new Set(trades.filter(t => (t.side ?? t.type) === 'BUY').map(t => t.slug || t.conditionId).filter(Boolean));
+    const redeemMarkets = new Set(trades.filter(t => (t.side ?? t.type) === 'REDEEM').map(t => t.slug || t.conditionId).filter(Boolean));
+    const win_rate = buyMarkets.size > 0 ? redeemMarkets.size / buyMarkets.size : null;
+
     const openPositions = positions.filter(p => !p.closed);
     const total_pnl = openPositions.reduce((sum, p) => sum + (p.cashPnl || 0), 0);
     const portfolio_value = openPositions.reduce((sum, p) => sum + (p.currentValue || 0), 0);
