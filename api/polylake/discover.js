@@ -7,7 +7,6 @@ export default async function handler(req, res) {
   const { url } = req.query;
   if (!url) return res.status(400).json({ error: 'url required' });
 
-  // ── Extract slug from URL ──────────────────────────────────────────────────
   const slugMatch = url.match(/polymarket\.com\/event\/([^/?#]+)/i);
   if (!slugMatch) return res.status(400).json({ error: 'Could not parse event slug from URL' });
   const slug = slugMatch[1];
@@ -27,10 +26,11 @@ export default async function handler(req, res) {
     const markets = event.markets ?? [];
     if (markets.length === 0) return res.status(404).json({ error: 'No markets found in event' });
 
-    // ── Collect all CLOB token IDs from markets ───────────────────────────
-    // gamma API returns clobTokenIds as a JSON-encoded array string e.g. '["12345","67890"]'
+    // ── Collect token IDs and condition IDs ───────────────────────────────
     const tokenIds = [];
+    const conditionIds = [];
     for (const market of markets) {
+      if (market.conditionId) conditionIds.push(market.conditionId);
       try {
         const ids = typeof market.clobTokenIds === 'string'
           ? JSON.parse(market.clobTokenIds)
@@ -39,69 +39,90 @@ export default async function handler(req, res) {
       } catch {}
     }
 
-    if (tokenIds.length === 0) {
-      return res.status(200).json({
-        event: { title: event.title, slug },
-        wallets: [],
-        debug: { markets: markets.length, tokenIds: [] },
-      });
-    }
+    const debugInfo = { tokenIds, conditionIds, markets: markets.length, apiAttempts: [] };
 
-    // ── Fetch trades from CLOB API for each token ─────────────────────────
-    // clob.polymarket.com/trades?market={tokenId}&limit=500
     const byWallet = {};
 
-    await Promise.all(
-      tokenIds.map(async tokenId => {
-        try {
-          const r = await fetch(
-            `https://clob.polymarket.com/trades?market=${tokenId}&limit=500`,
-            { headers: { Accept: 'application/json' } }
-          );
-          if (!r.ok) return;
-          const data = await r.json();
-          const trades = Array.isArray(data) ? data : (data.data ?? data.trades ?? []);
-
-          for (const t of trades) {
-            // CLOB trades have maker_address and taker_address (proxy wallets)
-            const addresses = [t.maker_address, t.taker_address].filter(Boolean);
-            for (const addr of addresses) {
-              if (!byWallet[addr]) {
-                byWallet[addr] = { user: addr, tradeCount: 0, totalVolume: 0, totalPnl: 0, totalValue: 0, positions: [] };
-              }
-              byWallet[addr].tradeCount += 1;
-              // fee_rate_bps or size fields
-              const size = Number(t.size ?? t.matched_amount ?? 0);
-              const price = Number(t.price ?? 0);
-              byWallet[addr].totalVolume += size * price; // USDC value
-            }
+    // ── Attempt 1: data-api positions by tokenId (market param) ──────────
+    for (const tokenId of tokenIds) {
+      try {
+        const r = await fetch(
+          `https://data-api.polymarket.com/positions?market=${tokenId}&limit=100`,
+          { headers: { Accept: 'application/json' } }
+        );
+        const text = await r.text();
+        let data; try { data = JSON.parse(text); } catch { data = null; }
+        debugInfo.apiAttempts.push({ endpoint: `data-api/positions?market=${tokenId.slice(0,8)}...`, status: r.status, count: Array.isArray(data) ? data.length : (data ? 'obj' : 'null') });
+        if (r.ok && Array.isArray(data) && data.length > 0) {
+          for (const p of data) {
+            const user = p.user ?? p.proxyWallet ?? p.address;
+            if (!user) continue;
+            if (!byWallet[user]) byWallet[user] = { user, tradeCount: 0, totalVolume: 0, totalPnl: 0, totalValue: 0, positions: [] };
+            byWallet[user].totalVolume += Number(p.size ?? 0);
+            byWallet[user].totalPnl += Number(p.cashPnl ?? 0);
+            byWallet[user].totalValue += Number(p.currentValue ?? 0);
+            byWallet[user].positions.push({ outcome: p.outcome, size: Number(p.size ?? 0), avgPrice: Number(p.avgPrice ?? 0), currentValue: Number(p.currentValue ?? 0), cashPnl: Number(p.cashPnl ?? 0) });
           }
-        } catch {}
-      })
-    );
-
-    if (Object.keys(byWallet).length === 0) {
-      return res.status(200).json({
-        event: { title: event.title, slug },
-        wallets: [],
-        debug: { tokenIds, marketsChecked: markets.length },
-      });
+        }
+      } catch (e) { debugInfo.apiAttempts.push({ endpoint: `data-api/positions?market=tokenId`, error: e.message }); }
     }
 
-    // ── Rank by total USDC volume ─────────────────────────────────────────
+    // ── Attempt 2: CLOB API trades ─────────────────────────────────────
+    for (const tokenId of tokenIds) {
+      try {
+        const r = await fetch(
+          `https://clob.polymarket.com/trades?market=${tokenId}&limit=500`,
+          { headers: { Accept: 'application/json' } }
+        );
+        const text = await r.text();
+        let data; try { data = JSON.parse(text); } catch { data = null; }
+        const trades = Array.isArray(data) ? data : (data?.data ?? data?.trades ?? []);
+        debugInfo.apiAttempts.push({ endpoint: `clob/trades?market=${tokenId.slice(0,8)}...`, status: r.status, count: trades.length, sample: trades[0] ? Object.keys(trades[0]) : [] });
+        for (const t of trades) {
+          const addresses = [t.maker_address, t.taker_address, t.user, t.proxyWallet].filter(Boolean);
+          for (const addr of addresses) {
+            if (!byWallet[addr]) byWallet[addr] = { user: addr, tradeCount: 0, totalVolume: 0, totalPnl: 0, totalValue: 0, positions: [] };
+            byWallet[addr].tradeCount += 1;
+            byWallet[addr].totalVolume += Number(t.size ?? t.matched_amount ?? 0) * Number(t.price ?? 1);
+          }
+        }
+      } catch (e) { debugInfo.apiAttempts.push({ endpoint: `clob/trades?market=tokenId`, error: e.message }); }
+    }
+
+    // ── Attempt 3: data-api positions by conditionId ──────────────────────
+    for (const conditionId of conditionIds) {
+      try {
+        const r = await fetch(
+          `https://data-api.polymarket.com/positions?conditionId=${conditionId}&limit=100`,
+          { headers: { Accept: 'application/json' } }
+        );
+        const text = await r.text();
+        let data; try { data = JSON.parse(text); } catch { data = null; }
+        debugInfo.apiAttempts.push({ endpoint: `data-api/positions?conditionId=${conditionId.slice(0,8)}...`, status: r.status, count: Array.isArray(data) ? data.length : (data ? 'obj' : 'null'), sample: Array.isArray(data) && data[0] ? Object.keys(data[0]) : [] });
+        if (r.ok && Array.isArray(data) && data.length > 0) {
+          for (const p of data) {
+            const user = p.user ?? p.proxyWallet ?? p.address;
+            if (!user) continue;
+            if (!byWallet[user]) byWallet[user] = { user, tradeCount: 0, totalVolume: 0, totalPnl: 0, totalValue: 0, positions: [] };
+            byWallet[user].totalVolume += Number(p.size ?? 0);
+            byWallet[user].totalPnl += Number(p.cashPnl ?? 0);
+          }
+        }
+      } catch (e) { debugInfo.apiAttempts.push({ endpoint: `data-api/positions?conditionId`, error: e.message }); }
+    }
+
+    if (Object.keys(byWallet).length === 0) {
+      return res.status(200).json({ event: { title: event.title, slug }, wallets: [], debug: debugInfo });
+    }
+
     const ranked = Object.values(byWallet)
-      .filter(w => w.tradeCount > 0)
-      .sort((a, b) => b.totalVolume - a.totalVolume)
+      .sort((a, b) => (b.totalVolume || b.tradeCount) - (a.totalVolume || a.tradeCount))
       .slice(0, 30);
 
-    // ── Fetch display names + profile data for top wallets ────────────────
     await Promise.all(
       ranked.slice(0, 15).map(async w => {
         try {
-          const r = await fetch(
-            `https://data-api.polymarket.com/profiles?address=${w.user}`,
-            { headers: { Accept: 'application/json' } }
-          );
+          const r = await fetch(`https://data-api.polymarket.com/profiles?address=${w.user}`, { headers: { Accept: 'application/json' } });
           if (r.ok) {
             const profiles = await r.json();
             const p = Array.isArray(profiles) ? profiles[0] : profiles;
@@ -113,14 +134,7 @@ export default async function handler(req, res) {
       })
     );
 
-    return res.status(200).json({
-      event: {
-        title: event.title,
-        slug,
-        markets: markets.length,
-      },
-      wallets: ranked,
-    });
+    return res.status(200).json({ event: { title: event.title, slug, markets: markets.length }, wallets: ranked });
 
   } catch (e) {
     return res.status(500).json({ error: e.message });
