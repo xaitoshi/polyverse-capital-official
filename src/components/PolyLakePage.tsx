@@ -14,6 +14,7 @@ interface Wallet {
   open_positions: number | null;
   added_at: string;
   last_refreshed_at: string | null;
+  ai_summary: string | null;
 }
 
 interface Trade {
@@ -176,6 +177,13 @@ function WalletCard({
             <div className="text-sm font-bold font-mono text-white">{wallet.open_positions ?? '—'}</div>
           </div>
         </div>
+
+        {/* AI summary */}
+        {wallet.ai_summary && (
+          <div className="text-[11px] text-gray-400 leading-relaxed border-l-2 border-purple-500/30 pl-2">
+            {wallet.ai_summary}
+          </div>
+        )}
 
         {/* Category selector + expand toggle */}
         <div className="flex items-center justify-between">
