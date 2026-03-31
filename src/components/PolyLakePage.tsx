@@ -315,6 +315,12 @@ export default function PolyLakePage() {
   const [addError, setAddError]             = useState<string | null>(null);
 
   // Chat
+  // Discover from market
+  const [discoverUrl, setDiscoverUrl]       = useState('');
+  const [discoverLoading, setDiscoverLoading] = useState(false);
+  const [discoverError, setDiscoverError]   = useState<string | null>(null);
+  const [discoverResult, setDiscoverResult] = useState<{ event: { title: string; slug: string; markets: number }; wallets: any[] } | null>(null);
+
   const [chatMessages, setChatMessages]     = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput]           = useState('');
   const [chatLoading, setChatLoading]       = useState(false);
@@ -421,6 +427,32 @@ export default function PolyLakePage() {
     await fetchWallets();
   };
 
+  const handleDiscover = async () => {
+    if (!discoverUrl.trim()) return;
+    setDiscoverLoading(true); setDiscoverError(null); setDiscoverResult(null);
+    try {
+      const r = await fetch(`/api/polylake/discover?url=${encodeURIComponent(discoverUrl.trim())}`);
+      const data = await r.json();
+      if (!r.ok) { setDiscoverError(data.error || 'Discovery failed'); }
+      else setDiscoverResult(data);
+    } catch (e: any) { setDiscoverError(e.message); }
+    setDiscoverLoading(false);
+  };
+
+  const handleAddFromDiscover = async (wallet: any) => {
+    await fetch('/api/polylake/wallets', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ address: wallet.user, label: wallet.displayName || null, category: 'Uncategorized' }),
+    });
+    fetch('/api/polylake/refresh', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ address: wallet.user }),
+    }).then(() => fetchWallets()).catch(() => {});
+    await fetchWallets();
+  };
+
   const sendChat = async (msg?: string) => {
     const text = msg ?? chatInput.trim();
     if (!text || chatLoading) return;
@@ -499,6 +531,82 @@ export default function PolyLakePage() {
             ))}
           </div>
         )}
+
+        {/* ── Discover from Market ── */}
+        <div className="bg-white/[0.02] border border-white/10 rounded-xl p-4 space-y-3">
+          <div className="text-[10px] text-blue-400 tracking-widest">DISCOVER WALLETS FROM MARKET</div>
+          <div className="flex gap-2">
+            <input
+              value={discoverUrl}
+              onChange={e => { setDiscoverUrl(e.target.value); setDiscoverResult(null); setDiscoverError(null); }}
+              onKeyDown={e => { if (e.key === 'Enter') handleDiscover(); }}
+              placeholder="https://polymarket.com/event/…"
+              className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-xs text-white font-mono placeholder:text-gray-700 focus:outline-none focus:border-blue-500/50"
+            />
+            <button onClick={handleDiscover} disabled={!discoverUrl.trim() || discoverLoading}
+              className="px-4 py-2 rounded-lg bg-blue-500/20 border border-blue-500/40 text-blue-400 text-xs font-mono hover:bg-blue-500/30 transition-colors disabled:opacity-40 whitespace-nowrap">
+              {discoverLoading ? 'scanning…' : 'Find Wallets'}
+            </button>
+          </div>
+
+          {discoverError && (
+            <div className="text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">⚠ {discoverError}</div>
+          )}
+
+          {discoverResult && (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="text-[11px] text-gray-300 font-semibold">{discoverResult.event.title}</div>
+                <div className="text-[10px] text-gray-600">{discoverResult.wallets.length} wallets found</div>
+              </div>
+              {discoverResult.wallets.length === 0 ? (
+                <div className="text-[10px] text-gray-600">No position data available for this market yet.</div>
+              ) : (
+                <div className="space-y-1.5 max-h-72 overflow-y-auto">
+                  {discoverResult.wallets.map((w, i) => {
+                    const alreadyTracked = wallets.some(t => t.address === w.user);
+                    const name = w.displayName || (w.username ? `@${w.username}` : null) || truncAddr(w.user);
+                    return (
+                      <div key={w.user} className="flex items-center gap-3 bg-white/[0.02] border border-white/5 rounded-lg px-3 py-2 hover:bg-white/[0.04]">
+                        <div className="text-[10px] text-gray-600 w-5 shrink-0">#{i + 1}</div>
+                        {w.pfpUrl
+                          ? <img src={w.pfpUrl} alt="" className="w-6 h-6 rounded-full object-cover shrink-0" />
+                          : <div className="w-6 h-6 rounded-full bg-blue-500/20 border border-blue-500/30 shrink-0 flex items-center justify-center text-[9px] text-blue-400">{name.slice(0, 2).toUpperCase()}</div>
+                        }
+                        <div className="flex-1 min-w-0">
+                          <div className="text-[11px] text-white font-mono truncate">{name}</div>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            {w.positions.map((p: any, j: number) => (
+                              <span key={j} className={`text-[9px] font-mono ${p.outcome === 'Yes' ? 'text-green-400' : 'text-orange-400'}`}>
+                                {p.outcome} @ {Math.round(p.avgPrice * 100)}¢
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <div className="text-[11px] font-mono text-white">${w.totalSize.toFixed(0)} <span className="text-gray-600 text-[9px]">shares</span></div>
+                          <div className={`text-[10px] font-mono ${w.totalPnl >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                            {w.totalPnl >= 0 ? '+' : ''}${w.totalPnl.toFixed(2)}
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => handleAddFromDiscover(w)}
+                          disabled={alreadyTracked}
+                          className={`shrink-0 px-2.5 py-1 rounded-lg text-[10px] font-mono border transition-colors ${
+                            alreadyTracked
+                              ? 'border-green-500/20 text-green-600 bg-green-500/5 cursor-default'
+                              : 'border-blue-500/30 text-blue-400 bg-blue-500/10 hover:bg-blue-500/20'
+                          }`}>
+                          {alreadyTracked ? '✓ tracked' : '+ add'}
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
 
         {/* Category filter */}
         {wallets.length > 0 && (
