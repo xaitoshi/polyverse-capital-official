@@ -55,15 +55,15 @@ export default async function handler(req, res) {
       const tradeRows = trades.map(t => ({
         wallet_address: address,
         trade_id: t.id || t.transactionHash || `${address}-${t.timestamp}`,
-        timestamp: t.timestamp ? new Date(t.timestamp * 1000).toISOString() : null,
-        type: t.type,
-        outcome: t.outcome,
-        title: t.title,
-        slug: t.slug,
-        price: t.price,
-        size: t.size,
-        usdc_size: t.usdcSize,
-        transaction_hash: t.transactionHash,
+        timestamp: t.timestamp ? new Date(Number(t.timestamp) * 1000).toISOString() : null,
+        type: t.side ?? t.type ?? 'TRADE',        // Polymarket uses 'side' not 'type'
+        outcome: t.outcome ?? '',
+        title: t.title ?? t.market ?? '',
+        slug: t.slug ?? '',
+        price: Number(t.price ?? 0),
+        size: Number(t.size ?? 0),
+        usdc_size: Number(t.usdcSize ?? t.amount ?? 0),
+        transaction_hash: t.transactionHash ?? '',
       }));
       await sbUpsert('wallet_trades', tradeRows);
     }
@@ -92,13 +92,17 @@ export default async function handler(req, res) {
 
     // ── Compute summary stats ─────────────────────────────────────────────────
     const closed = positions.filter(p => p.closed);
-    const wins = closed.filter(p =>
-      p.winningOutcome && p.outcome &&
-      p.winningOutcome.toLowerCase() === p.outcome.toLowerCase()
-    );
+    // winningOutcome is not in the raw Polymarket API — use cashPnl > 0 as proxy for wins
+    const wins = closed.filter(p => {
+      if (p.winningOutcome && p.outcome) {
+        return p.winningOutcome.toLowerCase() === p.outcome.toLowerCase();
+      }
+      return (p.cashPnl || 0) > 0;
+    });
     const win_rate = closed.length > 0 ? wins.length / closed.length : null;
     const openPositions = positions.filter(p => !p.closed);
     const total_pnl = openPositions.reduce((sum, p) => sum + (p.cashPnl || 0), 0);
+    const portfolio_value = openPositions.reduce((sum, p) => sum + (p.currentValue || 0), 0);
     const open_positions = openPositions.length;
 
     // ── Generate AI summary via Gemini ───────────────────────────────────────
@@ -149,6 +153,7 @@ Write a 1-2 sentence trader profile. Focus on: what markets they specialise in, 
         total_pnl,
         open_positions,
         last_refreshed_at: new Date().toISOString(),
+        portfolio_value,
         ...(ai_summary ? { ai_summary } : {}),
       }),
     });
@@ -158,6 +163,7 @@ Write a 1-2 sentence trader profile. Focus on: what markets they specialise in, 
       positions: positions.length,
       win_rate,
       total_pnl,
+      portfolio_value,
       open_positions,
       ai_summary,
     });

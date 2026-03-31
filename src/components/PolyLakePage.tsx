@@ -12,6 +12,7 @@ interface Wallet {
   win_rate: number | null;
   total_pnl: number | null;
   open_positions: number | null;
+  portfolio_value: number | null;
   added_at: string;
   last_refreshed_at: string | null;
   ai_summary: string | null;
@@ -163,7 +164,7 @@ function WalletCard({
         )}
 
         {/* Stats row */}
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-2 gap-2">
           <div>
             <div className="text-[9px] text-gray-600 tracking-wider">WIN RATE</div>
             <div className={`text-sm font-bold font-mono ${wrColor(wallet.win_rate)}`}>{fmtPct(wallet.win_rate)}</div>
@@ -173,7 +174,13 @@ function WalletCard({
             <div className={`text-sm font-bold font-mono ${pnlColor(wallet.total_pnl)}`}>{fmtUsd(wallet.total_pnl)}</div>
           </div>
           <div>
-            <div className="text-[9px] text-gray-600 tracking-wider">POSITIONS</div>
+            <div className="text-[9px] text-gray-600 tracking-wider">PORTFOLIO</div>
+            <div className="text-sm font-bold font-mono text-white">
+              {wallet.portfolio_value != null ? `$${wallet.portfolio_value.toFixed(2)}` : '—'}
+            </div>
+          </div>
+          <div>
+            <div className="text-[9px] text-gray-600 tracking-wider">OPEN POS</div>
             <div className="text-sm font-bold font-mono text-white">{wallet.open_positions ?? '—'}</div>
           </div>
         </div>
