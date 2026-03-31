@@ -67,43 +67,41 @@ export default async function handler(req, res) {
         let data; try { data = JSON.parse(text); } catch { data = null; }
         const arr = Array.isArray(data) ? data : (data?.data ?? data?.positions ?? data?.results ?? []);
         const count = ingestPositions(arr);
-        debugInfo.apiAttempts.push({ endpoint: label, status: r.status, rows: arr.length, ingested: count, keys: arr[0] ? Object.keys(arr[0]) : [] });
+        const info = { endpoint: label, status: r.status, rows: arr.length, ingested: count };
+        if (!r.ok) info.errorBody = text.slice(0, 200);
+        else if (arr[0]) info.keys = Object.keys(arr[0]);
+        debugInfo.apiAttempts.push(info);
       } catch (e) {
         debugInfo.apiAttempts.push({ endpoint: label, error: e.message });
       }
     };
 
-    // ── Attempt 1: asset_id (Polymarket internal name for clobTokenIds) ───
-    for (const tokenId of tokenIds) {
+    // ── Attempt 1: conditionId + sizeThreshold (original approach) ────────
+    for (const conditionId of conditionIds) {
+      await tryFetch(`data-api/positions?conditionId+sizeThreshold=0`,
+        `https://data-api.polymarket.com/positions?conditionId=${conditionId}&limit=100&offset=0&sizeThreshold=0`);
+      await tryFetch(`data-api/positions?conditionId+sizeThreshold=1`,
+        `https://data-api.polymarket.com/positions?conditionId=${conditionId}&limit=100&offset=0&sizeThreshold=1`);
+    }
+
+    // ── Attempt 2: asset_id ────────────────────────────────────────────────
+    for (const tokenId of tokenIds.slice(0, 1)) {
       await tryFetch(`data-api/positions?asset_id=${tokenId.slice(0,8)}...`,
         `https://data-api.polymarket.com/positions?asset_id=${tokenId}&limit=100`);
     }
 
-    // ── Attempt 2: conditionId without 0x prefix ───────────────────────
-    for (const conditionId of conditionIds) {
-      const bare = conditionId.replace(/^0x/i, '');
-      await tryFetch(`data-api/positions?conditionId=bare_${bare.slice(0,8)}...`,
-        `https://data-api.polymarket.com/positions?conditionId=${bare}&limit=100`);
-    }
-
-    // ── Attempt 3: gamma-api positions ────────────────────────────────
-    for (const conditionId of conditionIds) {
-      await tryFetch(`gamma-api/positions?conditionId=${conditionId.slice(0,8)}...`,
-        `https://gamma-api.polymarket.com/positions?conditionId=${conditionId}&limit=100`);
-    }
-
-    // ── Attempt 4: data-api leaderboard ──────────────────────────────
-    for (const conditionId of conditionIds) {
-      await tryFetch(`data-api/leaderboard?conditionId=${conditionId.slice(0,8)}...`,
-        `https://data-api.polymarket.com/leaderboard?conditionId=${conditionId}&limit=100`);
-    }
-
-    // ── Attempt 5: gamma-api market leaderboard ───────────────────────
+    // ── Attempt 3: gamma market endpoint - fetch full market fields ────────
     for (const market of markets) {
-      if (market.id) {
-        await tryFetch(`gamma-api/market-positions?id=${market.id}`,
-          `https://gamma-api.polymarket.com/market-positions?market=${market.id}&limit=100`);
+      if (market.conditionId) {
+        await tryFetch(`gamma-api/markets?conditionId=${market.conditionId.slice(0,8)}...`,
+          `https://gamma-api.polymarket.com/markets?conditionId=${market.conditionId}`);
       }
+    }
+
+    // ── Attempt 4: Polymarket strapi (older public API) ───────────────────
+    for (const conditionId of conditionIds) {
+      await tryFetch(`strapi/positions?conditionId=${conditionId.slice(0,8)}...`,
+        `https://strapi-matic.polymarket.com/positions?conditionId=${conditionId}&limit=100`);
     }
 
     if (Object.keys(byWallet).length === 0) {
