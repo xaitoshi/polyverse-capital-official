@@ -1,4 +1,5 @@
-// Discover top wallets in a specific Polymarket event/market
+// Discover top wallets trading in a specific Polymarket event/market
+// Strategy: fetch global leaderboard, check which top traders have positions in this market
 // GET /api/polylake/discover?url=https://polymarket.com/event/slug
 
 export default async function handler(req, res) {
@@ -12,7 +13,7 @@ export default async function handler(req, res) {
   const slug = slugMatch[1];
 
   try {
-    // ── Fetch event from Gamma API ─────────────────────────────────────────
+    // ── 1. Fetch event + conditionId ───────────────────────────────────────
     const eventRes = await fetch(
       `https://gamma-api.polymarket.com/events?slug=${slug}&limit=1`,
       { headers: { Accept: 'application/json' } }
@@ -26,96 +27,97 @@ export default async function handler(req, res) {
     const markets = event.markets ?? [];
     if (markets.length === 0) return res.status(404).json({ error: 'No markets found in event' });
 
-    // ── Collect token IDs and condition IDs ───────────────────────────────
-    const tokenIds = [];
-    const conditionIds = [];
-    for (const market of markets) {
-      if (market.conditionId) conditionIds.push(market.conditionId);
-      try {
-        const ids = typeof market.clobTokenIds === 'string'
-          ? JSON.parse(market.clobTokenIds)
-          : (market.clobTokenIds ?? []);
-        ids.forEach(id => tokenIds.push(String(id)));
-      } catch {}
-    }
+    const conditionIds = markets.map(m => m.conditionId).filter(Boolean);
 
-    const debugInfo = { tokenIds, conditionIds, markets: markets.length, apiAttempts: [] };
-
-    const byWallet = {};
-
-    // Helper to ingest positions array into byWallet
-    const ingestPositions = (data) => {
-      if (!Array.isArray(data)) return 0;
-      let count = 0;
-      for (const p of data) {
-        const user = p.user ?? p.proxyWallet ?? p.address ?? p.walletAddress;
-        if (!user) continue;
-        if (!byWallet[user]) byWallet[user] = { user, tradeCount: 0, totalVolume: 0, totalPnl: 0, totalValue: 0, positions: [] };
-        byWallet[user].totalVolume += Number(p.size ?? 0);
-        byWallet[user].totalPnl += Number(p.cashPnl ?? 0);
-        byWallet[user].totalValue += Number(p.currentValue ?? 0);
-        byWallet[user].positions.push({ outcome: p.outcome, size: Number(p.size ?? 0), avgPrice: Number(p.avgPrice ?? 0), currentValue: Number(p.currentValue ?? 0), cashPnl: Number(p.cashPnl ?? 0) });
-        count++;
+    // ── 2. Fetch global leaderboard (top Polymarket traders) ──────────────
+    // data-api requires user= for positions, but leaderboard gives us known traders
+    let leaderboardUsers = [];
+    try {
+      const lbRes = await fetch(
+        `https://data-api.polymarket.com/leaderboard?interval=all&limit=100&offset=0`,
+        { headers: { Accept: 'application/json' } }
+      );
+      if (lbRes.ok) {
+        const lbData = await lbRes.json();
+        const arr = Array.isArray(lbData) ? lbData : (lbData?.data ?? lbData?.accounts ?? []);
+        leaderboardUsers = arr.map(u => u.proxyWallet ?? u.address ?? u.user ?? u.id).filter(Boolean);
       }
-      return count;
-    };
+    } catch {}
 
-    const tryFetch = async (label, url) => {
-      try {
-        const r = await fetch(url, { headers: { Accept: 'application/json' } });
-        const text = await r.text();
-        let data; try { data = JSON.parse(text); } catch { data = null; }
-        const arr = Array.isArray(data) ? data : (data?.data ?? data?.positions ?? data?.results ?? []);
-        const count = ingestPositions(arr);
-        const info = { endpoint: label, status: r.status, rows: arr.length, ingested: count };
-        if (!r.ok) info.errorBody = text.slice(0, 200);
-        else if (arr[0]) info.keys = Object.keys(arr[0]);
-        debugInfo.apiAttempts.push(info);
-      } catch (e) {
-        debugInfo.apiAttempts.push({ endpoint: label, error: e.message });
-      }
-    };
-
-    // ── Attempt 1: conditionId + sizeThreshold (original approach) ────────
-    for (const conditionId of conditionIds) {
-      await tryFetch(`data-api/positions?conditionId+sizeThreshold=0`,
-        `https://data-api.polymarket.com/positions?conditionId=${conditionId}&limit=100&offset=0&sizeThreshold=0`);
-      await tryFetch(`data-api/positions?conditionId+sizeThreshold=1`,
-        `https://data-api.polymarket.com/positions?conditionId=${conditionId}&limit=100&offset=0&sizeThreshold=1`);
+    if (leaderboardUsers.length === 0) {
+      return res.status(200).json({
+        event: { title: event.title, slug },
+        wallets: [],
+        message: 'Polymarket leaderboard returned no data. Try adding wallets manually.',
+      });
     }
 
-    // ── Attempt 2: asset_id ────────────────────────────────────────────────
-    for (const tokenId of tokenIds.slice(0, 1)) {
-      await tryFetch(`data-api/positions?asset_id=${tokenId.slice(0,8)}...`,
-        `https://data-api.polymarket.com/positions?asset_id=${tokenId}&limit=100`);
+    // ── 3. Check each leaderboard user for positions in this market ────────
+    // Batch in groups of 10 to avoid rate limits
+    const results = [];
+    const batchSize = 10;
+
+    for (let i = 0; i < Math.min(leaderboardUsers.length, 80); i += batchSize) {
+      const batch = leaderboardUsers.slice(i, i + batchSize);
+      const batchResults = await Promise.all(
+        batch.map(async (userAddr) => {
+          try {
+            const r = await fetch(
+              `https://data-api.polymarket.com/positions?user=${userAddr}&limit=500&sizeThreshold=0`,
+              { headers: { Accept: 'application/json' } }
+            );
+            if (!r.ok) return null;
+            const positions = await r.json();
+            if (!Array.isArray(positions)) return null;
+
+            // Filter to positions in this market
+            const marketPositions = positions.filter(p =>
+              conditionIds.includes(p.conditionId)
+            );
+            if (marketPositions.length === 0) return null;
+
+            return {
+              user: userAddr,
+              positions: marketPositions.map(p => ({
+                outcome: p.outcome,
+                size: Number(p.size ?? 0),
+                avgPrice: Number(p.avgPrice ?? 0),
+                currentValue: Number(p.currentValue ?? 0),
+                cashPnl: Number(p.cashPnl ?? 0),
+              })),
+              totalSize: marketPositions.reduce((s, p) => s + Number(p.size ?? 0), 0),
+              totalPnl: marketPositions.reduce((s, p) => s + Number(p.cashPnl ?? 0), 0),
+              totalValue: marketPositions.reduce((s, p) => s + Number(p.currentValue ?? 0), 0),
+              tradeCount: 0,
+              totalVolume: marketPositions.reduce((s, p) => s + Number(p.size ?? 0), 0),
+            };
+          } catch {
+            return null;
+          }
+        })
+      );
+      results.push(...batchResults.filter(Boolean));
     }
 
-    // ── Attempt 3: gamma market endpoint - fetch full market fields ────────
-    for (const market of markets) {
-      if (market.conditionId) {
-        await tryFetch(`gamma-api/markets?conditionId=${market.conditionId.slice(0,8)}...`,
-          `https://gamma-api.polymarket.com/markets?conditionId=${market.conditionId}`);
-      }
+    if (results.length === 0) {
+      return res.status(200).json({
+        event: { title: event.title, slug },
+        wallets: [],
+        message: `Checked ${Math.min(leaderboardUsers.length, 80)} top Polymarket traders — none have open positions in this market.`,
+      });
     }
 
-    // ── Attempt 4: Polymarket strapi (older public API) ───────────────────
-    for (const conditionId of conditionIds) {
-      await tryFetch(`strapi/positions?conditionId=${conditionId.slice(0,8)}...`,
-        `https://strapi-matic.polymarket.com/positions?conditionId=${conditionId}&limit=100`);
-    }
+    // ── 4. Sort by position size ───────────────────────────────────────────
+    const ranked = results.sort((a, b) => b.totalSize - a.totalSize).slice(0, 30);
 
-    if (Object.keys(byWallet).length === 0) {
-      return res.status(200).json({ event: { title: event.title, slug }, wallets: [], debug: debugInfo });
-    }
-
-    const ranked = Object.values(byWallet)
-      .sort((a, b) => (b.totalVolume || b.tradeCount) - (a.totalVolume || a.tradeCount))
-      .slice(0, 30);
-
+    // ── 5. Fetch display names ─────────────────────────────────────────────
     await Promise.all(
       ranked.slice(0, 15).map(async w => {
         try {
-          const r = await fetch(`https://data-api.polymarket.com/profiles?address=${w.user}`, { headers: { Accept: 'application/json' } });
+          const r = await fetch(
+            `https://data-api.polymarket.com/profiles?address=${w.user}`,
+            { headers: { Accept: 'application/json' } }
+          );
           if (r.ok) {
             const profiles = await r.json();
             const p = Array.isArray(profiles) ? profiles[0] : profiles;
@@ -127,7 +129,10 @@ export default async function handler(req, res) {
       })
     );
 
-    return res.status(200).json({ event: { title: event.title, slug, markets: markets.length }, wallets: ranked });
+    return res.status(200).json({
+      event: { title: event.title, slug, markets: markets.length },
+      wallets: ranked,
+    });
 
   } catch (e) {
     return res.status(500).json({ error: e.message });
