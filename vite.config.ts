@@ -39,6 +39,7 @@ export default defineConfig(({mode}) => {
   return {
     plugins: [react(), tailwindcss(), fetchProxyPlugin()],
     define: {
+      global: 'globalThis',
       'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
       'process.env.FINNHUB_API_KEY': JSON.stringify(env.FINNHUB_API_KEY || ''),
       'process.env.NEWSDATA_API_KEY': JSON.stringify(env.NEWSDATA_API_KEY || ''),
