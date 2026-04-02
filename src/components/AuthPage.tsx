@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase';
 
 export default function AuthPage() {
   const [view, setView] = useState<'choice' | 'email' | 'email-sent'>('choice');
+  const [walletExpanded, setWalletExpanded] = useState(false);
   const [email, setEmail] = useState('');
   const [emailLoading, setEmailLoading] = useState(false);
   const [emailError, setEmailError] = useState<string | null>(null);
@@ -50,29 +51,40 @@ export default function AuthPage() {
 
             {/* Wallet connect */}
             <div className="space-y-2">
-              {connectors.map(connector => (
-                <button
-                  key={connector.uid}
-                  onClick={() => connect({ connector })}
-                  disabled={walletPending || isConnecting}
-                  className="w-full flex items-center justify-center gap-3 py-3.5 rounded-xl bg-blue-500/10 border border-blue-500/30 text-blue-400 font-mono text-sm hover:bg-blue-500/20 transition-colors disabled:opacity-50"
-                >
-                  <WalletIcon />
-                  {walletPending || isConnecting
-                    ? 'Connecting…'
-                    : connector.name === 'Injected'
-                    ? 'Connect Wallet (MetaMask / Browser)'
-                    : `Connect with ${connector.name}`}
-                </button>
-              ))}
-              {connectors.length === 0 && (
-                <div className="w-full flex items-center justify-center gap-3 py-3.5 rounded-xl bg-white/5 border border-white/10 text-gray-500 font-mono text-sm">
-                  <WalletIcon />
-                  No wallet detected
+              <button
+                onClick={() => setWalletExpanded(v => !v)}
+                className="w-full flex items-center justify-center gap-3 py-3.5 rounded-xl bg-blue-500/10 border border-blue-500/30 text-blue-400 font-mono text-sm hover:bg-blue-500/20 transition-colors"
+              >
+                <WalletIcon />
+                Connect Wallet
+                <svg className={`w-3.5 h-3.5 ml-auto transition-transform ${walletExpanded ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+
+              {walletExpanded && (
+                <div className="space-y-1.5 pl-2">
+                  {connectors.length === 0 ? (
+                    <div className="text-xs text-gray-600 text-center py-2">No wallet detected</div>
+                  ) : connectors.map(connector => (
+                    <button
+                      key={connector.uid}
+                      onClick={() => connect({ connector })}
+                      disabled={walletPending || isConnecting}
+                      className="w-full flex items-center gap-3 px-4 py-3 rounded-lg bg-white/[0.03] border border-white/10 text-gray-300 font-mono text-xs hover:bg-blue-500/10 hover:border-blue-500/20 hover:text-blue-400 transition-colors disabled:opacity-50"
+                    >
+                      <WalletIcon className="w-3.5 h-3.5 shrink-0" />
+                      {walletPending || isConnecting
+                        ? 'Connecting…'
+                        : connector.name === 'Injected'
+                        ? 'MetaMask / Browser Wallet'
+                        : connector.name}
+                    </button>
+                  ))}
+                  {walletError && (
+                    <p className="text-xs text-red-400 px-1">{walletError.message}</p>
+                  )}
                 </div>
-              )}
-              {walletError && (
-                <p className="text-xs text-red-400 text-center">{walletError.message}</p>
               )}
             </div>
 
