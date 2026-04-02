@@ -73,18 +73,32 @@ export default function EarnPage() {
   const { user } = useAuth();
   const [ticker, setTicker] = useState('');
   const [searchCount, setSearchCount] = useState<number | null>(null);
+  const [profileId, setProfileId] = useState<string | null>(null);
   const [result, setResult] = useState<TickerResult | null>(null);
   const [fetching, setFetching] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showPaywall, setShowPaywall] = useState(false);
 
-  // Load search count from user profile settings
+  // Fetch count fresh from Supabase on mount — don't rely on cached profile
   useEffect(() => {
-    if (user?.profile) {
-      const settings = (user.profile.settings ?? {}) as Record<string, unknown>;
-      setSearchCount((settings.earn_search_count as number) ?? 0);
-    }
-  }, [user?.profile]);
+    const load = async () => {
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (!authUser) return;
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('id, settings')
+        .eq('supabase_user_id', authUser.id)
+        .single();
+
+      if (profile) {
+        const settings = (profile.settings ?? {}) as Record<string, unknown>;
+        setSearchCount((settings.earn_search_count as number) ?? 0);
+        setProfileId(profile.id);
+      }
+    };
+    load();
+  }, []);
 
   const handleSearch = async () => {
     const sym = ticker.trim().toUpperCase();
@@ -127,16 +141,26 @@ export default function EarnPage() {
         score: calcScore(beatRate, avgSurprise),
       });
 
-      // Increment and persist count
+      // Increment locally and persist to Supabase
       const newCount = currentCount + 1;
       setSearchCount(newCount);
 
-      if (user?.profile?.id) {
-        const currentSettings = (user.profile.settings ?? {}) as Record<string, unknown>;
+      if (profileId) {
+        // Fetch latest settings first to avoid overwriting other keys
+        const { data: fresh } = await supabase
+          .from('profiles')
+          .select('settings')
+          .eq('id', profileId)
+          .single();
+
+        const latestSettings = ((fresh?.settings ?? {}) as Record<string, unknown>);
         await supabase.from('profiles').update({
-          settings: { ...currentSettings, earn_search_count: newCount },
-        }).eq('id', user.profile.id);
+          settings: { ...latestSettings, earn_search_count: newCount },
+        }).eq('id', profileId);
       }
+
+      if (newCount >= FREE_LIMIT) setShowPaywall(true);
+
     } catch {
       setError('Failed to fetch data. Please try again.');
     }
