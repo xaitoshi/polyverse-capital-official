@@ -69,19 +69,13 @@ export default function AuthPage() {
 
           {/* Left */}
           <div className="space-y-8">
-            {/* Badge */}
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-white/10 bg-white/5 text-xs text-gray-400">
-              <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />
-              Polymarket tools for niche markets
-            </div>
-
             {/* Headline */}
-            <div className="space-y-1">
+            <div className="space-y-0">
               <h1 className="text-5xl md:text-6xl font-bold leading-tight tracking-tight">
-                Edge tools for
+                Polymarket tools
               </h1>
               <h1 className="text-5xl md:text-6xl font-bold leading-tight tracking-tight">
-                prediction <span className="italic font-light text-blue-400">markets</span>
+                for <span className="italic font-light text-blue-400">niche markets</span>
               </h1>
             </div>
 
