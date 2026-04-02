@@ -70,32 +70,14 @@ export default function AuthPage() {
     <div className="min-h-screen bg-[#050505] text-white overflow-hidden relative flex flex-col">
 
       {/* ── Background ────────────────────────────────────────────────── */}
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        {/* Blue radial glow */}
-        <div className="absolute inset-0" style={{
-          background: 'radial-gradient(ellipse 80% 70% at 65% 45%, rgba(29,78,216,0.18) 0%, rgba(59,130,246,0.08) 40%, transparent 75%)',
-        }} />
-        {/* Secondary smaller glow */}
-        <div className="absolute inset-0" style={{
-          background: 'radial-gradient(ellipse 40% 40% at 70% 30%, rgba(96,165,250,0.1) 0%, transparent 60%)',
-        }} />
-        {/* Grain / dither noise */}
-        <div className="absolute inset-0 opacity-[0.07]" style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
-          backgroundRepeat: 'repeat',
-          backgroundSize: '128px 128px',
-        }} />
-        {/* Glitch scan lines */}
-        <div className="absolute inset-0 opacity-[0.04]" style={{
-          backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(59,130,246,0.5) 2px, rgba(59,130,246,0.5) 3px)',
-        }} />
-        {/* Edge fade */}
-        <div className="absolute inset-0" style={{
-          background: 'linear-gradient(to right, #050505 20%, transparent 50%, #050505 100%)',
-        }} />
-        <div className="absolute inset-0" style={{
-          background: 'linear-gradient(to bottom, #050505 0%, transparent 12%, transparent 82%, #050505 100%)',
-        }} />
+      <div className="pointer-events-none absolute inset-0">
+        <img
+          src="/auth-bg.png"
+          alt=""
+          className="absolute inset-0 w-full h-full object-cover object-center opacity-60"
+        />
+        {/* Dark overlay so text stays readable */}
+        <div className="absolute inset-0 bg-[#050505]/50" />
       </div>
 
       {/* ── Navbar ────────────────────────────────────────────────────── */}
