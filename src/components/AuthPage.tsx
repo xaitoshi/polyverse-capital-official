@@ -53,7 +53,7 @@ export default function AuthPage() {
             <div className="space-y-2">
               <button
                 onClick={() => setWalletExpanded(v => !v)}
-                className="w-full flex items-center py-3.5 px-4 rounded-xl bg-blue-500/10 border border-blue-500/30 text-blue-400 font-mono text-sm hover:bg-blue-500/20 transition-colors"
+                className="w-full flex items-center py-3.5 px-6 rounded-xl bg-blue-500/10 border border-blue-500/30 text-blue-400 font-mono text-sm hover:bg-blue-500/20 transition-colors"
               >
                 <WalletIcon className="w-4 h-4 shrink-0" />
                 <span className="flex-1 text-center">Connect Wallet</span>
