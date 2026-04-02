@@ -137,7 +137,8 @@ export default function AuthPage() {
 
             {/* Sub */}
             <p className="text-gray-500 text-sm leading-relaxed max-w-sm">
-              Track wallets, analyse trader behaviour, and find edges across Polymarket's niche events. All in one place.
+              Track wallets, analyse trader behaviour, and find edges across Polymarket's niche events.{' '}
+              <span className="block md:inline">All in one place.</span>
             </p>
 
             {/* Auth area */}
