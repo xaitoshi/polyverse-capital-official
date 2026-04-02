@@ -53,11 +53,11 @@ export default function AuthPage() {
             <div className="space-y-2">
               <button
                 onClick={() => setWalletExpanded(v => !v)}
-                className="w-full flex items-center justify-center gap-3 py-3.5 rounded-xl bg-blue-500/10 border border-blue-500/30 text-blue-400 font-mono text-sm hover:bg-blue-500/20 transition-colors"
+                className="w-full flex items-center py-3.5 px-4 rounded-xl bg-blue-500/10 border border-blue-500/30 text-blue-400 font-mono text-sm hover:bg-blue-500/20 transition-colors"
               >
-                <WalletIcon />
-                Connect Wallet
-                <svg className={`w-3.5 h-3.5 ml-auto transition-transform ${walletExpanded ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <WalletIcon className="w-4 h-4 shrink-0" />
+                <span className="flex-1 text-center">Connect Wallet</span>
+                <svg className={`w-3.5 h-3.5 shrink-0 transition-transform ${walletExpanded ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
                 </svg>
               </button>
