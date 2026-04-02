@@ -29,16 +29,19 @@ export default function AuthPage() {
   return (
     <div className="min-h-screen bg-[#050505] text-white overflow-hidden relative flex flex-col">
 
-      {/* ── Aurora background ─────────────────────────────────────────── */}
+      {/* ── Background image ──────────────────────────────────────────── */}
       <div className="pointer-events-none absolute inset-0">
+        <img
+          src="/auth-bg.png"
+          alt=""
+          className="absolute inset-0 w-full h-full object-cover object-center opacity-30"
+        />
+        {/* fade edges so content stays readable */}
         <div className="absolute inset-0" style={{
-          background: 'radial-gradient(ellipse 70% 60% at 65% 45%, rgba(59,130,246,0.12) 0%, transparent 70%)',
+          background: 'linear-gradient(to right, #050505 35%, transparent 65%, #050505 100%)',
         }} />
         <div className="absolute inset-0" style={{
-          background: 'radial-gradient(ellipse 40% 70% at 75% 55%, rgba(37,99,235,0.08) 0%, transparent 60%)',
-        }} />
-        <div className="absolute inset-0" style={{
-          background: 'radial-gradient(ellipse 30% 40% at 55% 30%, rgba(96,165,250,0.05) 0%, transparent 50%)',
+          background: 'linear-gradient(to bottom, #050505 0%, transparent 15%, transparent 80%, #050505 100%)',
         }} />
       </div>
 
