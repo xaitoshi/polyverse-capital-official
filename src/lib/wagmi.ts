@@ -2,7 +2,7 @@ import { createConfig, http } from 'wagmi';
 import { mainnet, polygon } from 'wagmi/chains';
 import { injected, walletConnect } from 'wagmi/connectors';
 
-const projectId = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID as string | undefined;
+const projectId = process.env.WALLETCONNECT_PROJECT_ID as string | undefined;
 
 const connectors = projectId
   ? [injected(), walletConnect({ projectId })]

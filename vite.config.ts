@@ -40,6 +40,9 @@ export default defineConfig(({mode}) => {
     plugins: [react(), tailwindcss(), fetchProxyPlugin()],
     define: {
       global: 'globalThis',
+      'process.env.SUPABASE_URL': JSON.stringify(env.SUPABASE_URL),
+      'process.env.SUPABASE_ANON_KEY': JSON.stringify(env.SUPABASE_ANON_KEY),
+      'process.env.WALLETCONNECT_PROJECT_ID': JSON.stringify(env.WALLETCONNECT_PROJECT_ID || ''),
       'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
       'process.env.FINNHUB_API_KEY': JSON.stringify(env.FINNHUB_API_KEY || ''),
       'process.env.NEWSDATA_API_KEY': JSON.stringify(env.NEWSDATA_API_KEY || ''),
