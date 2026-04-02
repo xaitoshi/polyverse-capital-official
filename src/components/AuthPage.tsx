@@ -2,29 +2,69 @@ import React, { useState } from 'react';
 import { useConnect, useAccount } from 'wagmi';
 import { supabase } from '../lib/supabase';
 
+type AuthView = 'hidden' | 'choice' | 'email' | 'forgot' | 'forgot-sent';
+type EmailTab = 'login' | 'signup';
+
 export default function AuthPage() {
-  const [authView, setAuthView] = useState<'hidden' | 'choice' | 'email' | 'email-sent'>('hidden');
+  const [authView, setAuthView] = useState<AuthView>('hidden');
+  const [emailTab, setEmailTab] = useState<EmailTab>('login');
   const [walletExpanded, setWalletExpanded] = useState(false);
+
+  // Shared fields
   const [email, setEmail] = useState('');
-  const [emailLoading, setEmailLoading] = useState(false);
-  const [emailError, setEmailError] = useState<string | null>(null);
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
   const { connect, connectors, isPending: walletPending, error: walletError } = useConnect();
   const { isConnecting } = useAccount();
 
-  const handleEmailSubmit = async () => {
-    if (!email.trim()) return;
-    setEmailLoading(true);
-    setEmailError(null);
-    const { error } = await supabase.auth.signInWithOtp({
-      email: email.trim(),
-      options: { emailRedirectTo: window.location.origin },
-    });
-    if (error) { setEmailError(error.message); setEmailLoading(false); }
-    else { setAuthView('email-sent'); setEmailLoading(false); }
+  const resetForm = () => {
+    setEmail(''); setPassword(''); setConfirmPassword('');
+    setError(null); setSuccessMsg(null);
   };
 
-  const openAuth = () => { setAuthView('choice'); setWalletExpanded(false); };
+  const handleSignIn = async () => {
+    if (!email.trim() || !password) return;
+    setLoading(true); setError(null);
+    const { error: err } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+    if (err) { setError(err.message); setLoading(false); }
+    else { window.location.href = '/dashboard'; }
+  };
+
+  const handleSignUp = async () => {
+    if (!email.trim() || !password) return;
+    if (password.length < 8) { setError('Password must be at least 8 characters.'); return; }
+    if (password !== confirmPassword) { setError('Passwords do not match.'); return; }
+    setLoading(true); setError(null);
+    const { error: err } = await supabase.auth.signUp({ email: email.trim(), password });
+    if (err) { setError(err.message); setLoading(false); }
+    else { window.location.href = '/dashboard'; }
+  };
+
+  const handleForgotPassword = async () => {
+    if (!email.trim()) return;
+    setLoading(true); setError(null);
+    const { error: err } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+      redirectTo: `${window.location.origin}/dashboard`,
+    });
+    if (err) { setError(err.message); setLoading(false); }
+    else { setAuthView('forgot-sent'); setLoading(false); }
+  };
+
+  const openAuth = () => { setAuthView('choice'); setWalletExpanded(false); resetForm(); };
+
+  const passwordStrength = (pw: string) => {
+    if (!pw) return null;
+    if (pw.length < 6) return 'weak';
+    if (pw.length < 10) return 'fair';
+    return 'strong';
+  };
+  const strength = emailTab === 'signup' ? passwordStrength(password) : null;
+  const strengthColor = strength === 'weak' ? 'bg-red-500' : strength === 'fair' ? 'bg-yellow-500' : 'bg-blue-400';
+  const strengthWidth = strength === 'weak' ? 'w-1/3' : strength === 'fair' ? 'w-2/3' : 'w-full';
 
   return (
     <div className="min-h-screen bg-[#050505] text-white overflow-hidden relative flex flex-col">
@@ -36,7 +76,6 @@ export default function AuthPage() {
           alt=""
           className="absolute inset-0 w-full h-full object-cover object-center opacity-30"
         />
-        {/* fade edges so content stays readable */}
         <div className="absolute inset-0" style={{
           background: 'linear-gradient(to right, #050505 35%, transparent 65%, #050505 100%)',
         }} />
@@ -52,13 +91,13 @@ export default function AuthPage() {
         </div>
         <div className="flex items-center gap-3">
           <button
-            onClick={openAuth}
+            onClick={() => { openAuth(); setEmailTab('login'); }}
             className="px-4 py-2 rounded-full border border-white/15 text-sm text-gray-300 hover:text-white hover:border-white/30 transition-colors font-mono"
           >
             Sign in
           </button>
           <button
-            onClick={openAuth}
+            onClick={() => { openAuth(); setEmailTab('signup'); }}
             className="px-5 py-2 rounded-full bg-blue-500/20 border border-blue-500/40 text-blue-400 text-sm font-semibold hover:bg-blue-500/30 transition-colors"
           >
             Get started
@@ -74,24 +113,37 @@ export default function AuthPage() {
           <div className="space-y-8">
             {/* Headline */}
             <div className="space-y-0">
-              <h1 className="text-5xl md:text-6xl font-bold leading-tight tracking-tight">
-                Polymarket tools
-              </h1>
-              <h1 className="text-5xl md:text-6xl font-bold leading-tight tracking-tight">
-                for <span className="italic font-light text-blue-400">niche markets</span>
-              </h1>
+              {/* Mobile layout */}
+              <div className="md:hidden">
+                <h1 className="text-5xl font-bold leading-tight tracking-tight flex items-center gap-3 flex-wrap">
+                  <img src="/polymarket-logo.png" alt="Polymarket" className="h-12 w-auto inline-block" />
+                  <span>tools for</span>
+                </h1>
+                <h1 className="text-5xl font-bold leading-tight tracking-tight italic font-light text-blue-400">
+                  niche markets
+                </h1>
+              </div>
+              {/* Desktop layout */}
+              <div className="hidden md:block">
+                <h1 className="text-6xl font-bold leading-tight tracking-tight">
+                  Polymarket tools
+                </h1>
+                <h1 className="text-6xl font-bold leading-tight tracking-tight">
+                  for <span className="italic font-light text-blue-400">niche markets</span>
+                </h1>
+              </div>
             </div>
 
             {/* Sub */}
             <p className="text-gray-500 text-sm leading-relaxed max-w-sm">
-              Track wallets, analyse trader behaviour, and find edges across Polymarket's niche events — all in one place.
+              Track wallets, analyse trader behaviour, and find edges across Polymarket's niche events. All in one place.
             </p>
 
             {/* Auth area */}
             {authView === 'hidden' && (
               <button
                 onClick={openAuth}
-                className="inline-flex items-center gap-3 px-6 py-3.5 rounded-full bg-blue-500/20 border border-blue-500/40 text-blue-400 font-semibold text-sm hover:bg-blue-500/30 transition-colors"
+                className="inline-flex items-center gap-3 px-6 py-3.5 rounded-xl bg-blue-500/20 border border-blue-500/40 text-blue-400 font-semibold text-sm hover:bg-blue-500/30 transition-colors"
               >
                 <span className="w-5 h-5 rounded-full bg-black/20 flex items-center justify-center">
                   <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -140,7 +192,7 @@ export default function AuthPage() {
 
                 {/* Email */}
                 <button
-                  onClick={() => setAuthView('email')}
+                  onClick={() => { setAuthView('email'); resetForm(); }}
                   className="w-full flex items-center px-5 py-3.5 rounded-full bg-white/[0.04] border border-white/10 text-gray-300 text-sm font-mono hover:bg-white/[0.08] transition-colors"
                 >
                   <EmailIcon className="w-4 h-4 shrink-0" />
@@ -151,24 +203,114 @@ export default function AuthPage() {
 
             {authView === 'email' && (
               <div className="space-y-3 max-w-xs">
-                <button onClick={() => setAuthView('choice')} className="text-[11px] text-gray-600 hover:text-gray-400 flex items-center gap-1">
+                <button onClick={() => { setAuthView('choice'); resetForm(); }} className="text-[11px] text-gray-600 hover:text-gray-400 flex items-center gap-1">
                   ← Back
                 </button>
-                <input autoFocus type="email" value={email}
+
+                {/* Tabs */}
+                <div className="flex rounded-xl bg-white/[0.04] border border-white/8 p-1 gap-1">
+                  {(['login', 'signup'] as EmailTab[]).map(tab => (
+                    <button
+                      key={tab}
+                      onClick={() => { setEmailTab(tab); resetForm(); }}
+                      className={`flex-1 py-1.5 rounded-lg text-xs font-mono transition-colors ${
+                        emailTab === tab
+                          ? 'bg-blue-500/20 border border-blue-500/30 text-blue-400'
+                          : 'text-gray-600 hover:text-gray-400'
+                      }`}
+                    >
+                      {tab === 'login' ? 'Log In' : 'Sign Up'}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Fields */}
+                <input
+                  autoFocus
+                  type="email"
+                  value={email}
                   onChange={e => setEmail(e.target.value)}
-                  onKeyDown={e => { if (e.key === 'Enter') handleEmailSubmit(); }}
                   placeholder="you@example.com"
                   className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder:text-gray-700 font-mono focus:outline-none focus:border-blue-500/50"
                 />
-                {emailError && <p className="text-xs text-red-400">{emailError}</p>}
-                <button onClick={handleEmailSubmit} disabled={!email.trim() || emailLoading}
-                  className="w-full py-3 rounded-full bg-blue-500/20 border border-blue-500/40 text-blue-400 font-semibold text-sm hover:bg-blue-500/30 transition-colors disabled:opacity-50">
-                  {emailLoading ? 'Sending…' : 'Send Magic Link'}
+                <input
+                  type="password"
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter' && emailTab === 'login') handleSignIn(); }}
+                  placeholder="Password"
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder:text-gray-700 font-mono focus:outline-none focus:border-blue-500/50"
+                />
+
+                {/* Password strength bar (signup only) */}
+                {emailTab === 'signup' && password && (
+                  <div className="space-y-1">
+                    <div className="h-1 rounded-full bg-white/10 overflow-hidden">
+                      <div className={`h-full rounded-full transition-all ${strengthColor} ${strengthWidth}`} />
+                    </div>
+                    <p className="text-[10px] text-gray-600 capitalize">{strength} password</p>
+                  </div>
+                )}
+
+                {emailTab === 'signup' && (
+                  <input
+                    type="password"
+                    value={confirmPassword}
+                    onChange={e => setConfirmPassword(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter') handleSignUp(); }}
+                    placeholder="Confirm password"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder:text-gray-700 font-mono focus:outline-none focus:border-blue-500/50"
+                  />
+                )}
+
+                {error && <p className="text-xs text-red-400">{error}</p>}
+
+                <button
+                  onClick={emailTab === 'login' ? handleSignIn : handleSignUp}
+                  disabled={!email.trim() || !password || loading}
+                  className="w-full py-3 rounded-full bg-blue-500/20 border border-blue-500/40 text-blue-400 font-semibold text-sm hover:bg-blue-500/30 transition-colors disabled:opacity-50"
+                >
+                  {loading ? (emailTab === 'login' ? 'Signing in…' : 'Creating account…') : (emailTab === 'login' ? 'Sign In' : 'Create Account')}
+                </button>
+
+                {emailTab === 'login' && (
+                  <button
+                    onClick={() => { setAuthView('forgot'); setPassword(''); setError(null); }}
+                    className="w-full text-center text-[11px] text-gray-600 hover:text-gray-400 transition-colors"
+                  >
+                    Forgot password?
+                  </button>
+                )}
+              </div>
+            )}
+
+            {authView === 'forgot' && (
+              <div className="space-y-3 max-w-xs">
+                <button onClick={() => { setAuthView('email'); setEmailTab('login'); resetForm(); }} className="text-[11px] text-gray-600 hover:text-gray-400 flex items-center gap-1">
+                  ← Back
+                </button>
+                <p className="text-xs text-gray-500 leading-relaxed">Enter your email and we'll send a reset link.</p>
+                <input
+                  autoFocus
+                  type="email"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter') handleForgotPassword(); }}
+                  placeholder="you@example.com"
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder:text-gray-700 font-mono focus:outline-none focus:border-blue-500/50"
+                />
+                {error && <p className="text-xs text-red-400">{error}</p>}
+                <button
+                  onClick={handleForgotPassword}
+                  disabled={!email.trim() || loading}
+                  className="w-full py-3 rounded-full bg-blue-500/20 border border-blue-500/40 text-blue-400 font-semibold text-sm hover:bg-blue-500/30 transition-colors disabled:opacity-50"
+                >
+                  {loading ? 'Sending…' : 'Send Reset Link'}
                 </button>
               </div>
             )}
 
-            {authView === 'email-sent' && (
+            {authView === 'forgot-sent' && (
               <div className="space-y-2 max-w-xs">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-full bg-blue-500/10 border border-blue-500/20 flex items-center justify-center shrink-0">
@@ -176,11 +318,11 @@ export default function AuthPage() {
                   </div>
                   <div>
                     <div className="text-sm font-semibold text-white">Check your inbox</div>
-                    <div className="text-xs text-gray-500">Magic link sent to {email}</div>
+                    <div className="text-xs text-gray-500">Reset link sent to {email}</div>
                   </div>
                 </div>
-                <button onClick={() => { setAuthView('email'); setEmail(''); }} className="text-xs text-gray-600 hover:text-gray-400">
-                  Use a different email
+                <button onClick={() => { setAuthView('email'); setEmailTab('login'); resetForm(); }} className="text-xs text-gray-600 hover:text-gray-400">
+                  Back to sign in
                 </button>
               </div>
             )}

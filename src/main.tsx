@@ -32,6 +32,7 @@ function Router() {
   if (path === '/liquidity') return <LiquidityDashboard onClose={() => { window.location.href = '/'; }} />;
   if (path === '/esports') return <EsportsPage />;
   if (path === '/polylake') return <PolyLakePage />;
+  if (path === '/dashboard') return <App />;
   return <App />;
 }
 
