@@ -74,7 +74,8 @@ export default function AuthPage() {
         <img
           src="/auth-bg.png"
           alt=""
-          className="absolute inset-0 w-full h-full object-cover object-center opacity-30"
+          className="absolute opacity-30"
+          style={{ width: '60%', height: '60%', top: '20%', left: '20%', objectFit: 'contain' }}
         />
         <div className="absolute inset-0" style={{
           background: 'linear-gradient(to right, #050505 35%, transparent 65%, #050505 100%)',
