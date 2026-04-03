@@ -159,11 +159,45 @@ export function scoreColor(score: number): string {
   return 'text-red-400 bg-red-500/10 border-red-500/20';
 }
 
-// Estimate daily yield for a given capital amount
+// Rough estimate using market_competitiveness (used in table view, no book fetch needed)
 export function estimateDailyYield(market: RewardsMarket, capital: number): number {
   const dailyRate = market.rewards_config.reduce((s, r) => s + r.rate_per_day, 0);
   const comp = market.market_competitiveness;
-  if (comp === 0) return dailyRate; // uncontested — you get it all
-  // Your share of the pot based on capital vs existing competition
+  if (comp === 0) return dailyRate;
   return dailyRate * (capital / (comp + capital));
+}
+
+// Accurate yield using real order book depth per side.
+//
+// Polymarket splits the daily reward pool equally between the YES and NO sides.
+// Your share on each side = your_capital_on_that_side / (book_depth_on_that_side + your_capital).
+// The user's capital is split between YES and NO bids by the `splitRatio` (0–1, default 0.5 = 50/50).
+// A qualifying bid must have price ≥ token_price × (1 − max_spread/100).
+export interface BookYieldResult {
+  daily: number;
+  yesShare: number;       // 0–1 fraction
+  noShare: number;        // 0–1 fraction
+  yesBookDepth: number;   // $ of qualifying YES bids already on book
+  noBookDepth: number;    // $ of qualifying NO bids already on book
+  yesCapital: number;     // user's YES allocation
+  noCapital: number;      // user's NO allocation
+}
+
+export function estimateDailyYieldFromBook(
+  dailyRate: number,
+  capital: number,
+  splitRatio: number,          // fraction going to YES side (0–1)
+  yesBookDepth: number,
+  noBookDepth: number,
+): BookYieldResult {
+  const yesCapital = capital * splitRatio;
+  const noCapital  = capital * (1 - splitRatio);
+  const halfPool   = dailyRate / 2;
+
+  const yesShare = yesCapital === 0 ? 0 : yesCapital / (yesBookDepth + yesCapital);
+  const noShare  = noCapital  === 0 ? 0 : noCapital  / (noBookDepth  + noCapital);
+
+  const daily = halfPool * yesShare + halfPool * noShare;
+
+  return { daily, yesShare, noShare, yesBookDepth, noBookDepth, yesCapital, noCapital };
 }

@@ -4,13 +4,46 @@ import { useAuth } from '../contexts/AuthContext';
 import { supabase, type LPJournalRow } from '../lib/supabase';
 import {
   type RewardsMarket,
+  type BookYieldResult,
   calculateRiskAverseScore,
   getDaysUntilResolution,
   formatDaysLeft,
   daysColor,
   scoreColor,
   estimateDailyYield,
+  estimateDailyYieldFromBook,
 } from '../lib/rewardsScoring';
+
+// ─── Order book helpers ───────────────────────────────────────────────────────
+
+interface BookDepth { yes: number; no: number }
+
+async function fetchQualifyingDepth(market: RewardsMarket): Promise<BookDepth> {
+  const yesToken = market.tokens.find(t => t.outcome === 'Yes');
+  const noToken  = market.tokens.find(t => t.outcome === 'No');
+  if (!yesToken || !noToken) return { yes: 0, no: 0 };
+
+  const s = market.rewards_max_spread / 100;
+
+  async function sideDepth(tokenId: string, price: number): Promise<number> {
+    try {
+      const res  = await fetch(`/api/clob/book?token_id=${tokenId}`);
+      if (!res.ok) return 0;
+      const data = await res.json();
+      const minP = price * (1 - s);
+      return (data.bids ?? [])
+        .filter((b: { price: string }) => parseFloat(b.price) >= minP)
+        .reduce((sum: number, b: { price: string; size: string }) =>
+          sum + parseFloat(b.price) * parseFloat(b.size), 0);
+    } catch { return 0; }
+  }
+
+  const [yes, no] = await Promise.all([
+    sideDepth(yesToken.token_id, yesToken.price),
+    sideDepth(noToken.token_id,  noToken.price),
+  ]);
+  return { yes, no };
+}
 
 // ─── Data fetching ────────────────────────────────────────────────────────────
 
@@ -92,25 +125,55 @@ function ScoreBadge({ score, breakdown }: { score: number; breakdown: NonNullabl
   );
 }
 
-function LPSimulator({ market }: { market: RewardsMarket }) {
+function LPSimulator({ market, bookDepth, bookLoading }: {
+  market: RewardsMarket;
+  bookDepth: BookDepth | null;
+  bookLoading: boolean;
+}) {
   const [capital, setCapital] = useState(1000);
-  const [spread, setSpread] = useState(market.rewards_max_spread / 2);
+  // splitRatio: fraction of capital going to YES bids (default 50/50)
+  const [splitRatio, setSplitRatio] = useState(0.5);
 
   const dailyRate = market.rewards_config.reduce((s, r) => s + r.rate_per_day, 0);
-  const spreadOk = spread <= market.rewards_max_spread && capital >= market.rewards_min_size;
-  const estimatedDaily = spreadOk ? estimateDailyYield(market, capital) : 0;
   const days = market.daysUntilResolution ?? 0;
-  const totalEstimated = estimatedDaily * days;
-  const annualizedPct = capital > 0 && estimatedDaily > 0
-    ? ((estimatedDaily * 365) / capital) * 100
+  const valid = capital >= market.rewards_min_size;
+
+  const yesPrice = market.tokens.find(t => t.outcome === 'Yes')?.price ?? 0.5;
+  const noPrice  = market.tokens.find(t => t.outcome === 'No')?.price  ?? 0.5;
+
+  const result: BookYieldResult | null = valid && bookDepth
+    ? estimateDailyYieldFromBook(dailyRate, capital, splitRatio, bookDepth.yes, bookDepth.no)
+    : null;
+
+  const annualizedPct = result && capital > 0
+    ? (result.daily * 365 / capital) * 100
     : 0;
 
   return (
     <div className="space-y-4 bg-white/[0.02] rounded-xl border border-white/8 p-4">
       <div className="text-xs text-blue-400 font-semibold tracking-wider">LP SIMULATOR</div>
+
+      {/* Book depth row */}
+      <div className="grid grid-cols-2 gap-2">
+        {[
+          { label: `YES (${(yesPrice * 100).toFixed(1)}¢) book depth`, val: bookDepth?.yes, loading: bookLoading },
+          { label: `NO (${(noPrice * 100).toFixed(1)}¢) book depth`,   val: bookDepth?.no,  loading: bookLoading },
+        ].map(({ label, val, loading }) => (
+          <div key={label} className="bg-white/[0.03] border border-white/8 rounded-lg px-3 py-2">
+            <div className="text-[9px] text-gray-600 tracking-wider mb-0.5">{label}</div>
+            <div className="text-xs font-mono text-gray-300">
+              {loading ? <span className="animate-pulse text-gray-700">loading…</span>
+                : val != null ? `$${val.toLocaleString(undefined, { maximumFractionDigits: 0 })} qualifying`
+                : '—'}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Inputs */}
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="text-[10px] text-gray-500 tracking-wider block mb-1">CAPITAL ($)</label>
+          <label className="text-[10px] text-gray-500 tracking-wider block mb-1">YOUR CAPITAL ($)</label>
           <input
             type="number"
             value={capital}
@@ -124,44 +187,66 @@ function LPSimulator({ market }: { market: RewardsMarket }) {
         </div>
         <div>
           <label className="text-[10px] text-gray-500 tracking-wider block mb-1">
-            TARGET SPREAD (≤{market.rewards_max_spread}%)
+            YES / NO SPLIT ({Math.round(splitRatio * 100)}% / {Math.round((1 - splitRatio) * 100)}%)
           </label>
           <input
-            type="number"
-            value={spread}
-            onChange={e => setSpread(Number(e.target.value))}
-            step={0.1}
-            min={0.1}
-            max={market.rewards_max_spread}
-            className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white font-mono focus:outline-none focus:border-blue-500/50"
+            type="range"
+            min={0} max={1} step={0.05}
+            value={splitRatio}
+            onChange={e => setSplitRatio(Number(e.target.value))}
+            className="w-full mt-2 accent-blue-500"
           />
-          {spread > market.rewards_max_spread && (
-            <p className="text-[10px] text-red-400 mt-1">Exceeds max spread — orders won't score</p>
-          )}
+          <div className="flex justify-between text-[9px] text-gray-700 mt-0.5">
+            <span>${Math.round(capital * splitRatio)} YES</span>
+            <span>${Math.round(capital * (1 - splitRatio))} NO</span>
+          </div>
         </div>
       </div>
-      {spreadOk ? (
-        <div className="grid grid-cols-3 gap-3 pt-2">
-          <div className="bg-blue-500/5 border border-blue-500/10 rounded-xl p-3 text-center">
-            <div className="text-sm font-bold text-blue-400 font-mono">${estimatedDaily.toFixed(3)}</div>
-            <div className="text-[10px] text-gray-600 mt-0.5">Est. daily</div>
+
+      {/* Results */}
+      {result ? (
+        <>
+          <div className="grid grid-cols-3 gap-2">
+            <div className="bg-blue-500/5 border border-blue-500/10 rounded-xl p-3 text-center">
+              <div className="text-sm font-bold text-blue-400 font-mono">${result.daily.toFixed(3)}</div>
+              <div className="text-[10px] text-gray-600 mt-0.5">Est. daily</div>
+            </div>
+            <div className="bg-blue-500/5 border border-blue-500/10 rounded-xl p-3 text-center">
+              <div className="text-sm font-bold text-white font-mono">${(result.daily * days).toFixed(2)}</div>
+              <div className="text-[10px] text-gray-600 mt-0.5">Over {Math.floor(days)}d</div>
+            </div>
+            <div className="bg-blue-500/5 border border-blue-500/10 rounded-xl p-3 text-center">
+              <div className="text-sm font-bold text-blue-400 font-mono">{annualizedPct.toFixed(1)}%</div>
+              <div className="text-[10px] text-gray-600 mt-0.5">Ann. yield</div>
+            </div>
           </div>
-          <div className="bg-blue-500/5 border border-blue-500/10 rounded-xl p-3 text-center">
-            <div className="text-sm font-bold text-white font-mono">${totalEstimated.toFixed(2)}</div>
-            <div className="text-[10px] text-gray-600 mt-0.5">Over {Math.floor(days)}d</div>
+
+          {/* Share breakdown */}
+          <div className="grid grid-cols-2 gap-2 text-[10px]">
+            {[
+              { label: 'Your YES share', share: result.yesShare, depth: result.yesBookDepth, cap: result.yesCapital, color: 'text-blue-400' },
+              { label: 'Your NO share',  share: result.noShare,  depth: result.noBookDepth,  cap: result.noCapital,  color: 'text-gray-300' },
+            ].map(({ label, share, depth, cap, color }) => (
+              <div key={label} className="bg-white/[0.02] border border-white/5 rounded-lg px-3 py-2 space-y-0.5">
+                <div className="text-gray-600">{label}</div>
+                <div className={`font-bold font-mono ${color}`}>{(share * 100).toFixed(2)}%</div>
+                <div className="text-gray-700">
+                  ${cap.toLocaleString(undefined, { maximumFractionDigits: 0 })} vs ${depth.toLocaleString(undefined, { maximumFractionDigits: 0 })} on book
+                </div>
+              </div>
+            ))}
           </div>
-          <div className="bg-blue-500/5 border border-blue-500/10 rounded-xl p-3 text-center">
-            <div className="text-sm font-bold text-blue-400 font-mono">{annualizedPct.toFixed(1)}%</div>
-            <div className="text-[10px] text-gray-600 mt-0.5">Ann. yield</div>
-          </div>
-        </div>
+        </>
+      ) : bookLoading ? (
+        <div className="text-[10px] text-gray-700 text-center py-2 animate-pulse">Fetching order book…</div>
       ) : (
-        <div className="text-xs text-gray-600 text-center py-2">Fix inputs above to see projection</div>
+        <div className="text-[10px] text-gray-600 text-center py-2">Fix inputs above to see projection</div>
       )}
+
       <p className="text-[10px] text-gray-700 leading-relaxed">
-        Estimates assume your capital is fully deployed within the qualifying spread for the full duration.
-        Rewards paid daily ~midnight UTC. Inventory risk and competition still apply.
-        Competitiveness metric: {market.market_competitiveness.toLocaleString()}.
+        Book depth = sum of qualifying bids within the {market.rewards_max_spread}% spread range on each side.
+        Rewards split 50/50 between YES and NO sides. Your share = your capital / (book depth + your capital) per side.
+        Paid daily ~midnight UTC.
       </p>
     </div>
   );
@@ -186,11 +271,20 @@ function MarketModal({ market, onClose, onLogJournal }: {
   const yesPrice = market.tokens.find(t => t.outcome === 'Yes')?.price;
   const noPrice = market.tokens.find(t => t.outcome === 'No')?.price;
 
+  const [bookDepth, setBookDepth] = useState<BookDepth | null>(null);
+  const [bookLoading, setBookLoading] = useState(true);
+
   const [aiRec, setAiRec] = useState<AIRecommendation | null>(null);
   const [aiLoading, setAiLoading] = useState(true);
   const [aiError, setAiError] = useState<string | null>(null);
 
   useEffect(() => {
+    setBookLoading(true);
+    setBookDepth(null);
+    fetchQualifyingDepth(market)
+      .then(setBookDepth)
+      .finally(() => setBookLoading(false));
+
     setAiLoading(true);
     setAiError(null);
     setAiRec(null);
@@ -296,7 +390,7 @@ function MarketModal({ market, onClose, onLogJournal }: {
           )}
 
           {/* LP Simulator */}
-          <LPSimulator market={market} />
+          <LPSimulator market={market} bookDepth={bookDepth} bookLoading={bookLoading} />
 
           {/* AI Recommendation */}
           <div className="space-y-3 bg-white/[0.02] rounded-xl border border-white/8 p-4">
