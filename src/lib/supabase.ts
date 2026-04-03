@@ -20,3 +20,18 @@ export type Profile = {
   subscription_tier: string;
   opt_in_data_sharing: boolean;
 };
+
+export type LPJournalRow = {
+  id: string;
+  profile_id: string;
+  market: string;
+  condition_id: string;
+  capital: number;
+  target_spread: number;
+  expected_days: number;
+  daily_rate: number;
+  estimated_daily: number;
+  notes: string;
+  logged_at: string;
+  created_at: string;
+};

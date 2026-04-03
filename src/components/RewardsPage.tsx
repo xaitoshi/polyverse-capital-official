@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../contexts/AuthContext';
+import { supabase, type LPJournalRow } from '../lib/supabase';
 import {
   type RewardsMarket,
   calculateRiskAverseScore,
@@ -362,7 +363,7 @@ function LogJournalModal({ market, onClose, onSave }: {
   );
 }
 
-// ─── LP Journal (localStorage) ────────────────────────────────────────────────
+// ─── LP Journal (Supabase, per user) ─────────────────────────────────────────
 
 export interface LPJournalEntry {
   market: string;
@@ -376,13 +377,35 @@ export interface LPJournalEntry {
   notes: string;
 }
 
-const LP_JOURNAL_KEY = 'klvs_lp_journal';
-function loadLPJournal(): LPJournalEntry[] {
-  try { return JSON.parse(localStorage.getItem(LP_JOURNAL_KEY) ?? '[]'); }
-  catch { return []; }
+async function fetchJournal(profileId: string): Promise<LPJournalRow[]> {
+  const { data, error } = await supabase
+    .from('lp_journal')
+    .select('*')
+    .eq('profile_id', profileId)
+    .order('logged_at', { ascending: false });
+  if (error) throw error;
+  return data ?? [];
 }
-function saveLPJournal(entries: LPJournalEntry[]) {
-  localStorage.setItem(LP_JOURNAL_KEY, JSON.stringify(entries));
+
+async function insertJournalEntry(profileId: string, entry: LPJournalEntry): Promise<void> {
+  const { error } = await supabase.from('lp_journal').insert({
+    profile_id: profileId,
+    market: entry.market,
+    condition_id: entry.conditionId,
+    capital: entry.capital,
+    target_spread: entry.targetSpread,
+    expected_days: entry.expectedDays,
+    daily_rate: entry.dailyRate,
+    estimated_daily: entry.estimatedDaily,
+    notes: entry.notes,
+    logged_at: entry.loggedAt,
+  });
+  if (error) throw error;
+}
+
+async function deleteJournalEntry(id: string): Promise<void> {
+  const { error } = await supabase.from('lp_journal').delete().eq('id', id);
+  if (error) throw error;
 }
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
@@ -406,20 +429,29 @@ export default function RewardsPage() {
   const [sortAsc, setSortAsc] = useState(false);
   const [selectedMarket, setSelectedMarket] = useState<RewardsMarket | null>(null);
   const [logTarget, setLogTarget] = useState<RewardsMarket | null>(null);
-  const [lpJournal, setLPJournal] = useState<LPJournalEntry[]>(loadLPJournal);
   const [showJournal, setShowJournal] = useState(false);
 
-  const saveEntry = (entry: LPJournalEntry) => {
-    const updated = [entry, ...lpJournal];
-    setLPJournal(updated);
-    saveLPJournal(updated);
-  };
+  const profileId = user?.profile?.id ?? null;
+  const queryClient = useQueryClient();
 
-  const removeEntry = (idx: number) => {
-    const updated = lpJournal.filter((_, i) => i !== idx);
-    setLPJournal(updated);
-    saveLPJournal(updated);
-  };
+  const { data: lpJournal = [] } = useQuery({
+    queryKey: ['lp-journal', profileId],
+    queryFn: () => fetchJournal(profileId!),
+    enabled: !!profileId,
+  });
+
+  const addMutation = useMutation({
+    mutationFn: (entry: LPJournalEntry) => insertJournalEntry(profileId!, entry),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['lp-journal', profileId] }),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => deleteJournalEntry(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['lp-journal', profileId] }),
+  });
+
+  const saveEntry = (entry: LPJournalEntry) => addMutation.mutate(entry);
+  const removeEntry = (id: string) => deleteMutation.mutate(id);
 
   const setSweetSpot = () => {
     setMinDays(7);
@@ -480,6 +512,7 @@ export default function RewardsPage() {
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
           </svg>
           LP Journal {lpJournal.length > 0 && <span className="text-blue-400">({lpJournal.length})</span>}
+          {!profileId && <span className="text-gray-700 ml-1">(sign in)</span>}
         </button>
       </div>
 
@@ -517,24 +550,28 @@ export default function RewardsPage() {
               <span className="text-xs font-semibold text-white">My LP Positions</span>
               <span className="text-[10px] text-gray-600">Stored locally</span>
             </div>
-            {lpJournal.length === 0 ? (
+            {!profileId ? (
+              <div className="px-4 py-8 text-center text-gray-700 text-xs">
+                Sign in to save LP positions to your account.
+              </div>
+            ) : lpJournal.length === 0 ? (
               <div className="px-4 py-8 text-center text-gray-700 text-xs">
                 No positions logged yet. Click a market row → "Log to Journal".
               </div>
             ) : (
               <div className="divide-y divide-white/5">
-                {lpJournal.map((e, i) => (
-                  <div key={i} className="px-4 py-3 flex items-start justify-between gap-4 hover:bg-white/[0.02]">
+                {lpJournal.map(e => (
+                  <div key={e.id} className="px-4 py-3 flex items-start justify-between gap-4 hover:bg-white/[0.02]">
                     <div className="flex-1 min-w-0">
                       <div className="text-xs text-white truncate">{e.market}</div>
                       <div className="text-[10px] text-gray-600 mt-0.5">
-                        ${e.capital} @ ≤{e.targetSpread}% spread · ${e.dailyRate}/day pool · est. ${e.estimatedDaily.toFixed(3)}/day · {e.expectedDays}d duration
+                        ${e.capital} @ ≤{e.target_spread}% spread · ${e.daily_rate}/day pool · est. ${e.estimated_daily.toFixed(3)}/day · {e.expected_days}d duration
                       </div>
                       {e.notes && <div className="text-[10px] text-gray-700 mt-0.5 italic">{e.notes}</div>}
                     </div>
                     <div className="flex items-center gap-3 shrink-0">
-                      <span className="text-[10px] text-gray-700">{new Date(e.loggedAt).toLocaleDateString()}</span>
-                      <button onClick={() => removeEntry(i)} className="text-gray-700 hover:text-red-400 transition-colors">
+                      <span className="text-[10px] text-gray-700">{new Date(e.logged_at).toLocaleDateString()}</span>
+                      <button onClick={() => removeEntry(e.id)} className="text-gray-700 hover:text-red-400 transition-colors">
                         <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                           <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                         </svg>
@@ -694,7 +731,8 @@ export default function RewardsPage() {
                       <td className="px-3 py-3 text-center" onClick={e => e.stopPropagation()}>
                         <button
                           onClick={() => setLogTarget(m)}
-                          className="px-2.5 py-1.5 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[10px] hover:bg-blue-500/20 transition-colors whitespace-nowrap"
+                          disabled={!profileId}
+                          className="px-2.5 py-1.5 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[10px] hover:bg-blue-500/20 transition-colors whitespace-nowrap disabled:opacity-30 disabled:cursor-not-allowed"
                         >
                           + Log
                         </button>
