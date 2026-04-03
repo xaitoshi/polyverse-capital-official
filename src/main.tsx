@@ -7,6 +7,7 @@ import EarnPage from './components/EarnPage.tsx';
 import EsportsPage from './components/EsportsPage.tsx';
 import LiquidityDashboard from './components/LiquidityDashboard.tsx';
 import PolyLakePage from './components/PolyLakePage.tsx';
+import RewardsPage from './components/RewardsPage.tsx';
 import AuthPage from './components/AuthPage.tsx';
 import { AuthProvider, useAuth } from './contexts/AuthContext.tsx';
 import { wagmiConfig } from './lib/wagmi.ts';
@@ -33,6 +34,7 @@ function Router() {
   if (path === '/esports') return <EsportsPage />;
   if (path === '/polylake') return <PolyLakePage />;
   if (path === '/dashboard') return <App />;
+  if (path === '/rewards') return <RewardsPage />;
   return <App />;
 }
 

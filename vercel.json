@@ -21,6 +21,10 @@
       "destination": "/index.html"
     },
     {
+      "source": "/rewards",
+      "destination": "/index.html"
+    },
+    {
       "source": "/api/poly-web/:path*",
       "destination": "https://polymarket.com/:path*"
     },
