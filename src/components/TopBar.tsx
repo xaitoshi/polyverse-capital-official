@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Search, Globe2, Droplets, Activity, Layers, TrendingUp, Menu, X, Gamepad2, Bot } from 'lucide-react';
+import { Search, Globe2, Droplets, Activity, Layers, TrendingUp, Menu, X, Gamepad2, Bot, Fish, Gift } from 'lucide-react';
 import { MarketData } from '../data/mockData';
 
 interface SearchResult {
@@ -143,6 +143,16 @@ export default function TopBar({ onOpenEcosystem, onOpenPolyEarn, onOpenOsint, o
               className="flex items-center justify-center gap-2 py-3 px-6 bg-white/5 border border-blue-500/20 text-gray-300 rounded-lg text-sm font-mono hover:bg-blue-500/10 hover:text-blue-400 transition-colors">
               <Gamepad2 className="w-4 h-4" /> Esports
             </a>
+            <a href="/polylake"
+              onClick={() => setDesktopMenuOpen(false)}
+              className="flex items-center justify-center gap-2 py-3 px-6 bg-white/5 border border-blue-500/20 text-gray-300 rounded-lg text-sm font-mono hover:bg-blue-500/10 hover:text-blue-400 transition-colors">
+              <Fish className="w-4 h-4" /> PolyLake
+            </a>
+            <a href="/rewards"
+              onClick={() => setDesktopMenuOpen(false)}
+              className="flex items-center justify-center gap-2 py-3 px-6 bg-white/5 border border-blue-500/20 text-gray-300 rounded-lg text-sm font-mono hover:bg-blue-500/10 hover:text-blue-400 transition-colors">
+              <Gift className="w-4 h-4" /> Rewards
+            </a>
           </div>
         )}
       </div>
@@ -209,6 +219,14 @@ export default function TopBar({ onOpenEcosystem, onOpenPolyEarn, onOpenOsint, o
             <a href="/esports" onClick={closeAll}
               className="flex items-center justify-center gap-2 py-3 bg-white/5 border border-blue-500/20 text-gray-300 rounded-lg text-sm font-mono hover:bg-blue-500/10 hover:text-blue-400 transition-colors">
               <Gamepad2 className="w-4 h-4" /> Esports
+            </a>
+            <a href="/polylake" onClick={closeAll}
+              className="flex items-center justify-center gap-2 py-3 bg-white/5 border border-blue-500/20 text-gray-300 rounded-lg text-sm font-mono hover:bg-blue-500/10 hover:text-blue-400 transition-colors">
+              <Fish className="w-4 h-4" /> PolyLake
+            </a>
+            <a href="/rewards" onClick={closeAll}
+              className="flex items-center justify-center gap-2 py-3 bg-white/5 border border-blue-500/20 text-gray-300 rounded-lg text-sm font-mono hover:bg-blue-500/10 hover:text-blue-400 transition-colors">
+              <Gift className="w-4 h-4" /> Rewards
             </a>
           </div>
         )}
