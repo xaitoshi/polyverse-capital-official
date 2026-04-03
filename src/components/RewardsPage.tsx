@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase, type LPJournalRow } from '../lib/supabase';
@@ -167,6 +167,16 @@ function LPSimulator({ market }: { market: RewardsMarket }) {
   );
 }
 
+interface AIRecommendation {
+  yes_bid: string;
+  no_bid: string;
+  order_size: string;
+  yes_rationale: string;
+  no_rationale: string;
+  size_rationale: string;
+  summary: string;
+}
+
 function MarketModal({ market, onClose, onLogJournal }: {
   market: RewardsMarket;
   onClose: () => void;
@@ -175,6 +185,28 @@ function MarketModal({ market, onClose, onLogJournal }: {
   const dailyRate = market.rewards_config.reduce((s, r) => s + r.rate_per_day, 0);
   const yesPrice = market.tokens.find(t => t.outcome === 'Yes')?.price;
   const noPrice = market.tokens.find(t => t.outcome === 'No')?.price;
+
+  const [aiRec, setAiRec] = useState<AIRecommendation | null>(null);
+  const [aiLoading, setAiLoading] = useState(true);
+  const [aiError, setAiError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setAiLoading(true);
+    setAiError(null);
+    setAiRec(null);
+    fetch('/api/lp-recommend', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ market }),
+    })
+      .then(r => r.json())
+      .then(data => {
+        if (data.error) throw new Error(data.error);
+        setAiRec(data);
+      })
+      .catch(e => setAiError(e.message ?? 'Failed to generate recommendation'))
+      .finally(() => setAiLoading(false));
+  }, [market.condition_id]);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onClick={onClose}>
@@ -265,6 +297,40 @@ function MarketModal({ market, onClose, onLogJournal }: {
 
           {/* LP Simulator */}
           <LPSimulator market={market} />
+
+          {/* AI Recommendation */}
+          <div className="space-y-3 bg-white/[0.02] rounded-xl border border-white/8 p-4">
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-blue-400 font-semibold tracking-wider">AI ORDER RECOMMENDATION</span>
+              <span className="text-[9px] text-gray-600 bg-white/5 px-1.5 py-0.5 rounded">Gemini</span>
+            </div>
+            {aiLoading ? (
+              <div className="space-y-2 pt-1">
+                {[...Array(3)].map((_, i) => (
+                  <div key={i} className="h-8 rounded-lg bg-white/[0.03] animate-pulse" />
+                ))}
+              </div>
+            ) : aiError ? (
+              <p className="text-[11px] text-red-400/70">{aiError}</p>
+            ) : aiRec ? (
+              <div className="space-y-3">
+                <p className="text-[11px] text-gray-400 leading-relaxed italic">"{aiRec.summary}"</p>
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { label: 'YES Bid', val: aiRec.yes_bid, rationale: aiRec.yes_rationale, color: 'text-blue-400' },
+                    { label: 'NO Bid', val: aiRec.no_bid, rationale: aiRec.no_rationale, color: 'text-gray-300' },
+                    { label: 'Order Size', val: aiRec.order_size, rationale: aiRec.size_rationale, color: 'text-green-400' },
+                  ].map(({ label, val, rationale, color }) => (
+                    <div key={label} className="bg-white/[0.03] border border-white/8 rounded-xl p-3 space-y-1.5">
+                      <div className="text-[9px] text-gray-600 tracking-wider">{label}</div>
+                      <div className={`text-sm font-bold font-mono ${color}`}>{val}</div>
+                      <div className="text-[9px] text-gray-600 leading-tight">{rationale}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+          </div>
 
           {/* Actions */}
           <div className="flex gap-3 pt-1">
