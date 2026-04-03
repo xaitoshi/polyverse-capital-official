@@ -301,8 +301,7 @@ function MarketModal({ market, onClose, onLogJournal }: {
           {/* AI Recommendation */}
           <div className="space-y-3 bg-white/[0.02] rounded-xl border border-white/8 p-4">
             <div className="flex items-center gap-2">
-              <span className="text-xs text-blue-400 font-semibold tracking-wider">AI ORDER RECOMMENDATION</span>
-              <span className="text-[9px] text-gray-600 bg-white/5 px-1.5 py-0.5 rounded">Gemini</span>
+              <span className="text-xs text-blue-400 font-semibold tracking-wider">ORDER RECOMMENDATION</span>
             </div>
             {aiLoading ? (
               <div className="space-y-2 pt-1">
