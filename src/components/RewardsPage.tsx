@@ -48,32 +48,14 @@ async function fetchQualifyingDepth(market: RewardsMarket): Promise<BookDepth> {
 // ─── Data fetching ────────────────────────────────────────────────────────────
 
 async function fetchRewardsMarkets(): Promise<RewardsMarket[]> {
-  // Fetch CLOB rewards markets (authoritative for reward fields)
-  const clobRes = await fetch('/api/clob/rewards/markets/multi');
-  const clobData = await clobRes.json();
-  const rawMarkets: RewardsMarket[] = (clobData.data ?? []).filter(
-    (m: RewardsMarket) => m.rewards_config && m.rewards_config.length > 0,
-  );
+  // Use server-side aggregator that paginates ALL CLOB pages + merges Gamma dates
+  const res = await fetch('/api/rewards-markets');
+  if (!res.ok) throw new Error(`Failed to fetch rewards: ${res.status}`);
+  const { data } = await res.json();
 
-  // Fetch Gamma API for correct end dates (CLOB end_dates are often wrong)
-  const gammaRes = await fetch(
-    '/api/polymarket/markets?active=true&closed=false&limit=500&order=volume&ascending=false',
-  );
-  const gammaData = await gammaRes.json();
-  const gammaMap: Record<string, string> = {};
-  if (Array.isArray(gammaData)) {
-    for (const m of gammaData) {
-      if (m.slug && m.endDate) gammaMap[m.slug] = m.endDate;
-    }
-  }
-
-  // Merge and score
-  return rawMarkets.map(m => {
-    const endDate = gammaMap[m.market_slug] ?? m.end_date;
-    const days = getDaysUntilResolution(endDate);
-    const enriched: RewardsMarket = { ...m, resolved_end_date: endDate, daysUntilResolution: days };
-    const { score, breakdown } = calculateRiskAverseScore(enriched);
-    return { ...enriched, riskScore: score, scoreBreakdown: breakdown };
+  return (data as RewardsMarket[]).map(m => {
+    const { score, breakdown } = calculateRiskAverseScore(m);
+    return { ...m, riskScore: score, scoreBreakdown: breakdown };
   });
 }
 
