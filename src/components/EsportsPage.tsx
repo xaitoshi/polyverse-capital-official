@@ -421,6 +421,10 @@ export default function EsportsPage() {
     analysisIntervalRef.current = null;
     tickIntervalRef.current = null;
     setCaptureActive(false);
+    setGameStats(null);
+    setStatsHistory([]);
+    setLastUpdated(null);
+    setAnalysisError(null);
   }, []);
 
   const startAnalysis = async () => {
