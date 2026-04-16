@@ -7,13 +7,13 @@ export default async function handler(req, res) {
   const key = process.env.GEMINI_API_KEY;
   if (!key) return res.status(500).json({ error: 'GEMINI_API_KEY not configured' });
 
-  const prompt = `Analyze this League of Legends broadcast screenshot. Extract the scoreboard information:
+  const prompt = `Analyze this League of Legends broadcast screenshot. Extract the scoreboard information from the HUD at the top of the screen:
 - Blue team name and Red team name
-- Gold for Blue team and Red team
-- Kills for Blue team and Red team
-- Towers destroyed for Blue team and Red team
-- Dragons taken by Blue team and Red team
-- Current game time
+- Gold for Blue team and Red team (shown as numbers like 55.2k)
+- Kills for Blue team and Red team (shown as numbers either side of the centre)
+- Towers destroyed for Blue team and Red team (tower icon with a number)
+- Dragons taken by Blue team and Red team — IMPORTANT: dragons are shown as small coloured elemental icons (fire, water, earth, wind, void, chemtech, hextech) NOT as a plain number. Count how many dragon icons appear on each side of the scoreboard and return that count as an integer.
+- Current game time (MM:SS shown in the centre top area)
 
 Return ONLY clean JSON in this exact format with no extra text:
 {
