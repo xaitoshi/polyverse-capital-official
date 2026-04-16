@@ -361,6 +361,21 @@ export default function EsportsPage() {
   const analysisIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const tickIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  // ── Polymarket live odds ───────────────────────────────────────────────────
+  interface PolyMarket { id: string; question: string; outcomePrices: string; outcomes: string; url: string; volume: string }
+  const [polyMarkets, setPolyMarkets] = useState<PolyMarket[]>([]);
+  const [polyLoading, setPolyLoading] = useState(false);
+
+  useEffect(() => {
+    if (!teamA || !teamB) { setPolyMarkets([]); return; }
+    setPolyLoading(true);
+    fetch(`/api/esports-markets?team1=${encodeURIComponent(teamA)}&team2=${encodeURIComponent(teamB)}`)
+      .then(r => r.json())
+      .then(data => setPolyMarkets(Array.isArray(data) ? data : []))
+      .catch(() => setPolyMarkets([]))
+      .finally(() => setPolyLoading(false));
+  }, [teamA, teamB]);
+
   const league = LEAGUES.find(l => l.id === selectedLeague)!;
   const hostname = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
   const twitchSrc = league.twitch
@@ -1041,7 +1056,7 @@ export default function EsportsPage() {
                   </div>
                 </div>
                 {prediction && teamA && teamB ? (
-                  <div className="space-y-1.5">
+                  <div className="space-y-2">
                     <WinBar probA={prediction.probA} teamA={teamA} teamB={teamB} />
                     <div className="flex justify-between text-[9px] text-gray-600 font-mono">
                       {h2hData ? (
@@ -1050,6 +1065,38 @@ export default function EsportsPage() {
                       <span className="text-gray-700">
                         {Math.round(prediction.wrA * 100)}% · {Math.round(prediction.wrB * 100)}% overall WR
                       </span>
+                    </div>
+
+                    {/* Polymarket live odds */}
+                    <div className="border-t border-white/5 pt-2 space-y-1.5">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[9px] text-gray-600 tracking-widest">POLYMARKET ODDS</span>
+                        {polyLoading && <span className="w-2 h-2 rounded-full border border-blue-400 border-t-transparent animate-spin inline-block" />}
+                      </div>
+                      {!polyLoading && polyMarkets.length === 0 && (
+                        <div className="text-[9px] text-gray-700">No active markets found</div>
+                      )}
+                      {polyMarkets.slice(0, 3).map(m => {
+                        let prices: number[] = [];
+                        let outcomes: string[] = [];
+                        try { prices = JSON.parse(m.outcomePrices).map(Number); } catch { prices = []; }
+                        try { outcomes = JSON.parse(m.outcomes); } catch { outcomes = []; }
+                        const vol = m.volume ? `$${Number(m.volume).toLocaleString(undefined, { maximumFractionDigits: 0 })}` : '';
+                        return (
+                          <a key={m.id} href={`https://polymarket.com/event/${m.url}`} target="_blank" rel="noopener noreferrer"
+                            className="block bg-white/[0.03] border border-white/8 rounded-lg px-2 py-1.5 hover:bg-white/[0.06] transition-colors">
+                            <div className="text-[9px] text-gray-400 leading-tight mb-1 line-clamp-1">{m.question}</div>
+                            <div className="flex items-center gap-1 flex-wrap">
+                              {prices.map((p, i) => (
+                                <span key={i} className={`text-[10px] font-bold font-mono px-1.5 py-0.5 rounded ${i === 0 ? 'bg-blue-500/15 text-blue-400' : 'bg-orange-500/15 text-orange-400'}`}>
+                                  {outcomes[i] ?? (i === 0 ? 'Yes' : 'No')} {Math.round(p * 100)}¢
+                                </span>
+                              ))}
+                              {vol && <span className="text-[9px] text-gray-700 ml-auto">{vol} vol</span>}
+                            </div>
+                          </a>
+                        );
+                      })}
                     </div>
                   </div>
                 ) : (
