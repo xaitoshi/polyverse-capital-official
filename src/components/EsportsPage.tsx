@@ -468,6 +468,150 @@ export default function EsportsPage() {
   const towerDiff  = statsHistory.map(s => ({ t: s.timestamp, diff: s.blue.towers  - s.red.towers  }));
   const dragonDiff = statsHistory.map(s => ({ t: s.timestamp, diff: s.blue.dragons - s.red.dragons }));
 
+  const downloadGameStats = () => {
+    if (!gameStats) return;
+
+    const W = 800, CHART_H = 100, PAD = 32;
+    const CHARTS = [
+      { label: 'GOLD DIFF',   data: goldDiff,   color: '#3b82f6' },
+      { label: 'KILL DIFF',   data: killDiff,   color: '#22c55e' },
+      { label: 'TOWER DIFF',  data: towerDiff,  color: '#a855f7' },
+      { label: 'DRAGON DIFF', data: dragonDiff, color: '#f97316' },
+    ];
+    const STAT_SECTION = 200;
+    const H = PAD + 60 + STAT_SECTION + CHARTS.length * (CHART_H + 40) + PAD;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = W * 2; canvas.height = H * 2;
+    const ctx = canvas.getContext('2d')!;
+    ctx.scale(2, 2);
+
+    // Background
+    ctx.fillStyle = '#050505';
+    ctx.fillRect(0, 0, W, H);
+
+    // Subtle grid
+    ctx.strokeStyle = 'rgba(59,130,246,0.05)';
+    ctx.lineWidth = 1;
+    for (let y = 0; y < H; y += 40) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+
+    // Header
+    ctx.font = 'bold 11px monospace'; ctx.fillStyle = '#3b82f6';
+    ctx.fillText('POLYVERSE', PAD, 30);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText(' /ESPORTS · LIVE GAME STATS', PAD + 71, 30);
+    ctx.font = '9px monospace'; ctx.fillStyle = 'rgba(255,255,255,0.2)';
+    const ts = new Date().toLocaleString();
+    ctx.fillText(ts, W - PAD - ctx.measureText(ts).width, 30);
+
+    // Divider
+    ctx.fillStyle = 'rgba(59,130,246,0.15)'; ctx.fillRect(PAD, 40, W - PAD * 2, 1);
+
+    // Team names + game time
+    const blue = gameStats.blueTeam || 'BLUE';
+    const red  = gameStats.redTeam  || 'RED';
+    ctx.font = 'bold 20px monospace'; ctx.fillStyle = '#3b82f6';
+    ctx.fillText(blue, PAD, 72);
+    ctx.font = '11px monospace'; ctx.fillStyle = 'rgba(255,255,255,0.3)';
+    ctx.fillText('vs', W / 2 - 8, 72);
+    ctx.font = 'bold 20px monospace'; ctx.fillStyle = '#f97316';
+    const redW = ctx.measureText(red).width;
+    ctx.fillText(red, W - PAD - redW, 72);
+    ctx.font = '10px monospace'; ctx.fillStyle = '#6b7280';
+    const timeLabel = `⏱ ${gameStats.gameTime || '—'}`;
+    ctx.fillText(timeLabel, W / 2 - ctx.measureText(timeLabel).width / 2, 90);
+
+    // Stat bars
+    const stats = [
+      { label: 'GOLD',    bv: gameStats.blue.gold,    rv: gameStats.red.gold,    fmt: (v: number) => `${(v/1000).toFixed(1)}k` },
+      { label: 'KILLS',   bv: gameStats.blue.kills,   rv: gameStats.red.kills,   fmt: (v: number) => String(v) },
+      { label: 'TOWERS',  bv: gameStats.blue.towers,  rv: gameStats.red.towers,  fmt: (v: number) => String(v) },
+      { label: 'DRAGONS', bv: gameStats.blue.dragons, rv: gameStats.red.dragons, fmt: (v: number) => String(v) },
+    ];
+    let sy = 110;
+    const barW = W - PAD * 2;
+    stats.forEach(({ label, bv, rv, fmt }) => {
+      const total = bv + rv || 1;
+      const bFrac = bv / total;
+      ctx.font = '8px monospace'; ctx.fillStyle = '#4b5563';
+      ctx.textAlign = 'center';
+      ctx.fillText(label, W / 2, sy - 2);
+      ctx.textAlign = 'left';
+      ctx.font = 'bold 9px monospace'; ctx.fillStyle = '#3b82f6';
+      ctx.fillText(fmt(bv), PAD, sy - 2);
+      ctx.fillStyle = '#f97316'; ctx.textAlign = 'right';
+      ctx.fillText(fmt(rv), W - PAD, sy - 2);
+      ctx.textAlign = 'left';
+      // Blue bar
+      ctx.fillStyle = '#3b82f6';
+      ctx.beginPath(); ctx.roundRect(PAD, sy, barW * bFrac, 7, [3, 0, 0, 3]); ctx.fill();
+      // Red bar
+      ctx.fillStyle = '#f97316';
+      ctx.beginPath(); ctx.roundRect(PAD + barW * bFrac, sy, barW * (1 - bFrac), 7, [0, 3, 3, 0]); ctx.fill();
+      sy += 30;
+    });
+
+    // Charts
+    let cy = PAD + 60 + STAT_SECTION - 10;
+    ctx.fillStyle = 'rgba(255,255,255,0.04)';
+    ctx.fillRect(PAD, cy - 6, W - PAD * 2, 1);
+    cy += 10;
+
+    CHARTS.forEach(({ label, data, color }) => {
+      if (data.length < 2) return;
+      ctx.font = '8px monospace'; ctx.fillStyle = '#6b7280';
+      ctx.fillText(label, PAD, cy + 12);
+
+      const diffs = data.map(d => d.diff);
+      const min = Math.min(...diffs, 0);
+      const max = Math.max(...diffs, 0);
+      const range = max - min || 1;
+      const cW = W - PAD * 2;
+      const toX = (i: number) => PAD + (i / (data.length - 1)) * cW;
+      const toY = (v: number) => cy + 18 + ((max - v) / range) * (CHART_H - 10);
+      const zeroY = toY(0);
+
+      // Zero line
+      ctx.strokeStyle = 'rgba(255,255,255,0.06)'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(PAD, zeroY); ctx.lineTo(PAD + cW, zeroY); ctx.stroke();
+
+      // Area fill
+      ctx.beginPath();
+      ctx.moveTo(toX(0), zeroY);
+      data.forEach((d, i) => ctx.lineTo(toX(i), toY(d.diff)));
+      ctx.lineTo(toX(data.length - 1), zeroY);
+      ctx.closePath();
+      ctx.fillStyle = color + '20'; ctx.fill();
+
+      // Line
+      ctx.beginPath();
+      data.forEach((d, i) => i === 0 ? ctx.moveTo(toX(i), toY(d.diff)) : ctx.lineTo(toX(i), toY(d.diff)));
+      ctx.strokeStyle = color; ctx.lineWidth = 1.5;
+      ctx.lineJoin = 'round'; ctx.stroke();
+
+      // Last value
+      const last = diffs[diffs.length - 1];
+      ctx.font = 'bold 9px monospace'; ctx.fillStyle = color;
+      const lastLabel = `${last > 0 ? '+' : ''}${last.toLocaleString()}`;
+      ctx.fillText(lastLabel, PAD, cy + CHART_H + 22);
+      ctx.font = '8px monospace'; ctx.fillStyle = '#374151'; ctx.textAlign = 'right';
+      ctx.fillText(`${data.length} snapshots`, W - PAD, cy + CHART_H + 22);
+      ctx.textAlign = 'left';
+
+      cy += CHART_H + 40;
+    });
+
+    // Footer
+    ctx.fillStyle = 'rgba(255,255,255,0.06)'; ctx.fillRect(PAD, H - 24, W - PAD * 2, 1);
+    ctx.font = '8px monospace'; ctx.fillStyle = 'rgba(255,255,255,0.2)';
+    ctx.fillText('polyverse.capital/esports · powered by commonstack ai', PAD, H - 10);
+
+    const link = document.createElement('a');
+    link.download = `${blue}-vs-${red}-game-stats.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  };
+
   // Gemini scan
   const [scanImg, setScanImg] = useState<string | null>(null);
   const [scanLoading, setScanLoading] = useState(false);
@@ -905,12 +1049,16 @@ export default function EsportsPage() {
 
               {gameStats && (
                 <>
-                  {/* Team names + timer */}
+                  {/* Team names + timer + share button */}
                   <div className="flex items-center justify-between text-[10px] font-mono border-b border-white/5 pb-2">
                     <span className="text-blue-400 font-bold">{gameStats.blueTeam || 'BLUE'}</span>
                     <span className="text-gray-600">⏱ {gameStats.gameTime || '—'}</span>
                     <span className="text-orange-400 font-bold">{gameStats.redTeam || 'RED'}</span>
                   </div>
+                  <button onClick={downloadGameStats}
+                    className="w-full px-2 py-1.5 rounded-lg bg-white/5 border border-white/10 text-gray-400 text-[10px] font-mono hover:bg-white/10 hover:text-white transition-colors flex items-center justify-center gap-1.5">
+                    📸 Save chart as image
+                  </button>
 
                   {/* Stat bars */}
                   {[
