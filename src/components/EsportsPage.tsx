@@ -1027,6 +1027,35 @@ export default function EsportsPage() {
                 )}
                 {analysisError && <span className="text-[10px] text-red-400">{analysisError}</span>}
               </div>
+
+              {/* ── Quick win-rate strip ── */}
+              <div className="mt-3 bg-white/[0.02] border border-white/8 rounded-xl p-3 space-y-2">
+                <div className="text-[9px] text-gray-600 tracking-widest">QUICK WIN RATE</div>
+                <div className="flex gap-2">
+                  <div className="flex-1 min-w-0">
+                    <Autocomplete value={teamA} onChange={setTeamA} options={teamList} placeholder="Blue team…" />
+                  </div>
+                  <div className="flex items-center text-[10px] text-gray-600 px-1">vs</div>
+                  <div className="flex-1 min-w-0">
+                    <Autocomplete value={teamB} onChange={setTeamB} options={teamList} placeholder="Red team…" />
+                  </div>
+                </div>
+                {prediction && teamA && teamB ? (
+                  <div className="space-y-1.5">
+                    <WinBar probA={prediction.probA} teamA={teamA} teamB={teamB} />
+                    <div className="flex justify-between text-[9px] text-gray-600 font-mono">
+                      {h2hData ? (
+                        <span>H2H {h2hData.winsA}–{h2hData.winsB} ({h2hData.total}g)</span>
+                      ) : <span>No H2H data</span>}
+                      <span className="text-gray-700">
+                        {Math.round(prediction.wrA * 100)}% · {Math.round(prediction.wrB * 100)}% overall WR
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-[9px] text-gray-700 text-center py-1">Select both teams to see prediction</div>
+                )}
+              </div>
             </div>
 
             {/* Stats panel — 35% width, scrollable */}
