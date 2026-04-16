@@ -19,6 +19,9 @@ const path = window.location.pathname;
 function Router() {
   const { user, loading } = useAuth();
 
+  // Public routes — no auth required
+  if (path === '/esports') return <EsportsPage />;
+
   if (loading) {
     return (
       <div className="min-h-screen bg-[#050505] flex items-center justify-center">
@@ -31,7 +34,6 @@ function Router() {
 
   if (path === '/earn') return <EarnPage />;
   if (path === '/liquidity') return <LiquidityDashboard onClose={() => { window.location.href = '/'; }} />;
-  if (path === '/esports') return <EsportsPage />;
   if (path === '/polylake') return <PolyLakePage />;
   if (path === '/dashboard') return <App />;
   if (path === '/rewards') return <RewardsPage />;

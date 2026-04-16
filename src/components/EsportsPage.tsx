@@ -1,4 +1,71 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+
+// ── Live stream config ─────────────────────────────────────────────────────────
+const LEAGUES = [
+  { id: 'LCK', label: 'LCK', twitch: 'lck',  ytHandle: 'LCK'  },
+  { id: 'LPL', label: 'LPL', twitch: null,    ytHandle: 'lpl'  },
+  { id: 'LEC', label: 'LEC', twitch: 'lec',   ytHandle: 'LEC'  },
+  { id: 'LCS', label: 'LCS', twitch: 'lcs',   ytHandle: 'LCS'  },
+  { id: 'MSI', label: 'MSI / Worlds', twitch: 'riotgames', ytHandle: 'lolesports' },
+] as const;
+
+// ── Live stats types ───────────────────────────────────────────────────────────
+interface TeamStats { gold: number; kills: number; towers: number; dragons: number }
+interface GameStats {
+  blueTeam: string; redTeam: string; gameTime: string;
+  blue: TeamStats; red: TeamStats;
+}
+interface StatsSnapshot extends GameStats { timestamp: number }
+
+// ── Tiny SVG line chart ────────────────────────────────────────────────────────
+function DiffChart({ data, label, color }: {
+  data: { t: number; diff: number }[];
+  label: string;
+  color: string;
+}) {
+  if (data.length < 2) return (
+    <div className="h-24 flex items-center justify-center text-[10px] text-gray-700">
+      {data.length < 1 ? 'No data yet' : 'Waiting for more data points…'}
+    </div>
+  );
+
+  const W = 300, H = 80, PAD = 8;
+  const diffs = data.map(d => d.diff);
+  const min = Math.min(...diffs, 0);
+  const max = Math.max(...diffs, 0);
+  const range = max - min || 1;
+
+  const toY = (v: number) => PAD + ((max - v) / range) * (H - PAD * 2);
+  const toX = (i: number) => PAD + (i / (data.length - 1)) * (W - PAD * 2);
+
+  const pts = data.map((d, i) => `${toX(i)},${toY(d.diff)}`).join(' ');
+  const zeroY = toY(0);
+
+  return (
+    <div className="space-y-1">
+      <div className="text-[10px] text-gray-500 tracking-wider">{label}</div>
+      <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ height: 80 }}>
+        {/* zero line */}
+        <line x1={PAD} y1={zeroY} x2={W - PAD} y2={zeroY} stroke="rgba(255,255,255,0.07)" strokeWidth={1} />
+        {/* area fill */}
+        <polyline
+          points={`${toX(0)},${zeroY} ${pts} ${toX(data.length - 1)},${zeroY}`}
+          fill={color} fillOpacity={0.12} stroke="none"
+        />
+        {/* line */}
+        <polyline points={pts} fill="none" stroke={color} strokeWidth={1.5} strokeLinejoin="round" />
+        {/* last point dot */}
+        <circle cx={toX(data.length - 1)} cy={toY(diffs[diffs.length - 1])} r={3} fill={color} />
+      </svg>
+      <div className="flex justify-between text-[9px] font-mono">
+        <span style={{ color }} className="font-bold">
+          {diffs[diffs.length - 1] > 0 ? '+' : ''}{diffs[diffs.length - 1].toLocaleString()}
+        </span>
+        <span className="text-gray-700">{data.length} snapshots</span>
+      </div>
+    </div>
+  );
+}
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 interface TeamRecord { wins: number; total: number }
@@ -278,6 +345,123 @@ export default function EsportsPage() {
 
   // Player search tab
   const [playerSearch, setPlayerSearch] = useState('');
+
+  // ── Live stream + AI analysis state ──────────────────────────────────────────
+  const [selectedLeague, setSelectedLeague] = useState<typeof LEAGUES[number]['id']>('LCK');
+  const [streamSource, setStreamSource] = useState<'twitch' | 'youtube'>('twitch');
+  const [captureActive, setCaptureActive] = useState(false);
+  const [analysisLoading, setAnalysisLoading] = useState(false);
+  const [gameStats, setGameStats] = useState<GameStats | null>(null);
+  const [statsHistory, setStatsHistory] = useState<StatsSnapshot[]>([]);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [secondsAgo, setSecondsAgo] = useState(0);
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
+  const captureVideoRef = useRef<HTMLVideoElement>(null);
+  const captureStreamRef = useRef<MediaStream | null>(null);
+  const analysisIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const tickIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const league = LEAGUES.find(l => l.id === selectedLeague)!;
+  const hostname = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
+  const twitchSrc = league.twitch
+    ? `https://player.twitch.tv/?channel=${league.twitch}&parent=${hostname}&autoplay=false`
+    : null;
+  const youtubeSrc = `https://www.youtube.com/@${league.ytHandle}/live`;
+
+  const captureAndAnalyze = useCallback(async () => {
+    if (!captureVideoRef.current) return;
+    const video = captureVideoRef.current;
+    if (video.readyState < 2 || video.videoWidth === 0) return;
+
+    setAnalysisLoading(true);
+    setAnalysisError(null);
+    try {
+      // Draw full frame
+      const canvas = document.createElement('canvas');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      canvas.getContext('2d')!.drawImage(video, 0, 0);
+
+      // Crop top 20% — where LoL scoreboard overlay lives
+      const cropH = Math.floor(canvas.height * 0.20);
+      const crop = document.createElement('canvas');
+      crop.width = canvas.width;
+      crop.height = cropH;
+      crop.getContext('2d')!.drawImage(canvas, 0, 0, canvas.width, cropH, 0, 0, canvas.width, cropH);
+
+      const base64 = crop.toDataURL('image/jpeg', 0.85).split(',')[1];
+
+      const res = await fetch('/api/esports-stats', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ base64, mimeType: 'image/jpeg' }),
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+
+      const snapshot: StatsSnapshot = { ...data, timestamp: Date.now() };
+      setGameStats(data);
+      setStatsHistory(prev => [...prev, snapshot]);
+      setLastUpdated(new Date());
+      setSecondsAgo(0);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Analysis failed';
+      if (msg !== 'no scoreboard visible') setAnalysisError(msg);
+    } finally {
+      setAnalysisLoading(false);
+    }
+  }, []);
+
+  const stopAnalysis = useCallback(() => {
+    captureStreamRef.current?.getTracks().forEach(t => t.stop());
+    captureStreamRef.current = null;
+    if (analysisIntervalRef.current) clearInterval(analysisIntervalRef.current);
+    if (tickIntervalRef.current) clearInterval(tickIntervalRef.current);
+    analysisIntervalRef.current = null;
+    tickIntervalRef.current = null;
+    setCaptureActive(false);
+  }, []);
+
+  const startAnalysis = async () => {
+    try {
+      const stream = await (navigator.mediaDevices as MediaDevices & {
+        getDisplayMedia: (c: object) => Promise<MediaStream>
+      }).getDisplayMedia({
+        video: { frameRate: 1 },
+        audio: false,
+        preferCurrentTab: true,
+      });
+
+      captureStreamRef.current = stream;
+      if (captureVideoRef.current) {
+        captureVideoRef.current.srcObject = stream;
+        await captureVideoRef.current.play();
+      }
+
+      setCaptureActive(true);
+      setStatsHistory([]);
+      setGameStats(null);
+      setAnalysisError(null);
+
+      // First capture after video loads
+      setTimeout(captureAndAnalyze, 1500);
+      analysisIntervalRef.current = setInterval(captureAndAnalyze, 15000);
+
+      // "X seconds ago" ticker
+      tickIntervalRef.current = setInterval(() => setSecondsAgo(s => s + 1), 1000);
+
+      stream.getVideoTracks()[0].addEventListener('ended', stopAnalysis);
+    } catch (e: unknown) {
+      const name = e instanceof Error ? (e as Error & { name: string }).name : '';
+      if (name !== 'NotAllowedError') setAnalysisError('Screen capture failed — please try again');
+    }
+  };
+
+  // Chart data derived from history
+  const goldDiff   = statsHistory.map(s => ({ t: s.timestamp, diff: s.blue.gold    - s.red.gold    }));
+  const killDiff   = statsHistory.map(s => ({ t: s.timestamp, diff: s.blue.kills   - s.red.kills   }));
+  const towerDiff  = statsHistory.map(s => ({ t: s.timestamp, diff: s.blue.towers  - s.red.towers  }));
+  const dragonDiff = statsHistory.map(s => ({ t: s.timestamp, diff: s.blue.dragons - s.red.dragons }));
 
   // Gemini scan
   const [scanImg, setScanImg] = useState<string | null>(null);
@@ -608,6 +792,147 @@ export default function EsportsPage() {
       </div>
 
       <div className="max-w-5xl mx-auto px-4 py-10 space-y-10">
+
+        {/* ── Live Stream + AI Analysis ── */}
+        <div className="bg-white/[0.02] border border-white/10 rounded-2xl p-6 space-y-4">
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <div className="text-[10px] text-blue-400 tracking-widest">LIVE STREAM + AI ANALYSIS</div>
+            <div className="flex items-center gap-2 flex-wrap">
+              {/* League tabs */}
+              {LEAGUES.map(l => (
+                <button key={l.id}
+                  onClick={() => setSelectedLeague(l.id)}
+                  className={`px-2.5 py-1 rounded text-[10px] font-mono transition-colors ${
+                    selectedLeague === l.id
+                      ? 'bg-blue-500/20 border border-blue-500/40 text-blue-300'
+                      : 'bg-white/5 border border-white/10 text-gray-500 hover:text-gray-300'
+                  }`}>
+                  {l.label}
+                </button>
+              ))}
+              {/* Source toggle */}
+              <div className="flex rounded overflow-hidden border border-white/10 ml-1">
+                {(['twitch', 'youtube'] as const).map(src => (
+                  <button key={src}
+                    onClick={() => setStreamSource(src)}
+                    className={`px-2.5 py-1 text-[10px] font-mono transition-colors ${
+                      streamSource === src ? 'bg-purple-500/20 text-purple-300' : 'bg-white/5 text-gray-500 hover:text-gray-300'
+                    }`}>
+                    {src === 'twitch' ? '🟣 Twitch' : '🔴 YouTube'}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Stream embed */}
+          <div className="relative w-full rounded-xl overflow-hidden bg-black border border-white/10" style={{ paddingTop: '56.25%' }}>
+            {streamSource === 'twitch' && twitchSrc ? (
+              <iframe
+                key={`twitch-${selectedLeague}`}
+                src={twitchSrc}
+                className="absolute inset-0 w-full h-full"
+                allowFullScreen
+                title={`${selectedLeague} live stream`}
+              />
+            ) : streamSource === 'twitch' && !twitchSrc ? (
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-600 text-sm space-y-2">
+                <span>No Twitch stream for {selectedLeague}</span>
+                <button onClick={() => setStreamSource('youtube')}
+                  className="text-[11px] text-blue-400 hover:text-blue-300 underline">
+                  Switch to YouTube
+                </button>
+              </div>
+            ) : (
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-center p-6">
+                <div className="text-gray-400 text-sm">YouTube live streams cannot be embedded directly.</div>
+                <a href={youtubeSrc} target="_blank" rel="noopener noreferrer"
+                  className="px-4 py-2 rounded-lg bg-red-600/20 border border-red-500/40 text-red-400 text-sm hover:bg-red-600/30 transition-colors font-mono">
+                  ▶ Open {selectedLeague} on YouTube
+                </a>
+                <div className="text-[10px] text-gray-600">Open stream in a separate tab, then use "Start Analysis" to capture it</div>
+              </div>
+            )}
+          </div>
+
+          {/* Analysis controls */}
+          <div className="flex items-center gap-3 flex-wrap">
+            {!captureActive ? (
+              <button onClick={startAnalysis}
+                className="px-3 py-1.5 rounded-lg bg-green-500/20 border border-green-500/40 text-green-400 text-[10px] font-mono hover:bg-green-500/30 transition-colors flex items-center gap-1.5">
+                ⬤ Start Analysis
+              </button>
+            ) : (
+              <button onClick={stopAnalysis}
+                className="px-3 py-1.5 rounded-lg bg-red-500/20 border border-red-500/40 text-red-400 text-[10px] font-mono hover:bg-red-500/30 transition-colors flex items-center gap-1.5">
+                ■ Stop
+              </button>
+            )}
+            {captureActive && (
+              <div className="flex items-center gap-2 text-[10px] text-gray-500">
+                <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse inline-block" />
+                {analysisLoading ? 'Scanning…' : lastUpdated ? `Updated ${secondsAgo}s ago` : 'Waiting for first scan…'}
+              </div>
+            )}
+            {analysisError && (
+              <span className="text-[10px] text-red-400">{analysisError}</span>
+            )}
+            {captureActive && (
+              <span className="text-[10px] text-gray-600 ml-auto">
+                Scans every 15s · crops top 20% of screen · requires screen share permission
+              </span>
+            )}
+          </div>
+
+          {/* Hidden video element for screen capture */}
+          <video ref={captureVideoRef} muted playsInline className="hidden" />
+
+          {/* Live stats display */}
+          {gameStats && (
+            <div className="space-y-4 pt-2 border-t border-white/5">
+              {/* Team header row */}
+              <div className="flex items-center justify-between text-xs font-mono">
+                <span className="text-blue-400 font-bold">{gameStats.blueTeam || 'BLUE'}</span>
+                <span className="text-gray-600 text-[10px]">⏱ {gameStats.gameTime || '—'}</span>
+                <span className="text-orange-400 font-bold">{gameStats.redTeam || 'RED'}</span>
+              </div>
+
+              {/* Stat bars */}
+              {[
+                { label: 'GOLD', blue: gameStats.blue.gold, red: gameStats.red.gold, format: (v: number) => `${(v/1000).toFixed(1)}k` },
+                { label: 'KILLS', blue: gameStats.blue.kills, red: gameStats.red.kills, format: (v: number) => String(v) },
+                { label: 'TOWERS', blue: gameStats.blue.towers, red: gameStats.red.towers, format: (v: number) => String(v) },
+                { label: 'DRAGONS', blue: gameStats.blue.dragons, red: gameStats.red.dragons, format: (v: number) => String(v) },
+              ].map(({ label, blue, red, format }) => {
+                const total = blue + red || 1;
+                const blueW = Math.round((blue / total) * 100);
+                return (
+                  <div key={label} className="space-y-0.5">
+                    <div className="flex justify-between text-[9px] text-gray-600 tracking-wider">
+                      <span className="text-blue-400 font-mono">{format(blue)}</span>
+                      <span>{label}</span>
+                      <span className="text-orange-400 font-mono">{format(red)}</span>
+                    </div>
+                    <div className="flex h-1.5 rounded-full overflow-hidden bg-white/5">
+                      <div className="bg-blue-500 transition-all" style={{ width: `${blueW}%` }} />
+                      <div className="bg-orange-500 transition-all" style={{ width: `${100 - blueW}%` }} />
+                    </div>
+                  </div>
+                );
+              })}
+
+              {/* Differential charts */}
+              {statsHistory.length >= 2 && (
+                <div className="grid grid-cols-2 gap-4 pt-2 border-t border-white/5">
+                  <DiffChart data={goldDiff}   label="GOLD DIFF (blue − red)"   color="#3b82f6" />
+                  <DiffChart data={killDiff}   label="KILL DIFF (blue − red)"   color="#22c55e" />
+                  <DiffChart data={towerDiff}  label="TOWER DIFF (blue − red)"  color="#a855f7" />
+                  <DiffChart data={dragonDiff} label="DRAGON DIFF (blue − red)" color="#f97316" />
+                </div>
+              )}
+            </div>
+          )}
+        </div>
 
         {/* Header */}
         <div className="text-center">
