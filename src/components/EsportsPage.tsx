@@ -376,18 +376,19 @@ export default function EsportsPage() {
     setAnalysisLoading(true);
     setAnalysisError(null);
     try {
-      // Draw full frame
+      // Draw full frame, then crop to the stream panel area:
+      // left 65% (stream column) × top 30% (where LoL scoreboard overlay sits)
       const canvas = document.createElement('canvas');
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
       canvas.getContext('2d')!.drawImage(video, 0, 0);
 
-      // Crop top 20% — where LoL scoreboard overlay lives
-      const cropH = Math.floor(canvas.height * 0.20);
+      const cropW = Math.floor(canvas.width  * 0.65);
+      const cropH = Math.floor(canvas.height * 0.30);
       const crop = document.createElement('canvas');
-      crop.width = canvas.width;
+      crop.width = cropW;
       crop.height = cropH;
-      crop.getContext('2d')!.drawImage(canvas, 0, 0, canvas.width, cropH, 0, 0, canvas.width, cropH);
+      crop.getContext('2d')!.drawImage(canvas, 0, 0, cropW, cropH, 0, 0, cropW, cropH);
 
       const base64 = crop.toDataURL('image/jpeg', 0.85).split(',')[1];
 
