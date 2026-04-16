@@ -346,6 +346,34 @@ export default function EsportsPage() {
   // Player search tab
   const [playerSearch, setPlayerSearch] = useState('');
 
+  // ── Schedule state ─────────────────────────────────────────────────────────
+  interface ScheduleTeam { name: string; code: string; image: string; result: { outcome: string; gameWins: number } | null }
+  interface ScheduleMarket { id: string; question: string; outcomePrices: string; outcomes: string; url: string; volume: string }
+  interface ScheduleEvent {
+    id: string; state: string; startTime: string;
+    league: { name: string; slug: string };
+    blockName: string;
+    strategy: { type: string; count: number } | null;
+    teams: ScheduleTeam[];
+    markets: ScheduleMarket[];
+  }
+  const [liveMatches, setLiveMatches] = useState<ScheduleEvent[]>([]);
+  const [upcomingMatches, setUpcomingMatches] = useState<ScheduleEvent[]>([]);
+  const [scheduleLoading, setScheduleLoading] = useState(true);
+
+  useEffect(() => {
+    const load = () => {
+      fetch('/api/esports-schedule')
+        .then(r => r.json())
+        .then(d => { setLiveMatches(d.live ?? []); setUpcomingMatches(d.upcoming ?? []); })
+        .catch(() => {})
+        .finally(() => setScheduleLoading(false));
+    };
+    load();
+    const iv = setInterval(load, 60000); // refresh every minute
+    return () => clearInterval(iv);
+  }, []);
+
   // ── Live stream + AI analysis state ──────────────────────────────────────────
   const [selectedLeague, setSelectedLeague] = useState<typeof LEAGUES[number]['id']>('LCK');
   const [streamSource, setStreamSource] = useState<'twitch' | 'youtube'>('twitch');
@@ -1040,6 +1068,138 @@ export default function EsportsPage() {
       </div>
 
       <div className="max-w-5xl mx-auto px-4 py-10 space-y-10">
+
+        {/* ── Live & Upcoming Matches ── */}
+        {(scheduleLoading || liveMatches.length > 0 || upcomingMatches.length > 0) && (() => {
+          const parseMarket = (m: ScheduleMarket) => {
+            let prices: number[] = [];
+            let outcomes: string[] = [];
+            try { prices = JSON.parse(m.outcomePrices).map(Number); } catch { prices = []; }
+            try { outcomes = JSON.parse(m.outcomes); } catch { outcomes = []; }
+            return { prices, outcomes };
+          };
+          const leagueSlugToId = (slug: string): typeof LEAGUES[number]['id'] | null => {
+            const s = slug.toLowerCase();
+            if (s.includes('lck')) return 'LCK';
+            if (s.includes('lpl')) return 'LPL';
+            if (s.includes('lec')) return 'LEC';
+            if (s.includes('lcs')) return 'LCS';
+            if (s.includes('msi') || s.includes('worlds')) return 'MSI';
+            return null;
+          };
+          return (
+            <div className="bg-white/[0.02] border border-white/10 rounded-2xl p-5 space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="text-[10px] text-blue-400 tracking-widest">MATCHES</div>
+                {scheduleLoading && <span className="w-3 h-3 rounded-full border border-blue-400/40 border-t-blue-400 animate-spin inline-block" />}
+              </div>
+
+              {/* Live now */}
+              {liveMatches.length > 0 && (
+                <div className="space-y-2">
+                  <div className="text-[9px] text-green-500 tracking-widest flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse inline-block" />
+                    LIVE NOW
+                  </div>
+                  {liveMatches.map(ev => {
+                    const [t1, t2] = ev.teams;
+                    const lid = leagueSlugToId(ev.league.slug);
+                    return (
+                      <div key={ev.id} className="bg-green-500/[0.04] border border-green-500/20 rounded-xl p-3 space-y-2">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[9px] text-green-400 font-mono tracking-wider">{ev.league.name}</span>
+                          {ev.strategy && <span className="text-[9px] text-gray-700">BO{ev.strategy.count}</span>}
+                          {lid && (
+                            <button onClick={() => { setSelectedLeague(lid); setStreamSource('twitch'); }}
+                              className="ml-auto text-[9px] px-2 py-0.5 rounded bg-green-500/15 border border-green-500/30 text-green-400 hover:bg-green-500/25 transition-colors font-mono">
+                              ▶ Watch
+                            </button>
+                          )}
+                        </div>
+                        <div className="flex items-center justify-between text-sm font-mono font-bold">
+                          <span className="text-blue-400">{t1?.name ?? '?'}</span>
+                          <span className="text-gray-700 text-[10px]">vs</span>
+                          <span className="text-orange-400">{t2?.name ?? '?'}</span>
+                        </div>
+                        {ev.markets.length > 0 && (
+                          <div className="space-y-1">
+                            {ev.markets.map(m => {
+                              const { prices, outcomes } = parseMarket(m);
+                              return (
+                                <a key={m.id} href={`https://polymarket.com/event/${m.url}`} target="_blank" rel="noopener noreferrer"
+                                  className="flex items-center gap-2 bg-white/[0.03] border border-white/8 rounded-lg px-2 py-1.5 hover:bg-white/[0.06] transition-colors">
+                                  <span className="text-[9px] text-gray-500 flex-1 line-clamp-1">{m.question}</span>
+                                  <div className="flex gap-1 shrink-0">
+                                    {prices.map((p, i) => (
+                                      <span key={i} className={`text-[10px] font-bold font-mono px-1.5 py-0.5 rounded ${i === 0 ? 'bg-blue-500/15 text-blue-400' : 'bg-orange-500/15 text-orange-400'}`}>
+                                        {outcomes[i] ?? (i === 0 ? 'Yes' : 'No')} {Math.round(p * 100)}¢
+                                      </span>
+                                    ))}
+                                  </div>
+                                </a>
+                              );
+                            })}
+                          </div>
+                        )}
+                        {ev.markets.length === 0 && (
+                          <div className="text-[9px] text-gray-700">No Polymarket markets found</div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Upcoming */}
+              {upcomingMatches.length > 0 && (
+                <div className="space-y-2">
+                  <div className="text-[9px] text-gray-600 tracking-widest">UPCOMING · NEXT 48H</div>
+                  <div className="space-y-1">
+                    {upcomingMatches.slice(0, 12).map(ev => {
+                      const [t1, t2] = ev.teams;
+                      const start = new Date(ev.startTime);
+                      const timeStr = start.toLocaleString(undefined, { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+                      const hasMarkets = ev.markets.length > 0;
+                      return (
+                        <div key={ev.id} className="flex items-center gap-3 px-3 py-2 rounded-lg bg-white/[0.02] border border-white/5 hover:bg-white/[0.04] transition-colors">
+                          <div className="w-10 shrink-0">
+                            <div className="text-[8px] text-gray-600 font-mono">{ev.league.name}</div>
+                            {ev.strategy && <div className="text-[8px] text-gray-700">BO{ev.strategy.count}</div>}
+                          </div>
+                          <div className="flex-1 min-w-0 flex items-center gap-1.5 text-[11px] font-mono font-bold">
+                            <span className="text-blue-400 truncate">{t1?.name ?? '?'}</span>
+                            <span className="text-gray-700 text-[9px] shrink-0">vs</span>
+                            <span className="text-orange-400 truncate">{t2?.name ?? '?'}</span>
+                          </div>
+                          <div className="shrink-0 text-right">
+                            <div className="text-[9px] text-gray-600 font-mono">{timeStr}</div>
+                            {hasMarkets && (
+                              <div className="flex gap-1 justify-end mt-0.5">
+                                {(() => {
+                                  const { prices, outcomes } = parseMarket(ev.markets[0]);
+                                  return prices.slice(0, 2).map((p, i) => (
+                                    <a key={i} href={`https://polymarket.com/event/${ev.markets[0].url}`} target="_blank" rel="noopener noreferrer"
+                                      className={`text-[9px] font-bold px-1 py-0.5 rounded ${i === 0 ? 'text-blue-400' : 'text-orange-400'}`}>
+                                      {outcomes[i]?.slice(0, 3) ?? (i === 0 ? 'Yes' : 'No')} {Math.round(p * 100)}¢
+                                    </a>
+                                  ));
+                                })()}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {!scheduleLoading && liveMatches.length === 0 && upcomingMatches.length === 0 && (
+                <div className="text-[10px] text-gray-700 text-center py-2">No matches found in next 48h</div>
+              )}
+            </div>
+          );
+        })()}
 
         {/* ── Live Stream + AI Analysis ── */}
         <div className="bg-white/[0.02] border border-white/10 rounded-2xl p-6 space-y-4">
