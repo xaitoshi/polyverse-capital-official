@@ -795,13 +795,13 @@ export default function EsportsPage() {
 
         {/* ── Live Stream + AI Analysis ── */}
         <div className="bg-white/[0.02] border border-white/10 rounded-2xl p-6 space-y-4">
+
+          {/* Top bar: title + league + source controls */}
           <div className="flex items-center justify-between flex-wrap gap-3">
             <div className="text-[10px] text-blue-400 tracking-widest">LIVE STREAM + AI ANALYSIS</div>
             <div className="flex items-center gap-2 flex-wrap">
-              {/* League tabs */}
               {LEAGUES.map(l => (
-                <button key={l.id}
-                  onClick={() => setSelectedLeague(l.id)}
+                <button key={l.id} onClick={() => setSelectedLeague(l.id)}
                   className={`px-2.5 py-1 rounded text-[10px] font-mono transition-colors ${
                     selectedLeague === l.id
                       ? 'bg-blue-500/20 border border-blue-500/40 text-blue-300'
@@ -810,11 +810,9 @@ export default function EsportsPage() {
                   {l.label}
                 </button>
               ))}
-              {/* Source toggle */}
               <div className="flex rounded overflow-hidden border border-white/10 ml-1">
                 {(['twitch', 'youtube'] as const).map(src => (
-                  <button key={src}
-                    onClick={() => setStreamSource(src)}
+                  <button key={src} onClick={() => setStreamSource(src)}
                     className={`px-2.5 py-1 text-[10px] font-mono transition-colors ${
                       streamSource === src ? 'bg-purple-500/20 text-purple-300' : 'bg-white/5 text-gray-500 hover:text-gray-300'
                     }`}>
@@ -825,113 +823,127 @@ export default function EsportsPage() {
             </div>
           </div>
 
-          {/* Stream embed */}
-          <div className="relative w-full rounded-xl overflow-hidden bg-black border border-white/10" style={{ paddingTop: '56.25%' }}>
-            {streamSource === 'twitch' && twitchSrc ? (
-              <iframe
-                key={`twitch-${selectedLeague}`}
-                src={twitchSrc}
-                className="absolute inset-0 w-full h-full"
-                allowFullScreen
-                title={`${selectedLeague} live stream`}
-              />
-            ) : streamSource === 'twitch' && !twitchSrc ? (
-              <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-600 text-sm space-y-2">
-                <span>No Twitch stream for {selectedLeague}</span>
-                <button onClick={() => setStreamSource('youtube')}
-                  className="text-[11px] text-blue-400 hover:text-blue-300 underline">
-                  Switch to YouTube
-                </button>
-              </div>
-            ) : (
-              <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-center p-6">
-                <div className="text-gray-400 text-sm">YouTube live streams cannot be embedded directly.</div>
-                <a href={youtubeSrc} target="_blank" rel="noopener noreferrer"
-                  className="px-4 py-2 rounded-lg bg-red-600/20 border border-red-500/40 text-red-400 text-sm hover:bg-red-600/30 transition-colors font-mono">
-                  ▶ Open {selectedLeague} on YouTube
-                </a>
-                <div className="text-[10px] text-gray-600">Open stream in a separate tab, then use "Start Analysis" to capture it</div>
-              </div>
-            )}
-          </div>
+          {/* Side-by-side: stream left, stats right */}
+          <div className="flex gap-4 items-stretch">
 
-          {/* Analysis controls */}
-          <div className="flex items-center gap-3 flex-wrap">
-            {!captureActive ? (
-              <button onClick={startAnalysis}
-                className="px-3 py-1.5 rounded-lg bg-green-500/20 border border-green-500/40 text-green-400 text-[10px] font-mono hover:bg-green-500/30 transition-colors flex items-center gap-1.5">
-                ⬤ Start Analysis
-              </button>
-            ) : (
-              <button onClick={stopAnalysis}
-                className="px-3 py-1.5 rounded-lg bg-red-500/20 border border-red-500/40 text-red-400 text-[10px] font-mono hover:bg-red-500/30 transition-colors flex items-center gap-1.5">
-                ■ Stop
-              </button>
-            )}
-            {captureActive && (
-              <div className="flex items-center gap-2 text-[10px] text-gray-500">
-                <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse inline-block" />
-                {analysisLoading ? 'Scanning…' : lastUpdated ? `Updated ${secondsAgo}s ago` : 'Waiting for first scan…'}
-              </div>
-            )}
-            {analysisError && (
-              <span className="text-[10px] text-red-400">{analysisError}</span>
-            )}
-            {captureActive && (
-              <span className="text-[10px] text-gray-600 ml-auto">
-                Scans every 15s · crops top 20% of screen · requires screen share permission
-              </span>
-            )}
-          </div>
-
-          {/* Hidden video element for screen capture */}
-          <video ref={captureVideoRef} muted playsInline className="hidden" />
-
-          {/* Live stats display */}
-          {gameStats && (
-            <div className="space-y-4 pt-2 border-t border-white/5">
-              {/* Team header row */}
-              <div className="flex items-center justify-between text-xs font-mono">
-                <span className="text-blue-400 font-bold">{gameStats.blueTeam || 'BLUE'}</span>
-                <span className="text-gray-600 text-[10px]">⏱ {gameStats.gameTime || '—'}</span>
-                <span className="text-orange-400 font-bold">{gameStats.redTeam || 'RED'}</span>
-              </div>
-
-              {/* Stat bars */}
-              {[
-                { label: 'GOLD', blue: gameStats.blue.gold, red: gameStats.red.gold, format: (v: number) => `${(v/1000).toFixed(1)}k` },
-                { label: 'KILLS', blue: gameStats.blue.kills, red: gameStats.red.kills, format: (v: number) => String(v) },
-                { label: 'TOWERS', blue: gameStats.blue.towers, red: gameStats.red.towers, format: (v: number) => String(v) },
-                { label: 'DRAGONS', blue: gameStats.blue.dragons, red: gameStats.red.dragons, format: (v: number) => String(v) },
-              ].map(({ label, blue, red, format }) => {
-                const total = blue + red || 1;
-                const blueW = Math.round((blue / total) * 100);
-                return (
-                  <div key={label} className="space-y-0.5">
-                    <div className="flex justify-between text-[9px] text-gray-600 tracking-wider">
-                      <span className="text-blue-400 font-mono">{format(blue)}</span>
-                      <span>{label}</span>
-                      <span className="text-orange-400 font-mono">{format(red)}</span>
-                    </div>
-                    <div className="flex h-1.5 rounded-full overflow-hidden bg-white/5">
-                      <div className="bg-blue-500 transition-all" style={{ width: `${blueW}%` }} />
-                      <div className="bg-orange-500 transition-all" style={{ width: `${100 - blueW}%` }} />
-                    </div>
+            {/* Stream embed — 65% width */}
+            <div className="flex-[2] min-w-0">
+              <div className="relative w-full rounded-xl overflow-hidden bg-black border border-white/10" style={{ paddingTop: '56.25%' }}>
+                {streamSource === 'twitch' && twitchSrc ? (
+                  <iframe
+                    key={`twitch-${selectedLeague}`}
+                    src={twitchSrc}
+                    className="absolute inset-0 w-full h-full"
+                    allowFullScreen
+                    title={`${selectedLeague} live stream`}
+                  />
+                ) : streamSource === 'twitch' && !twitchSrc ? (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-600 text-sm space-y-2">
+                    <span>No Twitch stream for {selectedLeague}</span>
+                    <button onClick={() => setStreamSource('youtube')}
+                      className="text-[11px] text-blue-400 hover:text-blue-300 underline">
+                      Switch to YouTube
+                    </button>
                   </div>
-                );
-              })}
+                ) : (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-center p-6">
+                    <div className="text-gray-400 text-sm">YouTube live streams cannot be embedded directly.</div>
+                    <a href={youtubeSrc} target="_blank" rel="noopener noreferrer"
+                      className="px-4 py-2 rounded-lg bg-red-600/20 border border-red-500/40 text-red-400 text-sm hover:bg-red-600/30 transition-colors font-mono">
+                      ▶ Open {selectedLeague} on YouTube
+                    </a>
+                    <div className="text-[10px] text-gray-600">Open in a tab, then use "Start Analysis" to capture it</div>
+                  </div>
+                )}
+              </div>
 
-              {/* Differential charts */}
-              {statsHistory.length >= 2 && (
-                <div className="grid grid-cols-2 gap-4 pt-2 border-t border-white/5">
-                  <DiffChart data={goldDiff}   label="GOLD DIFF (blue − red)"   color="#3b82f6" />
-                  <DiffChart data={killDiff}   label="KILL DIFF (blue − red)"   color="#22c55e" />
-                  <DiffChart data={towerDiff}  label="TOWER DIFF (blue − red)"  color="#a855f7" />
-                  <DiffChart data={dragonDiff} label="DRAGON DIFF (blue − red)" color="#f97316" />
+              {/* Analysis controls below stream */}
+              <div className="flex items-center gap-3 mt-2 flex-wrap">
+                {!captureActive ? (
+                  <button onClick={startAnalysis}
+                    className="px-3 py-1.5 rounded-lg bg-green-500/20 border border-green-500/40 text-green-400 text-[10px] font-mono hover:bg-green-500/30 transition-colors">
+                    ⬤ Start Analysis
+                  </button>
+                ) : (
+                  <button onClick={stopAnalysis}
+                    className="px-3 py-1.5 rounded-lg bg-red-500/20 border border-red-500/40 text-red-400 text-[10px] font-mono hover:bg-red-500/30 transition-colors">
+                    ■ Stop
+                  </button>
+                )}
+                {captureActive && (
+                  <div className="flex items-center gap-2 text-[10px] text-gray-500">
+                    <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse inline-block" />
+                    {analysisLoading ? 'Scanning…' : lastUpdated ? `Updated ${secondsAgo}s ago` : 'Waiting for first scan…'}
+                  </div>
+                )}
+                {analysisError && <span className="text-[10px] text-red-400">{analysisError}</span>}
+              </div>
+            </div>
+
+            {/* Stats panel — 35% width, scrollable */}
+            <div className="flex-[1] min-w-0 flex flex-col gap-3 overflow-y-auto" style={{ maxHeight: 420 }}>
+
+              {/* Hidden video for capture */}
+              <video ref={captureVideoRef} muted playsInline className="hidden" />
+
+              {!gameStats && !captureActive && (
+                <div className="flex-1 flex items-center justify-center text-[10px] text-gray-700 text-center p-4">
+                  Start Analysis to see live game stats here
                 </div>
               )}
+
+              {!gameStats && captureActive && (
+                <div className="flex-1 flex items-center justify-center text-[10px] text-gray-600 text-center p-4">
+                  <span className="animate-pulse">Waiting for scoreboard…</span>
+                </div>
+              )}
+
+              {gameStats && (
+                <>
+                  {/* Team names + timer */}
+                  <div className="flex items-center justify-between text-[10px] font-mono border-b border-white/5 pb-2">
+                    <span className="text-blue-400 font-bold">{gameStats.blueTeam || 'BLUE'}</span>
+                    <span className="text-gray-600">⏱ {gameStats.gameTime || '—'}</span>
+                    <span className="text-orange-400 font-bold">{gameStats.redTeam || 'RED'}</span>
+                  </div>
+
+                  {/* Stat bars */}
+                  {[
+                    { label: 'GOLD',    blue: gameStats.blue.gold,    red: gameStats.red.gold,    fmt: (v: number) => `${(v/1000).toFixed(1)}k` },
+                    { label: 'KILLS',   blue: gameStats.blue.kills,   red: gameStats.red.kills,   fmt: (v: number) => String(v) },
+                    { label: 'TOWERS',  blue: gameStats.blue.towers,  red: gameStats.red.towers,  fmt: (v: number) => String(v) },
+                    { label: 'DRAGONS', blue: gameStats.blue.dragons, red: gameStats.red.dragons, fmt: (v: number) => String(v) },
+                  ].map(({ label, blue, red, fmt }) => {
+                    const total = blue + red || 1;
+                    const blueW = Math.round((blue / total) * 100);
+                    return (
+                      <div key={label} className="space-y-0.5">
+                        <div className="flex justify-between text-[9px] tracking-wider">
+                          <span className="text-blue-400 font-mono">{fmt(blue)}</span>
+                          <span className="text-gray-600">{label}</span>
+                          <span className="text-orange-400 font-mono">{fmt(red)}</span>
+                        </div>
+                        <div className="flex h-1.5 rounded-full overflow-hidden bg-white/5">
+                          <div className="bg-blue-500 transition-all" style={{ width: `${blueW}%` }} />
+                          <div className="bg-orange-500 transition-all" style={{ width: `${100 - blueW}%` }} />
+                        </div>
+                      </div>
+                    );
+                  })}
+
+                  {/* Charts */}
+                  {statsHistory.length >= 2 && (
+                    <div className="space-y-3 pt-2 border-t border-white/5">
+                      <DiffChart data={goldDiff}   label="GOLD DIFF"   color="#3b82f6" />
+                      <DiffChart data={killDiff}   label="KILL DIFF"   color="#22c55e" />
+                      <DiffChart data={towerDiff}  label="TOWER DIFF"  color="#a855f7" />
+                      <DiffChart data={dragonDiff} label="DRAGON DIFF" color="#f97316" />
+                    </div>
+                  )}
+                </>
+              )}
             </div>
-          )}
+          </div>
         </div>
 
         {/* Header */}
