@@ -388,6 +388,41 @@ export default function EsportsPage() {
   const [analysisRunning, setAnalysisRunning] = useState(false);
   const [analysisGenError, setAnalysisGenError] = useState<string | null>(null);
 
+  // ── Supabase save ──────────────────────────────────────────────────────────
+  const [savedId, setSavedId] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  const saveGameToDb = async (analysis: GameAnalysis | null) => {
+    if (statsHistory.length < 3) return;
+    setSaving(true);
+    try {
+      const polyOddsForDb = polyMarkets.slice(0, 5).map(m => {
+        let prices: number[] = [];
+        try { prices = JSON.parse(m.outcomePrices).map(Number); } catch { prices = []; }
+        let outcomes: string[] = [];
+        try { outcomes = JSON.parse(m.outcomes); } catch { outcomes = []; }
+        return { question: m.question, prices: prices.map((p, i) => `${outcomes[i] ?? i} ${Math.round(p * 100)}¢`).join(' / '), volume: m.volume };
+      });
+      const res = await fetch('/api/save-esports-game', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          league: selectedLeague,
+          blueTeam: gameStats?.blueTeam || teamA || null,
+          redTeam:  gameStats?.redTeam  || teamB || null,
+          snapshots: statsHistory,
+          aiAnalysis: analysis,
+          modelProbBlue: prediction?.probA ?? null,
+          polymarketOdds: polyOddsForDb,
+        }),
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      setSavedId(data.id);
+    } catch { /* silently fail — saving is best-effort */ }
+    finally { setSaving(false); }
+  };
+
   const runGameAnalysis = async () => {
     if (statsHistory.length < 3) return;
     setAnalysisRunning(true);
@@ -414,6 +449,8 @@ export default function EsportsPage() {
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       setGameAnalysis(data);
+      // Auto-save to Supabase once analysis is done
+      await saveGameToDb(data);
     } catch (e: unknown) {
       setAnalysisGenError(e instanceof Error ? e.message : 'Analysis failed');
     } finally {
@@ -485,6 +522,8 @@ export default function EsportsPage() {
     setStatsHistory([]);
     setLastUpdated(null);
     setAnalysisError(null);
+    setGameAnalysis(null);
+    setSavedId(null);
   }, []);
 
   const startAnalysis = async () => {
@@ -1218,12 +1257,22 @@ export default function EsportsPage() {
                   {/* AI analysis */}
                   {statsHistory.length >= 3 && (
                     <div className="pt-2 border-t border-white/5 space-y-2">
-                      <button onClick={runGameAnalysis} disabled={analysisRunning}
-                        className="w-full px-2 py-1.5 rounded-lg bg-blue-500/10 border border-blue-500/30 text-blue-400 text-[10px] font-mono hover:bg-blue-500/20 transition-colors disabled:opacity-40 flex items-center justify-center gap-1.5">
-                        {analysisRunning
-                          ? <><span className="w-2.5 h-2.5 rounded-full border border-blue-400 border-t-transparent animate-spin" />Analysing…</>
-                          : '✦ AI Game Analysis'}
-                      </button>
+                      <div className="flex gap-2">
+                        <button onClick={runGameAnalysis} disabled={analysisRunning || saving}
+                          className="flex-1 px-2 py-1.5 rounded-lg bg-blue-500/10 border border-blue-500/30 text-blue-400 text-[10px] font-mono hover:bg-blue-500/20 transition-colors disabled:opacity-40 flex items-center justify-center gap-1.5">
+                          {analysisRunning
+                            ? <><span className="w-2.5 h-2.5 rounded-full border border-blue-400 border-t-transparent animate-spin" />Analysing…</>
+                            : '✦ AI Game Analysis'}
+                        </button>
+                        {!savedId && !saving && statsHistory.length >= 3 && (
+                          <button onClick={() => saveGameToDb(gameAnalysis)} disabled={saving}
+                            className="px-2 py-1.5 rounded-lg bg-white/5 border border-white/10 text-gray-500 text-[10px] font-mono hover:bg-white/10 hover:text-gray-300 transition-colors">
+                            💾 Save
+                          </button>
+                        )}
+                        {saving && <span className="text-[9px] text-gray-600 self-center animate-pulse">Saving…</span>}
+                        {savedId && <span className="text-[9px] text-green-500 self-center">✓ Saved</span>}
+                      </div>
                       {analysisGenError && <div className="text-[9px] text-red-400">{analysisGenError}</div>}
 
                       {gameAnalysis && (
