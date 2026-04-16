@@ -376,6 +376,51 @@ export default function EsportsPage() {
       .finally(() => setPolyLoading(false));
   }, [teamA, teamB]);
 
+  // ── AI game analysis ───────────────────────────────────────────────────────
+  interface TurningPoint { snapshot: number; gameTime: string; team: string; confidence: number; reason: string }
+  interface GameAnalysis {
+    narrative: string;
+    turningPoint: TurningPoint;
+    keyFactors: string[];
+    prediction: { team: string; confidence: number; summary: string };
+  }
+  const [gameAnalysis, setGameAnalysis] = useState<GameAnalysis | null>(null);
+  const [analysisRunning, setAnalysisRunning] = useState(false);
+  const [analysisGenError, setAnalysisGenError] = useState<string | null>(null);
+
+  const runGameAnalysis = async () => {
+    if (statsHistory.length < 3) return;
+    setAnalysisRunning(true);
+    setAnalysisGenError(null);
+    try {
+      const polyOdds = polyMarkets.slice(0, 3).map(m => {
+        let prices: number[] = [];
+        try { prices = JSON.parse(m.outcomePrices).map(Number); } catch { prices = []; }
+        let outcomes: string[] = [];
+        try { outcomes = JSON.parse(m.outcomes); } catch { outcomes = []; }
+        return { question: m.question, prices: prices.map((p, i) => `${outcomes[i] ?? i} ${Math.round(p * 100)}¢`).join(' / ') };
+      });
+      const res = await fetch('/api/esports-analysis', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          blueTeam: gameStats?.blueTeam || teamA,
+          redTeam:  gameStats?.redTeam  || teamB,
+          history: statsHistory,
+          polyOdds,
+          modelProb: prediction?.probA ?? null,
+        }),
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      setGameAnalysis(data);
+    } catch (e: unknown) {
+      setAnalysisGenError(e instanceof Error ? e.message : 'Analysis failed');
+    } finally {
+      setAnalysisRunning(false);
+    }
+  };
+
   const league = LEAGUES.find(l => l.id === selectedLeague)!;
   const hostname = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
   const twitchSrc = league.twitch
@@ -1167,6 +1212,59 @@ export default function EsportsPage() {
                       <DiffChart data={killDiff}   label="KILL DIFF"   color="#22c55e" />
                       <DiffChart data={towerDiff}  label="TOWER DIFF"  color="#a855f7" />
                       <DiffChart data={dragonDiff} label="DRAGON DIFF" color="#f97316" />
+                    </div>
+                  )}
+
+                  {/* AI analysis */}
+                  {statsHistory.length >= 3 && (
+                    <div className="pt-2 border-t border-white/5 space-y-2">
+                      <button onClick={runGameAnalysis} disabled={analysisRunning}
+                        className="w-full px-2 py-1.5 rounded-lg bg-blue-500/10 border border-blue-500/30 text-blue-400 text-[10px] font-mono hover:bg-blue-500/20 transition-colors disabled:opacity-40 flex items-center justify-center gap-1.5">
+                        {analysisRunning
+                          ? <><span className="w-2.5 h-2.5 rounded-full border border-blue-400 border-t-transparent animate-spin" />Analysing…</>
+                          : '✦ AI Game Analysis'}
+                      </button>
+                      {analysisGenError && <div className="text-[9px] text-red-400">{analysisGenError}</div>}
+
+                      {gameAnalysis && (
+                        <div className="space-y-2 text-[10px] font-mono">
+                          {/* Narrative */}
+                          <div className="bg-white/[0.03] border border-white/8 rounded-lg p-2 text-gray-400 leading-relaxed">
+                            {gameAnalysis.narrative}
+                          </div>
+
+                          {/* Turning point */}
+                          <div className="bg-blue-500/[0.07] border border-blue-500/20 rounded-lg p-2 space-y-1">
+                            <div className="text-[9px] text-blue-400 tracking-widest">TURNING POINT</div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-white font-bold">{gameAnalysis.turningPoint.team}</span>
+                              <span className="text-gray-600">@ {gameAnalysis.turningPoint.gameTime} · snap {gameAnalysis.turningPoint.snapshot}</span>
+                              <span className="ml-auto text-green-400 font-bold">{gameAnalysis.turningPoint.confidence}%</span>
+                            </div>
+                            <div className="text-gray-500 text-[9px] leading-snug">{gameAnalysis.turningPoint.reason}</div>
+                          </div>
+
+                          {/* Key factors */}
+                          <div className="space-y-0.5">
+                            <div className="text-[9px] text-gray-600 tracking-widest">KEY FACTORS</div>
+                            {gameAnalysis.keyFactors.map((f, i) => (
+                              <div key={i} className="flex items-start gap-1 text-gray-500 text-[9px]">
+                                <span className="text-blue-500 mt-px">▸</span>{f}
+                              </div>
+                            ))}
+                          </div>
+
+                          {/* Final prediction */}
+                          <div className="bg-white/[0.03] border border-white/8 rounded-lg p-2 space-y-1">
+                            <div className="text-[9px] text-gray-600 tracking-widest">FINAL PREDICTION</div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-white font-bold">{gameAnalysis.prediction.team}</span>
+                              <span className="text-green-400 font-bold ml-auto">{gameAnalysis.prediction.confidence}% confidence</span>
+                            </div>
+                            <div className="text-gray-500 text-[9px] leading-snug">{gameAnalysis.prediction.summary}</div>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
                 </>
