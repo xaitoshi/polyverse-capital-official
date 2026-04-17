@@ -1,5 +1,12 @@
 {
   "rewrites": [
+    { "source": "/api/esports-schedule",  "destination": "/api/esports?action=schedule" },
+    { "source": "/api/esports-markets",   "destination": "/api/esports?action=markets"  },
+    { "source": "/api/esports-analysis",  "destination": "/api/esports?action=analysis" },
+    { "source": "/api/esports-stats",     "destination": "/api/esports?action=stats"    },
+    { "source": "/api/save-esports-game", "destination": "/api/esports?action=save"     },
+    { "source": "/api/gemini-scan",       "destination": "/api/esports?action=scan"     },
+    { "source": "/api/polylake/:action",  "destination": "/api/polylake?action=:action" },
     {
       "source": "/earn",
       "destination": "/index.html"
