@@ -17,29 +17,60 @@ async function fetchSchedule() {
   return data.data?.schedule?.events ?? [];
 }
 
-async function fetchPolymarketOdds(team1, team2, leagueName) {
-  const queries = [`${team1} ${team2}`, `${team1} ${leagueName}`];
-  const markets = [];
-  for (const q of queries) {
-    try {
-      const r = await fetch(
-        `https://gamma-api.polymarket.com/markets?active=true&closed=false&q=${encodeURIComponent(q)}&limit=10&order=volume&ascending=false`,
-        { headers: { 'User-Agent': 'Mozilla/5.0', Accept: 'application/json' } }
-      );
-      if (!r.ok) continue;
-      const data = await r.json();
-      if (!Array.isArray(data)) continue;
-      const t1l = team1.toLowerCase(), t2l = team2.toLowerCase();
-      for (const m of data) {
-        const text = (m.question ?? '').toLowerCase();
-        if ((text.includes(t1l) || text.includes(team1.slice(0, 3).toLowerCase())) &&
-            (text.includes(t2l) || text.includes(team2.slice(0, 3).toLowerCase()))) {
-          if (!markets.find(x => x.id === m.id)) markets.push(m);
-        }
-      }
-    } catch { /* skip */ }
+// Normalise a team name for fuzzy matching:
+// "Gen.G" → "geng", "Anyone's Legend" → "anyones legend", "T1" → "t1"
+function normTeam(name) {
+  return (name || '').toLowerCase().replace(/[^a-z0-9 ]/g, '').trim();
+}
+
+// Fetch all active esports events from Polymarket once and cache per request
+async function fetchEsportsEvents() {
+  const r = await fetch(
+    'https://gamma-api.polymarket.com/events?active=true&closed=false&tag_slug=esports&limit=200&order=volume&ascending=false',
+    { headers: { 'User-Agent': 'Mozilla/5.0', Accept: 'application/json' } }
+  );
+  if (!r.ok) return [];
+  const data = await r.json();
+  return Array.isArray(data) ? data : [];
+}
+
+// Map a Polymarket event + one of its markets to the shape the frontend expects
+function mapMarket(event, market) {
+  return {
+    id:           market.id   ?? event.id,
+    question:     market.question ?? event.title,
+    outcomePrices: market.outcomePrices ?? '[]',
+    outcomes:     market.outcomes ?? '["Yes","No"]',
+    url:          event.slug  ?? market.slug ?? '',
+    volume:       market.volume ?? event.volume ?? '0',
+  };
+}
+
+function matchesTeams(eventTitle, t1name, t1code, t2name, t2code) {
+  const title = normTeam(eventTitle);
+  const n1 = normTeam(t1name), n2 = normTeam(t2name);
+  const c1 = (t1code || '').toLowerCase(), c2 = (t2code || '').toLowerCase();
+  const hasT1 = (n1 && title.includes(n1)) || (c1 && title.includes(c1));
+  const hasT2 = (n2 && title.includes(n2)) || (c2 && title.includes(c2));
+  return hasT1 && hasT2;
+}
+
+function findMarketsForMatch(esportsEvents, t1name, t1code, t2name, t2code) {
+  const matched = esportsEvents.filter(e =>
+    matchesTeams(e.title ?? '', t1name, t1code, t2name, t2code)
+  );
+  // Return up to 3 markets from matching events (prefer the win/BO market)
+  const out = [];
+  for (const event of matched) {
+    const markets = event.markets ?? [];
+    // Prefer the head-to-head "who wins" market (shorter question, no handicap)
+    const sorted = [...markets].sort((a, b) => (a.question?.length ?? 0) - (b.question?.length ?? 0));
+    for (const m of sorted.slice(0, 2)) {
+      if (!out.find(x => x.id === m.id)) out.push(mapMarket(event, m));
+    }
+    if (out.length >= 3) break;
   }
-  return markets.slice(0, 3);
+  return out;
 }
 
 // ── Gemini helper ─────────────────────────────────────────────────────────────
@@ -75,11 +106,12 @@ export default async function handler(req, res) {
         }
         return false;
       });
+      const esportsEvents = await fetchEsportsEvents();
       const enriched = await Promise.all(relevant.map(async e => {
         const teams = e.match?.teams ?? [];
         const [t1, t2] = teams;
         let markets = [];
-        if (t1?.name && t2?.name) markets = await fetchPolymarketOdds(t1.name, t2.name, e.league?.name ?? '');
+        if (t1?.name && t2?.name) markets = findMarketsForMatch(esportsEvents, t1.name, t1.code, t2.name, t2.code);
         return {
           id: e.match?.id ?? e.startTime, state: e.state, startTime: e.startTime,
           league: { name: e.league?.name, slug: e.league?.slug },
@@ -104,18 +136,9 @@ export default async function handler(req, res) {
     const { team1, team2 } = req.query;
     if (!team1 || !team2) return res.status(400).json({ error: 'Missing team1 or team2' });
     try {
-      const q = encodeURIComponent(`${team1} ${team2}`);
-      const url = `https://gamma-api.polymarket.com/markets?active=true&closed=false&q=${q}&limit=20&order=volume&ascending=false`;
-      const r = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0', Accept: 'application/json' } });
-      if (!r.ok) throw new Error(`Gamma ${r.status}`);
-      const markets = await r.json();
-      const t1 = team1.toLowerCase(), t2 = team2.toLowerCase();
-      const filtered = (Array.isArray(markets) ? markets : []).filter(m => {
-        const text = (m.question ?? '').toLowerCase();
-        return (text.includes(t1) || text.includes(team1.slice(0, 3).toLowerCase())) &&
-               (text.includes(t2) || text.includes(team2.slice(0, 3).toLowerCase()));
-      });
-      return res.status(200).json(filtered);
+      const esportsEvents = await fetchEsportsEvents();
+      const markets = findMarketsForMatch(esportsEvents, team1, '', team2, '');
+      return res.status(200).json(markets);
     } catch (e) {
       return res.status(500).json({ error: e.message });
     }
