@@ -9,6 +9,65 @@ const LEAGUES = [
   { id: 'MSI', label: 'MSI / Worlds', twitch: 'riotgames', ytHandle: 'lolesports' },
 ] as const;
 
+// ── 2026 Season Standings (sourced from OraclesElixir) ────────────────────────
+const STANDINGS_2026 = [
+  {
+    league: 'LCK', split: 'Cup',
+    teams: [
+      { name: 'T1',                  wins: 14, losses:  9 },
+      { name: 'Dplus Kia',           wins: 18, losses: 17 },
+      { name: 'DN SOOPers',          wins: 15, losses: 18 },
+      { name: 'Kiwoom DRX',          wins: 15, losses: 18 },
+      { name: 'Nongshim RedForce',   wins:  8, losses: 13 },
+      { name: 'Hanwha Life Esports', wins:  5, losses:  9 },
+      { name: 'KT Rolster',          wins:  6, losses: 11 },
+      { name: 'HANJIN BRION',        wins:  6, losses: 13 },
+    ],
+  },
+  {
+    league: 'LPL', split: 'Split 1',
+    teams: [
+      { name: "LNG Esports",         wins: 16, losses:  5 },
+      { name: "Anyone's Legend",     wins: 27, losses: 16 },
+      { name: 'Ninjas in Pyjamas',   wins: 16, losses: 13 },
+      { name: 'EDward Gaming',       wins: 10, losses:  9 },
+      { name: 'Weibo Gaming',        wins: 22, losses: 22 },
+      { name: 'Top Esports',         wins: 21, losses: 22 },
+      { name: 'LGD Gaming',          wins:  8, losses:  9 },
+      { name: 'Team WE',             wins: 14, losses: 17 },
+      { name: 'Oh My God',           wins:  9, losses: 12 },
+      { name: 'Invictus Gaming',     wins: 15, losses: 28 },
+      { name: 'Ultra Prime',         wins:  3, losses: 10 },
+      { name: 'ThunderTalk Gaming',  wins:  1, losses: 15 },
+    ],
+  },
+  {
+    league: 'LEC', split: 'Spring',
+    teams: [
+      { name: 'Karmine Corp',   wins: 22, losses: 12 },
+      { name: 'Natus Vincere',  wins: 12, losses:  9 },
+      { name: 'Team Vitality',  wins: 11, losses: 10 },
+      { name: 'Movistar KOI',   wins: 13, losses: 13 },
+      { name: 'GiantX',         wins: 12, losses: 13 },
+      { name: 'Team Heretics',  wins:  7, losses:  9 },
+      { name: 'Los Ratones',    wins:  5, losses:  6 },
+      { name: 'Shifters',       wins:  5, losses:  6 },
+      { name: 'Fnatic',         wins:  6, losses: 12 },
+      { name: 'SK Gaming',      wins:  3, losses:  8 },
+    ],
+  },
+  {
+    league: 'LCS', split: 'Lock-In',
+    teams: [
+      { name: 'Team Liquid',        wins: 8, losses:  7 },
+      { name: 'Disguised',          wins: 7, losses: 10 },
+      { name: 'FlyQuest',           wins: 5, losses:  9 },
+      { name: 'Dignitas',           wins: 2, losses:  5 },
+      { name: 'Shopify Rebellion',  wins: 0, losses:  6 },
+    ],
+  },
+] as const;
+
 // ── Live stats types ───────────────────────────────────────────────────────────
 interface TeamStats { gold: number; kills: number; towers: number; dragons: number }
 interface GameStats {
@@ -1479,6 +1538,45 @@ export default function EsportsPage() {
                 </>
               )}
             </div>
+          </div>
+        </div>
+
+        {/* ── 2026 Season Standings ── */}
+        <div className="bg-white/[0.02] border border-white/10 rounded-2xl p-6 space-y-4">
+          <div className="text-[10px] text-blue-400 tracking-widest">2026 SEASON STANDINGS</div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {STANDINGS_2026.map(({ league, split, teams }) => (
+              <div key={league} className="space-y-2">
+                <div className="flex items-baseline gap-2">
+                  <span className="text-[11px] font-bold text-white tracking-wider">{league}</span>
+                  <span className="text-[9px] text-gray-600">{split}</span>
+                </div>
+                <div className="space-y-1">
+                  {teams.map(({ name, wins, losses }, idx) => {
+                    const total = wins + losses;
+                    const wr = total ? wins / total : 0;
+                    const barColor = wr >= 0.6 ? '#4ade80' : wr >= 0.45 ? '#60a5fa' : '#f97316';
+                    return (
+                      <div key={name} className="flex items-center gap-2 group">
+                        <span className="text-[9px] text-gray-600 w-3 shrink-0">{idx + 1}</span>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between mb-0.5">
+                            <span className="text-[10px] text-gray-300 truncate leading-tight">{name}</span>
+                            <span className="text-[9px] font-mono text-gray-500 shrink-0 ml-1">{wins}–{losses}</span>
+                          </div>
+                          <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">
+                            <div className="h-full rounded-full" style={{ width: `${wr * 100}%`, background: barColor }} />
+                          </div>
+                        </div>
+                        <span className="text-[9px] font-mono shrink-0" style={{ color: barColor }}>
+                          {Math.round(wr * 100)}%
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
 
