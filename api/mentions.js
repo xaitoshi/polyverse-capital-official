@@ -72,33 +72,26 @@ async function fetchMarkets(ticker) {
 }
 
 async function fetchTranscripts(ticker, fmpKey, quarters) {
-  const now = new Date();
-  const curYear = now.getFullYear();
-  const curMonth = now.getMonth() + 1;
-  const candidates = [];
-  for (let y = curYear; y >= curYear - 2; y--) {
-    for (let q = 4; q >= 1; q--) {
-      if (y === curYear && q * 3 > curMonth + 1) continue;
-      candidates.push({ year: y, quarter: q });
-    }
+  // FMP stable API — fetch all transcripts for the symbol at once
+  const url = `https://financialmodelingprep.com/stable/earning-call-transcript?symbol=${ticker}&apikey=${fmpKey}&limit=${quarters}`;
+  const r = await fetch(url);
+  const d = await r.json();
+
+  if (!r.ok) {
+    throw new Error(d?.message ?? d?.['Error Message'] ?? `HTTP ${r.status}`);
   }
-  const results = [];
-  let lastError = null;
-  for (const { year, quarter } of candidates) {
-    if (results.length >= quarters) break;
-    try {
-      // FMP v3 endpoint — symbol in path
-      const url = `https://financialmodelingprep.com/api/v3/earning_call_transcript/${ticker}?year=${year}&quarter=${quarter}&apikey=${fmpKey}`;
-      const r = await fetch(url);
-      const d = await r.json();
-      if (!r.ok) { lastError = d?.['Error Message'] ?? `HTTP ${r.status}`; continue; }
-      if (Array.isArray(d) && d.length > 0 && d[0].content?.length > 100) {
-        results.push({ label: `Q${quarter} ${year}`, date: d[0].date ?? '', content: d[0].content });
-      }
-    } catch (e) { lastError = e.message; }
-  }
-  if (results.length === 0 && lastError) throw new Error(`FMP: ${lastError}`);
-  return results;
+
+  // Stable API returns an array of transcript objects
+  const items = Array.isArray(d) ? d : (d ? [d] : []);
+  if (items.length === 0) return [];
+
+  return items.slice(0, quarters).map(t => {
+    const content = t.content ?? t.transcript ?? '';
+    const quarter = t.quarter ?? '';
+    const year = t.year ?? '';
+    const label = quarter && year ? `Q${quarter} ${year}` : (t.date ?? '').slice(0, 7);
+    return { label, date: t.date ?? '', content };
+  }).filter(t => t.content.length > 100);
 }
 
 export default async function handler(req, res) {
