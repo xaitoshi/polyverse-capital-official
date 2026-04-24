@@ -1,65 +1,182 @@
-import Image from "next/image";
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import dynamic from "next/dynamic";
+import TerminalFrame from "@/components/TerminalFrame";
+import CityPanel from "@/components/CityPanel";
+import WatchStrip from "@/components/WatchStrip";
+import StatusTicker from "@/components/StatusTicker";
+import CitySearch from "@/components/CitySearch";
+import type { TempMarket } from "@/lib/polymarket";
+
+// Globe must be client-only (three.js + window refs).
+const Globe = dynamic(() => import("@/components/Globe"), {
+  ssr: false,
+  loading: () => (
+    <div className="flex h-full w-full items-center justify-center text-[11px] uppercase tracking-[0.3em] text-ink-dim">
+      ● booting globe<span className="blink">_</span>
+    </div>
+  ),
+});
+
+type MarketsByCity = Map<string, TempMarket[]>;
+
+function groupByCity(markets: TempMarket[]): MarketsByCity {
+  const m = new Map<string, TempMarket[]>();
+  for (const row of markets) {
+    const list = m.get(row.cityKey) ?? [];
+    list.push(row);
+    m.set(row.cityKey, list);
+  }
+  for (const list of m.values()) {
+    list.sort((a, b) => {
+      if (a.closed !== b.closed) return a.closed ? 1 : -1;
+      return a.date.localeCompare(b.date);
+    });
+  }
+  return m;
+}
 
 export default function Home() {
+  const [markets, setMarkets] = useState<TempMarket[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [selected, setSelected] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/markets")
+      .then((r) => r.json())
+      .then((d) => {
+        if (cancelled) return;
+        if (d.error) setError(d.error);
+        else setMarkets(d.markets ?? []);
+      })
+      .catch((e) => {
+        if (!cancelled) setError(String(e));
+      })
+      .finally(() => !cancelled && setLoading(false));
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setSelected(null);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  const byCity = useMemo(() => groupByCity(markets), [markets]);
+  const selectedMarkets = selected ? byCity.get(selected) ?? null : null;
+
+  const activeCount = markets.filter((m) => !m.closed).length;
+  const resolvedCount = markets.length - activeCount;
+  const cityCount = byCity.size;
+
+  const status = (
+    <span className="flex items-center gap-3">
+      <span className="text-ink-dim">CITIES</span>
+      <span className="phosphor">{cityCount}</span>
+      <span className="text-ink-dim">OPEN</span>
+      <span className="phosphor-amber">{activeCount}</span>
+      <span className="text-ink-dim">RESOLVED</span>
+      <span className="phosphor">{resolvedCount}</span>
+      <CitySearch markets={markets} onSelect={setSelected} />
+    </span>
+  );
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="flex min-h-screen w-full flex-col p-3 lg:p-5">
+      <TerminalFrame
+        status={status}
+        className="flex-1 min-h-[calc(100vh-1.5rem)] lg:min-h-[calc(100vh-2.5rem)]"
+      >
+        <div className="flex h-full flex-col p-3">
+          <WatchStrip
+            markets={markets}
+            selectedCityKey={selected}
+            onSelect={setSelected}
+          />
+          <StatusTicker markets={markets} onPickCity={setSelected} />
+          <div className="mt-3 flex flex-1 flex-col gap-3 lg:flex-row">
+          {/* Globe column */}
+          <section className="flex min-h-[480px] flex-1 flex-col">
+            <div className="flex items-center justify-between pb-2 text-[10px] uppercase tracking-[0.3em] text-ink-dim">
+              <span>› 3D · click a pin to drill in</span>
+              {loading && <span className="phosphor">loading markets…</span>}
+              {error && <span className="text-amber">error: {error}</span>}
+            </div>
+            <div className="relative flex-1 min-h-[480px]">
+              <Globe
+                markets={markets}
+                selectedCityKey={selected}
+                onSelectCity={(k) => setSelected(k)}
+              />
+            </div>
+            <Legend />
+          </section>
+
+          {/* Detail column */}
+          <section className="flex min-h-[480px] w-full shrink-0 flex-col lg:w-[560px] xl:w-[640px]">
+            {selectedMarkets ? (
+              <CityPanel
+                cityMarkets={selectedMarkets}
+                onClose={() => setSelected(null)}
+              />
+            ) : (
+              <EmptyPanel loading={loading} cityCount={cityCount} />
+            )}
+          </section>
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+      </TerminalFrame>
+    </div>
+  );
+}
+
+function Legend() {
+  return (
+    <div className="mt-2 flex flex-wrap items-center gap-4 text-[10px] uppercase tracking-[0.25em] text-ink-dim">
+      <span className="flex items-center gap-2">
+        <span className="inline-block h-2 w-2 rounded-full bg-amber" /> highest-temp market
+      </span>
+      <span className="flex items-center gap-2">
+        <span className="inline-block h-2 w-2 rounded-full bg-cyan" /> lowest-temp market
+      </span>
+      <span className="flex items-center gap-2">
+        <span className="inline-block h-2 w-2 rounded-full bg-ink-dim" /> resolved / closed
+      </span>
+      <span className="ml-auto phosphor">SRC: polymarket · open-meteo · windy · iowa asos</span>
+    </div>
+  );
+}
+
+function EmptyPanel({
+  loading,
+  cityCount,
+}: {
+  loading: boolean;
+  cityCount: number;
+}) {
+  return (
+    <div className="ascii-panel crt-scanlines flex h-full flex-col items-center justify-center gap-3 p-6 text-center">
+      <div className="text-[11px] uppercase tracking-[0.3em] text-ink-dim">
+        awaiting selection
+      </div>
+      <div className="phosphor text-sm">
+        ◉ CLICK A CITY PIN<span className="blink">_</span>
+      </div>
+      <p className="max-w-sm text-[11px] leading-relaxed text-ink-dim">
+        Pins mark cities with Polymarket temperature markets. Click one for
+        available dates, the multi-model forecast, the Windy overlay, and the
+        METAR history the market will resolve against.
+      </p>
+      <div className="mt-4 text-[11px] text-ink-dim">
+        {loading ? "indexing markets…" : `${cityCount} cities indexed`}
+      </div>
     </div>
   );
 }

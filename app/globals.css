@@ -1,26 +1,181 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg: #04070c;
+  --ink: #c8f2d8;
+  --ink-dim: #7fa990;
+  --amber: #ffb947;
+  --cyan: #5ef1ff;
+  --magenta: #ff5ecc;
+  --panel: rgba(4, 12, 10, 0.78);
+  --panel-border: rgba(94, 241, 255, 0.35);
+  --scanline: rgba(0, 0, 0, 0.28);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-background: var(--bg);
+  --color-foreground: var(--ink);
+  --color-ink: var(--ink);
+  --color-ink-dim: var(--ink-dim);
+  --color-amber: var(--amber);
+  --color-cyan: var(--cyan);
+  --color-magenta: var(--magenta);
+  --color-panel: var(--panel);
+  --color-panel-border: var(--panel-border);
+  --font-mono: var(--font-mono-stack);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html,
+body {
+  min-height: 100%;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-mono-stack, ui-monospace, "JetBrains Mono", Menlo, monospace);
+  font-feature-settings: "ss01", "ss02", "zero";
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  letter-spacing: 0.01em;
+}
+
+/* CRT scanlines overlay: a repeating horizontal dark band, very subtle. */
+.crt-scanlines {
+  position: relative;
+}
+.crt-scanlines::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent 2px,
+    var(--scanline) 3px,
+    transparent 4px
+  );
+  pointer-events: none;
+  mix-blend-mode: multiply;
+  opacity: 0.55;
+  border-radius: inherit;
+}
+
+.crt-vignette::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(
+    ellipse at center,
+    transparent 55%,
+    rgba(0, 0, 0, 0.55) 100%
+  );
+  pointer-events: none;
+  z-index: 60;
+}
+
+.phosphor {
+  text-shadow: 0 0 6px rgba(94, 241, 255, 0.55), 0 0 14px rgba(94, 241, 255, 0.2);
+}
+
+.phosphor-amber {
+  color: var(--amber);
+  text-shadow: 0 0 6px rgba(255, 185, 71, 0.5), 0 0 16px rgba(255, 185, 71, 0.2);
+}
+
+@keyframes crt-flicker {
+  0%, 100% { opacity: 1; }
+  48% { opacity: 0.98; }
+  50% { opacity: 0.93; }
+  52% { opacity: 0.99; }
+}
+
+.crt-flicker {
+  animation: crt-flicker 6s infinite;
+}
+
+@keyframes blink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+.blink { animation: blink 1.1s step-end infinite; }
+
+/* ASCII-style corner-bordered panel */
+.ascii-panel {
+  background: var(--panel);
+  border: 1px solid var(--panel-border);
+  box-shadow: 0 0 0 1px rgba(94, 241, 255, 0.08), 0 18px 60px rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(6px);
+}
+
+.ascii-panel-heading {
+  background: linear-gradient(
+    90deg,
+    rgba(94, 241, 255, 0.12),
+    rgba(94, 241, 255, 0) 60%
+  );
+  border-bottom: 1px dashed var(--panel-border);
+}
+
+/* Cloud drift utility — rely on Framer Motion for per-cloud motion, but give a
+   reusable background fade for the sky gradient layer. */
+.sky-gradient {
+  background:
+    linear-gradient(180deg,
+      #0a1a2a 0%,
+      #0e2a45 18%,
+      #1a4870 38%,
+      #2d6b9f 60%,
+      #4791c0 80%,
+      #79b7d8 100%);
+}
+
+/* Subtle cyan inner-glow on the globe container. No border-radius — the old
+   version was a giant circle that made it look like the globe itself was just
+   a CSS disc when the Three texture failed to load. */
+.globe-glow {
+  box-shadow:
+    inset 0 0 120px rgba(94, 241, 255, 0.08),
+    0 0 60px rgba(94, 241, 255, 0.05);
+}
+
+/* Thin scrollbars for our panels */
+.slim-scroll::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.slim-scroll::-webkit-scrollbar-thumb {
+  background: rgba(94, 241, 255, 0.25);
+  border-radius: 3px;
+}
+.slim-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Infinite-scroll ticker. We render the item list twice and translate -50%
+   so the second half lines up with the start of the first, creating a
+   seamless loop. Pause on hover so the user can actually read a chip. */
+@keyframes ticker-scroll {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+.ticker-track {
+  animation: ticker-scroll 55s linear infinite;
+  will-change: transform;
+}
+.ticker-track:hover {
+  animation-play-state: paused;
+}
+
+/* Probability bar shared base */
+.prob-bar {
+  position: relative;
+  height: 10px;
+  background: rgba(94, 241, 255, 0.08);
+  border: 1px solid rgba(94, 241, 255, 0.18);
+  overflow: hidden;
+}
+.prob-bar > span {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: linear-gradient(90deg, var(--cyan), var(--amber));
+  opacity: 0.75;
 }
