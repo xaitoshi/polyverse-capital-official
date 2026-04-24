@@ -122,6 +122,74 @@ function PhraseRow({ phrase, transcripts, snippetsOpen, onToggle }: {
   );
 }
 
+// ── Standalone transcript phrase search ────────────────────────────────────────
+function TranscriptSearchPanel({ transcripts }: { transcripts: Transcript[] }) {
+  const [phrase, setPhrase] = useState('');
+  const [pinned, setPinned] = useState<string[]>([]);
+  const [openSnippets, setOpenSnippets] = useState<Set<string>>(new Set());
+
+  const active = phrase.trim();
+
+  const pin = () => {
+    if (active && !pinned.includes(active)) setPinned(p => [...p, active]);
+    setPhrase('');
+  };
+
+  const toggleSnippet = (p: string) =>
+    setOpenSnippets(s => { const n = new Set(s); n.has(p) ? n.delete(p) : n.add(p); return n; });
+
+  return (
+    <div className="ascii-panel rounded-sm overflow-hidden">
+      <div className="ascii-panel-heading px-4 py-2.5 flex items-center gap-3">
+        <span className="phosphor text-[10px] uppercase tracking-[0.25em]">◎ TRANSCRIPT PHRASE SEARCH</span>
+        <span className="text-ink-dim/50 text-[9px]">{transcripts.length} quarters loaded</span>
+      </div>
+      <div className="p-4 space-y-4">
+        {/* Input row */}
+        <div className="flex items-center gap-2">
+          <input value={phrase} onChange={e => setPhrase(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && pin()}
+            placeholder="e.g. tariff, AI, buyback, cloud revenue_"
+            className="flex-1 bg-transparent border-b border-blue-400/30 focus:border-blue-400 outline-none text-[11px] text-ink placeholder:text-ink-dim/30 pb-0.5 transition-colors" />
+          <button onClick={pin} disabled={!active}
+            className="text-[9px] uppercase tracking-wider border border-blue-400/30 px-2 py-1 text-ink-dim hover:text-blue-400 hover:border-blue-400/50 disabled:opacity-30 transition-colors rounded-sm shrink-0">
+            PIN +
+          </button>
+        </div>
+
+        {/* Live result as you type */}
+        {active && (
+          <PhraseRow phrase={active} transcripts={transcripts}
+            snippetsOpen={openSnippets.has(active)} onToggle={() => toggleSnippet(active)} />
+        )}
+
+        {/* Pinned phrases */}
+        {pinned.length > 0 && (
+          <div className="space-y-4 border-t border-blue-400/10 pt-4">
+            <div className="text-[9px] uppercase tracking-[0.25em] text-ink-dim">PINNED PHRASES</div>
+            {pinned.map(p => (
+              <div key={p} className="relative pr-5">
+                <PhraseRow phrase={p} transcripts={transcripts}
+                  snippetsOpen={openSnippets.has(p)} onToggle={() => toggleSnippet(p)} />
+                <button onClick={() => setPinned(c => c.filter(x => x !== p))}
+                  className="absolute top-0 right-0 text-ink-dim/40 hover:text-red-400 transition-colors">
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {!active && pinned.length === 0 && (
+          <div className="text-[10px] text-ink-dim/40">
+            type a phrase — counts update live · press Enter or PIN to save for comparison
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function MarketCard({ event, transcripts, hasTranscripts }: {
   event: PolyEvent; transcripts: Transcript[]; hasTranscripts: boolean
 }) {
@@ -370,6 +438,9 @@ export default function MentionsPage() {
                   ))}
                 </div>
               )}
+
+              {/* Standalone transcript search */}
+              {transcripts.length > 0 && <TranscriptSearchPanel transcripts={transcripts} />}
 
               {/* Market cards */}
               {events.length === 0 ? (
