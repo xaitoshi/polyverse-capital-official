@@ -27,19 +27,24 @@ async function fetchMarkets(ticker) {
   const seen = new Set();
   const raw = [];
 
-  await Promise.all(
-    aliases.slice(0, 2).flatMap(kw => [
+  // Text searches per alias + earnings tag sweep
+  const fetches = [
+    ...aliases.flatMap(kw => [
       gFetch(`https://gamma-api.polymarket.com/events?active=true&closed=false&limit=100&q=${encodeURIComponent(kw + ' earnings')}&order=volume&ascending=false`),
       gFetch(`https://gamma-api.polymarket.com/events?active=true&closed=false&limit=100&q=${encodeURIComponent(kw)}&order=volume&ascending=false`),
-    ]).map(async p => {
-      try {
-        const r = await p;
-        if (!r.ok) return;
-        const d = await r.json();
-        if (Array.isArray(d)) raw.push(...d);
-      } catch {}
-    })
-  );
+    ]),
+    // Tag-based sweep catches events regardless of title wording
+    gFetch(`https://gamma-api.polymarket.com/events?active=true&closed=false&tag_slug=earnings&limit=200&order=volume&ascending=false`),
+  ];
+
+  await Promise.all(fetches.map(async p => {
+    try {
+      const r = await p;
+      if (!r.ok) return;
+      const d = await r.json();
+      if (Array.isArray(d)) raw.push(...d);
+    } catch {}
+  }));
 
   return raw.filter(e => {
     if (seen.has(e.id)) return false;
