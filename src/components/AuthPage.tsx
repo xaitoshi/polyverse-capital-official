@@ -67,7 +67,7 @@ export default function AuthPage() {
   const strengthWidth = strength === 'weak' ? 'w-1/3' : strength === 'fair' ? 'w-2/3' : 'w-full';
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white overflow-hidden relative flex flex-col">
+    <div className="min-h-screen bg-[#04070c] text-ink overflow-hidden relative flex flex-col">
 
       {/* ── Background ────────────────────────────────────────────────── */}
       <div className="pointer-events-none absolute inset-0">
@@ -77,7 +77,7 @@ export default function AuthPage() {
           className="absolute inset-0 w-full h-full object-cover object-center opacity-60"
         />
         {/* Dark overlay so text stays readable */}
-        <div className="absolute inset-0 bg-[#050505]/50" />
+        <div className="absolute inset-0 bg-[#04070c]/70" />
       </div>
 
       {/* ── Navbar ────────────────────────────────────────────────────── */}

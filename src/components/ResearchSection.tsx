@@ -371,7 +371,7 @@ export default function ResearchSection() {
   };
 
   return (
-    <div className="bg-[#050505] text-white font-mono">
+    <div className="bg-[#04070c] text-ink font-mono">
       <div className="border-t border-blue-500/20" />
 
       {/* ── Trade tracker ── */}

@@ -640,7 +640,7 @@ export default function RewardsPage() {
   );
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white font-mono">
+    <div className="min-h-screen bg-[#04070c] text-ink font-mono">
       {/* Nav */}
       <div className="border-b border-white/5 px-6 py-3 flex items-center justify-between">
         <a href="/" className="text-blue-400 hover:text-blue-300 text-sm transition-colors">← back</a>

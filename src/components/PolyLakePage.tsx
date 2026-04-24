@@ -483,7 +483,7 @@ export default function PolyLakePage() {
     / (wallets.filter(w => w.win_rate != null).length || 1);
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white font-mono">
+    <div className="min-h-screen bg-[#04070c] text-ink font-mono">
 
       {/* Nav */}
       <div className="border-b border-white/5 px-6 py-3 flex items-center justify-between">

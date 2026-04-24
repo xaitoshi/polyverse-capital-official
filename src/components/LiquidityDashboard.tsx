@@ -950,7 +950,7 @@ export default function LiquidityDashboard({ onClose }: { onClose: () => void })
   const isLowLiq = selected === LOW_LIQ_KEY;
 
   return (
-    <div className="fixed inset-0 z-50 bg-[#050505] flex flex-col font-mono">
+    <div className="fixed inset-0 z-50 bg-[#04070c] flex flex-col font-mono">
       {/* Header */}
       <div className="shrink-0 border-b border-blue-500/20 px-6 py-3 flex items-center justify-between">
         <div className="flex items-center gap-3">

@@ -1106,19 +1106,19 @@ export default function EsportsPage() {
   }, [db, playerSearch]);
 
   if (loading) return (
-    <div className="min-h-screen bg-[#050505] flex items-center justify-center font-mono text-blue-400 text-sm">
+    <div className="min-h-screen bg-[#04070c] flex items-center justify-center font-mono text-blue-400 text-sm">
       loading esports data…
     </div>
   );
   if (error) return (
-    <div className="min-h-screen bg-[#050505] flex items-center justify-center font-mono text-red-400 text-sm">
+    <div className="min-h-screen bg-[#04070c] flex items-center justify-center font-mono text-red-400 text-sm">
       error: {error}
     </div>
   );
   if (!db) return null;
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white font-mono">
+    <div className="min-h-screen bg-[#04070c] text-ink font-mono">
 
       {/* Nav */}
       <div className="border-b border-white/5 px-6 py-3 flex items-center justify-between">
@@ -1147,7 +1147,7 @@ export default function EsportsPage() {
             return null;
           };
           return (
-            <div className="bg-white/[0.02] border border-white/10 rounded-2xl p-5 space-y-4">
+            <div className="ascii-panel rounded-xl p-5 space-y-4">
               <div className="flex items-center justify-between">
                 <div className="text-[10px] text-blue-400 tracking-widest">MATCHES</div>
                 {scheduleLoading && <span className="w-3 h-3 rounded-full border border-blue-400/40 border-t-blue-400 animate-spin inline-block" />}
@@ -1261,7 +1261,7 @@ export default function EsportsPage() {
         })()}
 
         {/* ── Live Stream + AI Analysis ── */}
-        <div className="bg-white/[0.02] border border-white/10 rounded-2xl p-6 space-y-4">
+        <div className="ascii-panel rounded-xl p-6 space-y-4">
 
           {/* Top bar: title + league + source controls */}
           <div className="flex items-center justify-between flex-wrap gap-3">
@@ -1542,7 +1542,7 @@ export default function EsportsPage() {
         </div>
 
         {/* ── 2026 Season Standings ── */}
-        <div className="bg-white/[0.02] border border-white/10 rounded-2xl p-6 space-y-4">
+        <div className="ascii-panel rounded-xl p-6 space-y-4">
           <div className="text-[10px] text-blue-400 tracking-widest">2026 SEASON STANDINGS</div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {STANDINGS_2026.map(({ league, split, teams }) => (
@@ -1601,7 +1601,7 @@ export default function EsportsPage() {
         </div>
 
         {/* ── Matchup Predictor ── */}
-        <div className="bg-white/[0.02] border border-white/10 rounded-2xl p-6 space-y-6">
+        <div className="ascii-panel rounded-xl p-6 space-y-6">
           <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
           <div className="flex items-center gap-3">
             <div className="text-[10px] text-blue-400 tracking-widest flex-1">MATCHUP PREDICTOR</div>
@@ -1645,7 +1645,7 @@ export default function EsportsPage() {
 
           {/* H2H */}
           {teamA && teamB && (
-            <div className="border border-white/5 rounded-xl p-4 bg-white/[0.02]">
+            <div className="border border-blue-500/10 rounded-xl p-4 bg-white/[0.02]">
               <div className="text-[10px] text-gray-600 tracking-wider mb-2">HEAD TO HEAD</div>
               {h2hData ? (
                 <div className="flex items-center gap-4">
@@ -1870,7 +1870,7 @@ export default function EsportsPage() {
         </div>
 
         {/* ── Player Champion Pool ── */}
-        <div className="bg-white/[0.02] border border-white/10 rounded-2xl p-6 space-y-4">
+        <div className="ascii-panel rounded-xl p-6 space-y-4">
           <div className="text-[10px] text-blue-400 tracking-widest">PLAYER CHAMPION STATS</div>
           <Autocomplete
             value={playerSearch}
@@ -1926,7 +1926,7 @@ export default function EsportsPage() {
         </div>
 
         {/* ── Team Browser ── */}
-        <div className="bg-white/[0.02] border border-white/10 rounded-2xl p-6 space-y-4">
+        <div className="ascii-panel rounded-xl p-6 space-y-4">
           <div className="text-[10px] text-blue-400 tracking-widest">TEAM WIN RATES — ALL TEAMS</div>
           <div className="overflow-x-auto rounded-xl border border-white/10 max-h-96 overflow-y-auto">
             <table className="w-full text-xs">

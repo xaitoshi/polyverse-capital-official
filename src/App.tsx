@@ -72,13 +72,13 @@ export default function App() {
   return (
     <ConnectionProvider endpoint={SOLANA_RPC}>
       <WalletProvider wallets={wallets} autoConnect>
-        <div className="bg-[#050505] font-sans text-white">
+        <div className="bg-[#04070c] font-mono text-ink crt-flicker">
 
           {/* Hero — full viewport map */}
           <div className="relative w-full h-screen overflow-hidden">
             <FlatMapView data={marketData} onMarkerClick={handleSelectMarket} osintAlerts={osintAlerts} />
 
-            <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_center,transparent_0%,#050505_100%)] opacity-60" />
+            <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_center,transparent_0%,#04070c_100%)] opacity-70" />
 
             <TopBar
               onOpenEcosystem={() => setIsEcosystemOpen(true)}
@@ -135,9 +135,9 @@ export default function App() {
 
             {/* Scroll hint */}
             <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 pointer-events-none animate-bounce">
-              <span className="text-[10px] font-mono text-blue-500/40 tracking-widest">SCROLL</span>
+              <span className="text-[10px] font-mono text-blue-400/40 tracking-widest">SCROLL</span>
               <svg width="12" height="8" viewBox="0 0 12 8" fill="none">
-                <path d="M1 1L6 6L11 1" stroke="#0066ff55" strokeWidth="1.5" strokeLinecap="round"/>
+                <path d="M1 1L6 6L11 1" stroke="rgba(94,241,255,0.3)" strokeWidth="1.5" strokeLinecap="round"/>
               </svg>
             </div>
           </div>

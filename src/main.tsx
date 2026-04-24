@@ -26,8 +26,11 @@ function Router() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#050505] flex items-center justify-center">
-        <div className="w-5 h-5 border-2 border-blue-500/30 border-t-blue-400 rounded-full animate-spin" />
+      <div className="min-h-screen bg-[#04070c] flex items-center justify-center font-mono">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-5 h-5 border border-blue-400/30 border-t-blue-400 rounded-full animate-spin" />
+          <span className="text-[10px] uppercase tracking-[0.3em] text-blue-400/50">LOADING<span className="blink">_</span></span>
+        </div>
       </div>
     );
   }

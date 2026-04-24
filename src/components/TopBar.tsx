@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Search, Globe2, Droplets, Activity, Layers, TrendingUp, Menu, X, Gamepad2, Bot, Fish, Gift, Cloud } from 'lucide-react';
+import { ExternalLink, Search, Globe2, Droplets, Activity, Layers, TrendingUp, Menu, X, Gamepad2, Bot, Fish, Gift, Cloud } from 'lucide-react';
 import { MarketData } from '../data/mockData';
 
 interface SearchResult {
@@ -32,17 +32,13 @@ export default function TopBar({ onOpenEcosystem, onOpenPolyEarn, onOpenOsint, o
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
-        setIsOpen(false);
-      }
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) setIsOpen(false);
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  useEffect(() => {
-    if (mobileSearchOpen) mobileSearchRef.current?.focus();
-  }, [mobileSearchOpen]);
+  useEffect(() => { if (mobileSearchOpen) mobileSearchRef.current?.focus(); }, [mobileSearchOpen]);
 
   const handleSearch = (value: string) => {
     setQuery(value);
@@ -51,39 +47,44 @@ export default function TopBar({ onOpenEcosystem, onOpenPolyEarn, onOpenOsint, o
     const matched: SearchResult[] = [];
     for (const loc of marketData) {
       for (const m of loc.markets) {
-        if (m.question.toLowerCase().includes(lower) || loc.title.toLowerCase().includes(lower)) {
+        if (m.question.toLowerCase().includes(lower) || loc.title.toLowerCase().includes(lower))
           matched.push({ question: m.question, yesPrice: m.yesPrice, volume: m.volume, polymarketUrl: m.polymarketUrl, market: loc });
-        }
       }
     }
     setResults(matched.slice(0, 10));
     setIsOpen(matched.length > 0);
   };
 
-  const closeAll = () => {
-    setMobileMenuOpen(false);
-    setMobileSearchOpen(false);
-    setIsOpen(false);
-    setQuery('');
-    setResults([]);
-  };
+  const closeAll = () => { setMobileMenuOpen(false); setMobileSearchOpen(false); setIsOpen(false); setQuery(''); setResults([]); };
+
+  const NAV_ITEMS = [
+    { label: 'LIQUIDITY', icon: <Droplets   className="w-3.5 h-3.5" />, action: () => { closeAll(); window.location.href = '/liquidity'; } },
+    { label: 'POLY AI',   icon: <Activity   className="w-3.5 h-3.5" />, action: () => { onOpenOsint(); closeAll(); }, active: isOsintOpen },
+    { label: 'ECOSYSTEM', icon: <Layers     className="w-3.5 h-3.5" />, action: () => { onOpenEcosystem(); closeAll(); } },
+    { label: 'POLYEARN',  icon: <TrendingUp className="w-3.5 h-3.5" />, action: () => { onOpenPolyEarn(); closeAll(); } },
+    { label: 'ODDIE',     icon: <Bot        className="w-3.5 h-3.5" />, href: 'https://t.me/oddiepmbot', external: true },
+    { label: 'ESPORTS',   icon: <Gamepad2   className="w-3.5 h-3.5" />, href: '/esports' },
+    { label: 'POLYLAKE',  icon: <Fish       className="w-3.5 h-3.5" />, href: '/polylake' },
+    { label: 'REWARDS',   icon: <Gift       className="w-3.5 h-3.5" />, href: '/rewards' },
+    { label: 'WEATHER',   icon: <Cloud      className="w-3.5 h-3.5" />, href: '/weather' },
+  ] as const;
 
   const SearchDropdown = () => isOpen && results.length > 0 ? (
-    <div className="absolute top-full mt-2 right-0 w-[92vw] sm:w-96 max-h-72 overflow-y-auto bg-black/95 border border-blue-500/30 rounded-lg backdrop-blur-xl shadow-2xl z-50">
+    <div className="absolute top-full mt-1 right-0 w-[92vw] sm:w-96 max-h-72 overflow-y-auto ascii-panel rounded-sm z-50">
       {results.map((r, i) => (
         <button key={i} onClick={() => { onSelectMarket(r.market); closeAll(); }}
-          className="w-full text-left px-4 py-3 hover:bg-blue-500/10 border-b border-blue-500/10 last:border-b-0 transition-colors">
+          className="w-full text-left px-4 py-3 hover:bg-blue-500/5 border-b border-blue-500/10 last:border-b-0 transition-colors">
           <div className="flex items-start justify-between gap-2">
             <div className="flex-1 min-w-0">
-              <div className="text-sm text-gray-200 leading-snug truncate">{r.question}</div>
+              <div className="text-xs text-ink leading-snug truncate">{r.question}</div>
               <div className="flex items-center gap-3 mt-1">
-                <span className="text-xs font-mono text-blue-400">YES {Math.round(r.yesPrice * 100)}¢</span>
-                <span className="text-xs font-mono text-gray-500">{r.volume}</span>
-                <span className="text-[10px] font-mono text-gray-600">{r.market.title}</span>
+                <span className="text-[10px] phosphor">YES {Math.round(r.yesPrice * 100)}¢</span>
+                <span className="text-[10px] text-ink-dim">{r.volume}</span>
+                <span className="text-[9px] text-ink-dim/60">{r.market.title}</span>
               </div>
             </div>
             {r.polymarketUrl && (
-              <ExternalLink className="w-3.5 h-3.5 text-gray-600 hover:text-blue-400 shrink-0 mt-0.5"
+              <ExternalLink className="w-3 h-3 text-ink-dim/50 hover:text-blue-400 shrink-0 mt-0.5"
                 onClick={(e) => { e.stopPropagation(); window.open(r.polymarketUrl, '_blank', 'noopener,noreferrer'); }} />
             )}
           </div>
@@ -92,151 +93,96 @@ export default function TopBar({ onOpenEcosystem, onOpenPolyEarn, onOpenOsint, o
     </div>
   ) : null;
 
+  const NavBtn = ({ item }: { item: { label: string; icon: React.ReactNode; action?: () => void; active?: boolean; href?: string; external?: boolean } }) => {
+    const cls = `flex items-center gap-2 py-2.5 px-4 text-[10px] uppercase tracking-[0.2em] font-mono transition-all border rounded-sm
+      ${item.active ? 'bg-blue-500/10 border-blue-400/50 text-blue-400' : 'ascii-panel text-ink-dim hover:bg-blue-500/5 hover:border-blue-400/30 hover:text-ink'}`;
+    if (item.href) return (
+      <a href={item.href} target={item.external ? '_blank' : undefined} rel={item.external ? 'noopener noreferrer' : undefined}
+        onClick={closeAll} className={cls}>{item.icon}{item.label}</a>
+    );
+    return <button onClick={item.action} className={cls}>{item.icon}{item.label}</button>;
+  };
+
   return (
     <div className="absolute top-0 left-0 right-0 z-10 p-3 md:p-4">
 
-      {/* ── Desktop layout (lg+) ─────────────────────────────────────────── */}
+      {/* ── Desktop (lg+) ─────────────────────────────────────────────────── */}
       <div className="hidden lg:flex flex-col gap-2 pointer-events-auto">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 bg-black/60 border border-blue-500/30 backdrop-blur-md px-4 py-2 rounded-lg text-blue-400 font-mono font-bold text-xl tracking-wider">
-            <Globe2 className="w-6 h-6" />
-            POLYVERSE CAPITAL
+
+          {/* Logo */}
+          <div className="ascii-panel crt-scanlines flex items-center gap-2.5 px-4 py-2.5 rounded-sm">
+            <Globe2 className="w-4 h-4 text-blue-400" />
+            <span className="phosphor text-sm tracking-[0.3em] uppercase font-bold">[ POLYVERSE CAPITAL ]</span>
+            <span className="blink text-blue-400 text-sm">_</span>
           </div>
-          <div className="flex items-center gap-3">
-            <button onClick={() => {}}
-              className="bg-black/60 border border-blue-500/30 backdrop-blur-md px-4 py-2 rounded-lg text-blue-400 font-mono text-sm flex items-center gap-2 cursor-pointer hover:border-blue-500/60 hover:bg-blue-500/10 transition-colors">
-              $PLVS <span className="text-xs bg-blue-500/20 px-1.5 py-0.5 rounded">COMING SOON</span>
+
+          <div className="flex items-center gap-2">
+            {/* Search */}
+            <div className="relative" ref={wrapperRef}>
+              <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-blue-400/50 z-10" />
+              <input type="text" placeholder="search markets_" value={query}
+                onChange={(e) => handleSearch(e.target.value)}
+                className="ascii-panel rounded-sm pl-9 pr-4 py-2 text-[11px] text-ink w-56 bg-transparent
+                           focus:outline-none focus:border-blue-400/50 placeholder:text-ink-dim/40 transition-colors" />
+              <SearchDropdown />
+            </div>
+
+            <button className="ascii-panel rounded-sm px-3 py-2 text-[10px] uppercase tracking-[0.2em] text-ink-dim hover:text-blue-400 hover:border-blue-400/40 transition-colors">
+              $PLVS <span className="text-amber ml-1">SOON</span>
             </button>
+
             <button onClick={() => setDesktopMenuOpen(v => !v)}
-              className={`p-2 backdrop-blur-md rounded-lg border transition-colors ${desktopMenuOpen ? 'bg-blue-500/20 border-blue-500/50 text-blue-400' : 'bg-black/60 border-blue-500/30 text-blue-400 hover:bg-blue-500/10'}`}>
-              {desktopMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              className={`ascii-panel rounded-sm p-2.5 transition-all ${desktopMenuOpen ? 'bg-blue-500/10 border-blue-400/50 text-blue-400' : 'text-ink-dim hover:text-blue-400 hover:border-blue-400/40'}`}>
+              {desktopMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
             </button>
           </div>
         </div>
 
-        {/* Desktop nav grid — drops from the right */}
         {desktopMenuOpen && (
-          <div className="grid grid-cols-3 gap-2 bg-black/80 border border-blue-500/20 backdrop-blur-md rounded-xl p-3 w-fit self-end">
-            <button onClick={() => { setDesktopMenuOpen(false); window.location.href = '/liquidity'; }}
-              className="flex items-center justify-center gap-2 py-3 px-6 bg-blue-500/10 border border-blue-500/30 text-blue-400 rounded-lg text-sm font-mono hover:bg-blue-500/20 transition-colors">
-              <Droplets className="w-4 h-4" /> Liquidity
-            </button>
-            <button onClick={() => { onOpenOsint(); setDesktopMenuOpen(false); }}
-              className={`flex items-center justify-center gap-2 py-3 px-6 border rounded-lg text-sm font-mono transition-colors ${isOsintOpen ? 'bg-blue-500/20 border-blue-500/50 text-blue-400' : 'bg-white/5 border-blue-500/20 text-gray-300 hover:bg-blue-500/10 hover:text-blue-400'}`}>
-              <Activity className="w-4 h-4" /> Poly AI
-            </button>
-            <button onClick={() => { onOpenEcosystem(); setDesktopMenuOpen(false); }}
-              className="flex items-center justify-center gap-2 py-3 px-6 bg-white/5 border border-blue-500/20 text-gray-300 rounded-lg text-sm font-mono hover:bg-blue-500/10 hover:text-blue-400 transition-colors">
-              <Layers className="w-4 h-4" /> Ecosystem
-            </button>
-            <button onClick={() => { onOpenPolyEarn(); setDesktopMenuOpen(false); }}
-              className="flex items-center justify-center gap-2 py-3 px-6 bg-white/5 border border-blue-500/20 text-gray-300 rounded-lg text-sm font-mono hover:bg-blue-500/10 hover:text-blue-400 transition-colors">
-              <TrendingUp className="w-4 h-4" /> PolyEarn
-            </button>
-            <a href="https://t.me/oddiepmbot" target="_blank" rel="noopener noreferrer"
-              onClick={() => setDesktopMenuOpen(false)}
-              className="flex items-center justify-center gap-2 py-3 px-6 bg-white/5 border border-blue-500/20 text-gray-300 rounded-lg text-sm font-mono hover:bg-blue-500/10 hover:text-blue-400 transition-colors">
-              <Bot className="w-4 h-4" /> Oddie
-            </a>
-            <a href="/esports"
-              onClick={() => setDesktopMenuOpen(false)}
-              className="flex items-center justify-center gap-2 py-3 px-6 bg-white/5 border border-blue-500/20 text-gray-300 rounded-lg text-sm font-mono hover:bg-blue-500/10 hover:text-blue-400 transition-colors">
-              <Gamepad2 className="w-4 h-4" /> Esports
-            </a>
-            <a href="/polylake"
-              onClick={() => setDesktopMenuOpen(false)}
-              className="flex items-center justify-center gap-2 py-3 px-6 bg-white/5 border border-blue-500/20 text-gray-300 rounded-lg text-sm font-mono hover:bg-blue-500/10 hover:text-blue-400 transition-colors">
-              <Fish className="w-4 h-4" /> PolyLake
-            </a>
-            <a href="/rewards"
-              onClick={() => setDesktopMenuOpen(false)}
-              className="flex items-center justify-center gap-2 py-3 px-6 bg-white/5 border border-blue-500/20 text-gray-300 rounded-lg text-sm font-mono hover:bg-blue-500/10 hover:text-blue-400 transition-colors">
-              <Gift className="w-4 h-4" /> Rewards
-            </a>
-            <a href="/weather"
-              onClick={() => setDesktopMenuOpen(false)}
-              className="flex items-center justify-center gap-2 py-3 px-6 bg-white/5 border border-blue-500/20 text-gray-300 rounded-lg text-sm font-mono hover:bg-blue-500/10 hover:text-blue-400 transition-colors">
-              <Cloud className="w-4 h-4" /> Weather
-            </a>
+          <div className="grid grid-cols-3 gap-1.5 ascii-panel rounded-sm p-3 w-fit self-end">
+            {NAV_ITEMS.map(item => <NavBtn key={item.label} item={item} />)}
           </div>
         )}
       </div>
 
-      {/* ── Mobile layout (< lg) ─────────────────────────────────────────── */}
+      {/* ── Mobile (< lg) ─────────────────────────────────────────────────── */}
       <div className="flex lg:hidden flex-col gap-2 pointer-events-auto">
-        {/* Top row */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1 bg-black/70 border border-blue-500/30 backdrop-blur-md px-2 py-1.5 rounded-lg text-blue-400 font-mono font-bold text-xs tracking-wider">
-            <Globe2 className="w-3 h-3" />
-            POLYVERSE CAPITAL
+          <div className="ascii-panel crt-scanlines flex items-center gap-1.5 px-2.5 py-2 rounded-sm">
+            <Globe2 className="w-3 h-3 text-blue-400" />
+            <span className="phosphor text-[10px] tracking-[0.25em] uppercase font-bold">POLYVERSE</span>
+            <span className="blink text-blue-400 text-xs">_</span>
           </div>
-          <div className="flex items-center gap-2">
-            <button onClick={() => {}}
-              className="bg-black/70 border border-blue-500/30 backdrop-blur-md px-2.5 py-1.5 rounded-lg text-blue-400 font-mono text-xs flex items-center gap-1.5 hover:bg-blue-500/10 transition-colors">
-              $PLVS <span className="text-[9px] bg-blue-500/20 px-1 py-0.5 rounded">COMING SOON</span>
+          <div className="flex items-center gap-1.5">
+            <button className="ascii-panel rounded-sm px-2.5 py-1.5 text-[9px] uppercase tracking-[0.15em] text-ink-dim">
+              $PLVS <span className="text-amber ml-1">SOON</span>
             </button>
             <button onClick={() => { setMobileSearchOpen(v => !v); setMobileMenuOpen(false); }}
-              className={`p-2 backdrop-blur-md rounded-lg border transition-colors ${mobileSearchOpen ? 'bg-blue-500/20 border-blue-500/50 text-blue-400' : 'bg-black/70 border-blue-500/30 text-blue-400 hover:bg-blue-500/10'}`}>
+              className={`ascii-panel rounded-sm p-2 transition-all ${mobileSearchOpen ? 'bg-blue-500/10 border-blue-400/50 text-blue-400' : 'text-ink-dim hover:text-blue-400'}`}>
               <Search className="w-4 h-4" />
             </button>
             <button onClick={() => { setMobileMenuOpen(v => !v); setMobileSearchOpen(false); }}
-              className={`p-2 backdrop-blur-md rounded-lg border transition-colors ${mobileMenuOpen ? 'bg-blue-500/20 border-blue-500/50 text-blue-400' : 'bg-black/70 border-blue-500/30 text-blue-400 hover:bg-blue-500/10'}`}>
+              className={`ascii-panel rounded-sm p-2 transition-all ${mobileMenuOpen ? 'bg-blue-500/10 border-blue-400/50 text-blue-400' : 'text-ink-dim hover:text-blue-400'}`}>
               {mobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
             </button>
           </div>
         </div>
 
-        {/* Mobile search */}
         {mobileSearchOpen && (
           <div className="relative" ref={wrapperRef}>
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-blue-500/50 z-10" />
-            <input ref={mobileSearchRef} type="text" placeholder="Search markets..."
-              value={query} onChange={(e) => handleSearch(e.target.value)}
-              className="w-full bg-black/80 border border-blue-500/30 backdrop-blur-md rounded-lg pl-9 pr-4 py-2.5 text-sm text-blue-50 focus:outline-none focus:border-blue-500 placeholder:text-blue-500/30 transition-colors" />
+            <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-blue-400/50 z-10" />
+            <input ref={mobileSearchRef} type="text" placeholder="search markets_" value={query}
+              onChange={(e) => handleSearch(e.target.value)}
+              className="w-full ascii-panel rounded-sm pl-9 pr-4 py-2.5 text-[11px] text-ink bg-transparent
+                         focus:outline-none focus:border-blue-400/50 placeholder:text-ink-dim/40" />
             <SearchDropdown />
           </div>
         )}
 
-        {/* Mobile nav grid */}
         {mobileMenuOpen && (
-          <div className="grid grid-cols-2 gap-2 bg-black/80 border border-blue-500/20 backdrop-blur-md rounded-xl p-3">
-            <button onClick={() => { closeAll(); window.location.href = '/liquidity'; }}
-              className="flex items-center justify-center gap-2 py-3 bg-blue-500/10 border border-blue-500/30 text-blue-400 rounded-lg text-sm font-mono hover:bg-blue-500/20 transition-colors">
-              <Droplets className="w-4 h-4" /> Liquidity
-            </button>
-            <button onClick={() => { onOpenOsint(); closeAll(); }}
-              className={`flex items-center justify-center gap-2 py-3 border rounded-lg text-sm font-mono transition-colors ${isOsintOpen ? 'bg-blue-500/20 border-blue-500/50 text-blue-400' : 'bg-white/5 border-blue-500/20 text-gray-300 hover:bg-blue-500/10 hover:text-blue-400'}`}>
-              <Activity className="w-4 h-4" /> Poly AI
-            </button>
-            <button onClick={() => { onOpenEcosystem(); closeAll(); }}
-              className="flex items-center justify-center gap-2 py-3 bg-white/5 border border-blue-500/20 text-gray-300 rounded-lg text-sm font-mono hover:bg-blue-500/10 hover:text-blue-400 transition-colors">
-              <Layers className="w-4 h-4" /> Ecosystem
-            </button>
-            <button onClick={() => { onOpenPolyEarn(); closeAll(); }}
-              className="flex items-center justify-center gap-2 py-3 bg-white/5 border border-blue-500/20 text-gray-300 rounded-lg text-sm font-mono hover:bg-blue-500/10 hover:text-blue-400 transition-colors">
-              <TrendingUp className="w-4 h-4" /> PolyEarn
-            </button>
-            <a href="https://t.me/oddiepmbot" target="_blank" rel="noopener noreferrer"
-              onClick={closeAll}
-              className="flex items-center justify-center gap-2 py-3 bg-white/5 border border-blue-500/20 text-gray-300 rounded-lg text-sm font-mono hover:bg-blue-500/10 hover:text-blue-400 transition-colors">
-              <Bot className="w-4 h-4" /> Oddie
-            </a>
-            <a href="/esports" onClick={closeAll}
-              className="flex items-center justify-center gap-2 py-3 bg-white/5 border border-blue-500/20 text-gray-300 rounded-lg text-sm font-mono hover:bg-blue-500/10 hover:text-blue-400 transition-colors">
-              <Gamepad2 className="w-4 h-4" /> Esports
-            </a>
-            <a href="/polylake" onClick={closeAll}
-              className="flex items-center justify-center gap-2 py-3 bg-white/5 border border-blue-500/20 text-gray-300 rounded-lg text-sm font-mono hover:bg-blue-500/10 hover:text-blue-400 transition-colors">
-              <Fish className="w-4 h-4" /> PolyLake
-            </a>
-            <a href="/rewards" onClick={closeAll}
-              className="flex items-center justify-center gap-2 py-3 bg-white/5 border border-blue-500/20 text-gray-300 rounded-lg text-sm font-mono hover:bg-blue-500/10 hover:text-blue-400 transition-colors">
-              <Gift className="w-4 h-4" /> Rewards
-            </a>
-            <a href="/weather" onClick={closeAll}
-              className="flex items-center justify-center gap-2 py-3 bg-white/5 border border-blue-500/20 text-gray-300 rounded-lg text-sm font-mono hover:bg-blue-500/10 hover:text-blue-400 transition-colors">
-              <Cloud className="w-4 h-4" /> Weather
-            </a>
+          <div className="grid grid-cols-2 gap-1.5 ascii-panel rounded-sm p-3">
+            {NAV_ITEMS.map(item => <NavBtn key={item.label} item={item} />)}
           </div>
         )}
       </div>
