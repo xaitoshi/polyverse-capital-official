@@ -36,6 +36,10 @@
       "destination": "/index.html"
     },
     {
+      "source": "/mentions",
+      "destination": "/index.html"
+    },
+    {
       "source": "/api/open-meteo/:path*",
       "destination": "https://api.open-meteo.com/:path*"
     },

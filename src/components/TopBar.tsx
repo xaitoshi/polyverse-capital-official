@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ExternalLink, Search, Globe2, Droplets, Activity, Layers, TrendingUp, Menu, X, Gamepad2, Bot, Fish, Gift, Cloud } from 'lucide-react';
+import { ExternalLink, Search, Globe2, Droplets, Layers, TrendingUp, Menu, X, Gamepad2, Bot, Fish, Gift, Cloud, MessageSquare } from 'lucide-react';
 import { MarketData } from '../data/mockData';
 
 interface SearchResult {
@@ -59,7 +59,7 @@ export default function TopBar({ onOpenEcosystem, onOpenPolyEarn, onOpenOsint, o
 
   const NAV_ITEMS = [
     { label: 'LIQUIDITY', icon: <Droplets   className="w-3.5 h-3.5" />, action: () => { closeAll(); window.location.href = '/liquidity'; } },
-    { label: 'POLY AI',   icon: <Activity   className="w-3.5 h-3.5" />, action: () => { onOpenOsint(); closeAll(); }, active: isOsintOpen },
+    { label: 'MENTIONS',  icon: <MessageSquare className="w-3.5 h-3.5" />, href: '/mentions' },
     { label: 'ECOSYSTEM', icon: <Layers     className="w-3.5 h-3.5" />, action: () => { onOpenEcosystem(); closeAll(); } },
     { label: 'POLYEARN',  icon: <TrendingUp className="w-3.5 h-3.5" />, action: () => { onOpenPolyEarn(); closeAll(); } },
     { label: 'ODDIE',     icon: <Bot        className="w-3.5 h-3.5" />, href: 'https://t.me/oddiepmbot', external: true },
