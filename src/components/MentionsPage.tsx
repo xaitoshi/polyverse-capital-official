@@ -180,7 +180,13 @@ function TranscriptSearchPanel({ transcripts }: { transcripts: Transcript[] }) {
           </div>
         )}
 
-        {!active && pinned.length === 0 && (
+        {transcripts.length === 0 && (
+          <div className="text-[10px] text-amber/60 border border-amber/20 px-3 py-2 rounded-sm">
+            no transcripts loaded — check that FMP_KEY is set in Vercel env vars and redeploy
+          </div>
+        )}
+
+        {transcripts.length > 0 && !active && pinned.length === 0 && (
           <div className="text-[10px] text-ink-dim/40">
             type a phrase — counts update live · press Enter or PIN to save for comparison
           </div>
@@ -439,8 +445,8 @@ export default function MentionsPage() {
                 </div>
               )}
 
-              {/* Standalone transcript search */}
-              {transcripts.length > 0 && <TranscriptSearchPanel transcripts={transcripts} />}
+              {/* Standalone transcript search — always shown after scan */}
+              <TranscriptSearchPanel transcripts={transcripts} />
 
               {/* Market cards */}
               {events.length === 0 ? (
