@@ -123,7 +123,7 @@ function PhraseRow({ phrase, transcripts, snippetsOpen, onToggle }: {
 }
 
 // ── Standalone transcript phrase search ────────────────────────────────────────
-function TranscriptSearchPanel({ transcripts }: { transcripts: Transcript[] }) {
+function TranscriptSearchPanel({ transcripts, error }: { transcripts: Transcript[]; error?: string }) {
   const [phrase, setPhrase] = useState('');
   const [pinned, setPinned] = useState<string[]>([]);
   const [openSnippets, setOpenSnippets] = useState<Set<string>>(new Set());
@@ -182,7 +182,7 @@ function TranscriptSearchPanel({ transcripts }: { transcripts: Transcript[] }) {
 
         {transcripts.length === 0 && (
           <div className="text-[10px] text-amber/60 border border-amber/20 px-3 py-2 rounded-sm">
-            no transcripts loaded — check that FMP_KEY is set in Vercel env vars and redeploy
+            {error ? `ERROR: ${error}` : 'no transcripts loaded — check FMP_KEY is set in Vercel env vars'}
           </div>
         )}
 
@@ -331,6 +331,7 @@ export default function MentionsPage() {
   const [phase, setPhase] = useState<'idle' | 'loading' | 'done' | 'error'>('idle');
   const [events, setEvents] = useState<PolyEvent[]>([]);
   const [transcripts, setTranscripts] = useState<Transcript[]>([]);
+  const [transcriptError, setTranscriptError] = useState('');
   const [error, setError] = useState('');
   const [submittedTicker, setSubmittedTicker] = useState('');
 
@@ -339,6 +340,7 @@ export default function MentionsPage() {
     if (!t) return;
     setPhase('loading');
     setError('');
+    setTranscriptError('');
     setEvents([]);
     setTranscripts([]);
     setSubmittedTicker(t);
@@ -353,7 +355,10 @@ export default function MentionsPage() {
           body: JSON.stringify({ action: 'transcripts', ticker: t, quarters }),
         })
           .then(r => r.json())
-          .then(d => { if (Array.isArray(d)) setTranscripts(d); }),
+          .then(d => {
+            if (Array.isArray(d)) setTranscripts(d);
+            else if (d?.error) setTranscriptError(d.error);
+          }),
       ]);
       setPhase('done');
     } catch (e: unknown) {
@@ -446,7 +451,7 @@ export default function MentionsPage() {
               )}
 
               {/* Standalone transcript search — always shown after scan */}
-              <TranscriptSearchPanel transcripts={transcripts} />
+              <TranscriptSearchPanel transcripts={transcripts} error={transcriptError} />
 
               {/* Market cards */}
               {events.length === 0 ? (

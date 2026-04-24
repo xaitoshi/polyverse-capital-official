@@ -78,24 +78,26 @@ async function fetchTranscripts(ticker, fmpKey, quarters) {
   const candidates = [];
   for (let y = curYear; y >= curYear - 2; y--) {
     for (let q = 4; q >= 1; q--) {
-      if (y === curYear && q * 3 > curMonth + 1) continue; // skip future
+      if (y === curYear && q * 3 > curMonth + 1) continue;
       candidates.push({ year: y, quarter: q });
     }
   }
   const results = [];
+  let lastError = null;
   for (const { year, quarter } of candidates) {
     if (results.length >= quarters) break;
     try {
-      const r = await fetch(
-        `https://financialmodelingprep.com/stable/earning-call-transcript?symbol=${ticker}&year=${year}&quarter=${quarter}&apikey=${fmpKey}`
-      );
-      if (!r.ok) continue;
+      // FMP v3 endpoint — symbol in path
+      const url = `https://financialmodelingprep.com/api/v3/earning_call_transcript/${ticker}?year=${year}&quarter=${quarter}&apikey=${fmpKey}`;
+      const r = await fetch(url);
       const d = await r.json();
+      if (!r.ok) { lastError = d?.['Error Message'] ?? `HTTP ${r.status}`; continue; }
       if (Array.isArray(d) && d.length > 0 && d[0].content?.length > 100) {
         results.push({ label: `Q${quarter} ${year}`, date: d[0].date ?? '', content: d[0].content });
       }
-    } catch {}
+    } catch (e) { lastError = e.message; }
   }
+  if (results.length === 0 && lastError) throw new Error(`FMP: ${lastError}`);
   return results;
 }
 
