@@ -2,7 +2,9 @@ import { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import type { TempMarket, Outcome } from "../../lib/weatherverse/polymarket";
 import type { ModelForecast } from "../../lib/weatherverse/forecasts";
+import { fetchOpenMeteo } from "../../lib/weatherverse/forecasts";
 import type { HistoryDay } from "../../lib/weatherverse/metar";
+import { fetchAsosDaily } from "../../lib/weatherverse/metar";
 import WindyMap from "./WindyMap";
 import HistoryChart from "./HistoryChart";
 import PriceSparkline from "./PriceSparkline";
@@ -210,9 +212,8 @@ export default function CityPanel({ cityMarkets, onClose }: Props) {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setFetching(true);
     setForecast(null);
-    fetch(`/api/forecast?lat=${city.lat}&lon=${city.lon}&cc=${city.countryCode}`)
-      .then((r) => r.json())
-      .then((d) => !cancelled && setForecast(d.models ?? []))
+    fetchOpenMeteo(city.lat, city.lon, city.countryCode)
+      .then((models) => !cancelled && setForecast(models))
       .catch(() => !cancelled && setForecast([]))
       .finally(() => !cancelled && setFetching(false));
     return () => {
@@ -226,9 +227,8 @@ export default function CityPanel({ cityMarkets, onClose }: Props) {
     const { start, end } = historyWindow(activeDate);
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setHistory(null);
-    fetch(`/api/history?station=${station}&start=${start}&end=${end}`)
-      .then((r) => r.json())
-      .then((d) => !cancelled && setHistory(d.days ?? []))
+    fetchAsosDaily(station, start, end)
+      .then((days) => !cancelled && setHistory(days))
       .catch(() => !cancelled && setHistory([]));
     return () => {
       cancelled = true;

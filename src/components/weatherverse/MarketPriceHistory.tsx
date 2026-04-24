@@ -11,6 +11,7 @@ import {
 } from "recharts";
 import type { TempMarket } from "../../lib/weatherverse/polymarket";
 import type { PricePoint } from "../../lib/weatherverse/prices";
+import { fetchPriceHistory } from "../../lib/weatherverse/prices";
 
 type Props = {
   market: TempMarket | null;
@@ -95,13 +96,10 @@ export default function MarketPriceHistory({ market, headless = false }: Props) 
     Promise.all(
       tracked.map(async (t) => {
         try {
-          const r = await fetch(
-            `/api/price-history?token=${t.tokenId}&interval=1d`
-          );
-          const data = (await r.json()) as { history?: PricePoint[] };
-          return { ...t, points: data.history ?? [] };
+          const points = await fetchPriceHistory(t.tokenId, "1d");
+          return { ...t, points };
         } catch {
-          return { ...t, points: [] };
+          return { ...t, points: [] as PricePoint[] };
         }
       })
     ).then((rows) => {
