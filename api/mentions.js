@@ -113,8 +113,10 @@ export default async function handler(req, res) {
   }
 
   if (action === 'transcripts') {
-    const { ticker, fmpKey, quarters = 4 } = req.body ?? {};
-    if (!ticker || !fmpKey) return res.status(400).json({ error: 'Missing ticker or fmpKey' });
+    const { ticker, quarters = 4 } = req.body ?? {};
+    const fmpKey = process.env.FMP_KEY;
+    if (!ticker) return res.status(400).json({ error: 'Missing ticker' });
+    if (!fmpKey) return res.status(500).json({ error: 'FMP_KEY not configured' });
     try {
       return res.status(200).json(await fetchTranscripts(ticker.toUpperCase(), fmpKey, parseInt(quarters)));
     } catch (e) {

@@ -213,7 +213,6 @@ function MarketCard({ event, transcripts, hasTranscripts }: {
                       <span key={p} className="text-[10px] border border-blue-400/25 px-2 py-0.5 rounded-sm text-blue-400/80">"{p}"</span>
                     ))}
                   </div>
-                  <div className="text-[10px] text-ink-dim/50 mt-1">enter FMP key above to see transcript counts</div>
                 </div>
               )}
             </div>
@@ -254,15 +253,12 @@ function MarketCard({ event, transcripts, hasTranscripts }: {
 // ── Main Page ──────────────────────────────────────────────────────────────────
 export default function MentionsPage() {
   const [ticker, setTicker] = useState('');
-  const [fmpKey, setFmpKey] = useState(() => localStorage.getItem('fmp_key') ?? '');
   const [quarters, setQuarters] = useState(4);
   const [phase, setPhase] = useState<'idle' | 'loading' | 'done' | 'error'>('idle');
   const [events, setEvents] = useState<PolyEvent[]>([]);
   const [transcripts, setTranscripts] = useState<Transcript[]>([]);
   const [error, setError] = useState('');
   const [submittedTicker, setSubmittedTicker] = useState('');
-
-  useEffect(() => { localStorage.setItem('fmp_key', fmpKey); }, [fmpKey]);
 
   const scan = useCallback(async () => {
     const t = ticker.trim().toUpperCase();
@@ -273,35 +269,24 @@ export default function MentionsPage() {
     setTranscripts([]);
     setSubmittedTicker(t);
     try {
-      const jobs: Promise<void>[] = [];
-
-      // Fetch markets
-      jobs.push(
+      await Promise.all([
         fetch(`/api/mentions?action=markets&ticker=${t}`)
           .then(r => r.json())
-          .then(d => { if (Array.isArray(d)) setEvents(d); })
-      );
-
-      // Fetch transcripts only if FMP key provided
-      if (fmpKey.trim()) {
-        jobs.push(
-          fetch('/api/mentions', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: 'transcripts', ticker: t, fmpKey: fmpKey.trim(), quarters }),
-          })
-            .then(r => r.json())
-            .then(d => { if (Array.isArray(d)) setTranscripts(d); })
-        );
-      }
-
-      await Promise.all(jobs);
+          .then(d => { if (Array.isArray(d)) setEvents(d); }),
+        fetch('/api/mentions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'transcripts', ticker: t, quarters }),
+        })
+          .then(r => r.json())
+          .then(d => { if (Array.isArray(d)) setTranscripts(d); }),
+      ]);
       setPhase('done');
     } catch (e: unknown) {
       setError((e as Error).message ?? 'Unknown error');
       setPhase('error');
     }
-  }, [ticker, fmpKey, quarters]);
+  }, [ticker, quarters]);
 
   const onKey = (e: React.KeyboardEvent) => { if (e.key === 'Enter') scan(); };
 
@@ -333,13 +318,6 @@ export default function MentionsPage() {
               <input value={ticker} onChange={e => setTicker(e.target.value.toUpperCase())} onKeyDown={onKey}
                 placeholder="AAPL_"
                 className="w-24 bg-transparent border-b-2 border-blue-400/40 focus:border-blue-400 outline-none text-sm text-blue-400 font-bold tracking-wider placeholder:text-ink-dim/30 pb-0.5 uppercase transition-colors" />
-            </div>
-
-            <div className="space-y-1 flex-1 min-w-48">
-              <div className="text-[9px] uppercase tracking-[0.25em] text-ink-dim">FMP API KEY <span className="text-ink-dim/40 normal-case">(optional — for transcript counts)</span></div>
-              <input value={fmpKey} onChange={e => setFmpKey(e.target.value)} onKeyDown={onKey}
-                type="password" placeholder="financialmodelingprep.com key_"
-                className="w-full bg-transparent border-b border-blue-400/25 focus:border-blue-400/60 outline-none text-[11px] text-ink placeholder:text-ink-dim/30 pb-0.5 transition-colors" />
             </div>
 
             <div className="space-y-1">
@@ -379,11 +357,6 @@ export default function MentionsPage() {
                   <span className="text-ink-dim ml-4">TRANSCRIPTS</span>
                   <span className="phosphor">{transcripts.length}</span>
                 </>}
-                {!fmpKey && (
-                  <span className="text-amber/70 ml-4 normal-case tracking-normal">
-                    ↑ add FMP key to enable transcript analysis
-                  </span>
-                )}
               </div>
 
               {/* Transcript summary strip */}
