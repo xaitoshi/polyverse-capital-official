@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import type { PricePoint } from "../../lib/weatherverse/prices";
+import { fetchPriceHistory } from "../../lib/weatherverse/prices";
 
 type Props = {
   tokenId?: string;
@@ -23,9 +24,8 @@ export default function PriceSparkline({
   useEffect(() => {
     if (!tokenId) return;
     let cancelled = false;
-    fetch(`/api/price-history?token=${tokenId}&interval=${interval}`)
-      .then((r) => r.json())
-      .then((d) => !cancelled && setPoints(d.history ?? []))
+    fetchPriceHistory(tokenId, interval)
+      .then((history) => !cancelled && setPoints(history))
       .catch(() => !cancelled && setPoints([]));
     return () => {
       cancelled = true;
