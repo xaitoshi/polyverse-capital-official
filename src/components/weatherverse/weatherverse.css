@@ -1,0 +1,168 @@
+/* Weatherverse styles — scoped so the CRT/phosphor aesthetic doesn't bleed
+   into the host app. All the utility classes below are used inside a
+   `<div class="weatherverse">` wrapper set up by WeatherversePage.tsx.
+
+   Tailwind itself is already imported at src/index.css, so we only add
+   project-local tokens and utility classes here. */
+
+@theme {
+  /* Color tokens (enable Tailwind classes like text-ink, bg-panel-border,
+     hover:bg-cyan/10 etc. throughout the weatherverse module). */
+  --color-ink: #c8f2d8;
+  --color-ink-dim: #7fa990;
+  --color-amber: #ffb947;
+  --color-cyan: #5ef1ff;
+  --color-magenta: #ff5ecc;
+  --color-panel: rgba(4, 12, 10, 0.78);
+  --color-panel-border: rgba(94, 241, 255, 0.35);
+}
+
+/* Root variables — referenced by the styles below. Kept alongside @theme
+   tokens so utility classes and raw CSS stay in sync. */
+.weatherverse {
+  --bg: #04070c;
+  --ink: #c8f2d8;
+  --ink-dim: #7fa990;
+  --amber: #ffb947;
+  --cyan: #5ef1ff;
+  --magenta: #ff5ecc;
+  --panel: rgba(4, 12, 10, 0.78);
+  --panel-border: rgba(94, 241, 255, 0.35);
+  --scanline: rgba(0, 0, 0, 0.28);
+  letter-spacing: 0.01em;
+  font-feature-settings: "ss01", "ss02", "zero";
+}
+
+/* CRT scanlines overlay. */
+.weatherverse .crt-scanlines {
+  position: relative;
+}
+.weatherverse .crt-scanlines::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent 2px,
+    var(--scanline) 3px,
+    transparent 4px
+  );
+  pointer-events: none;
+  mix-blend-mode: multiply;
+  opacity: 0.55;
+  border-radius: inherit;
+}
+
+.weatherverse .crt-vignette::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(
+    ellipse at center,
+    transparent 55%,
+    rgba(0, 0, 0, 0.55) 100%
+  );
+  pointer-events: none;
+  z-index: 60;
+}
+
+.weatherverse .phosphor {
+  text-shadow: 0 0 6px rgba(94, 241, 255, 0.55), 0 0 14px rgba(94, 241, 255, 0.2);
+}
+
+.weatherverse .phosphor-amber {
+  color: var(--amber);
+  text-shadow: 0 0 6px rgba(255, 185, 71, 0.5), 0 0 16px rgba(255, 185, 71, 0.2);
+}
+
+@keyframes weatherverse-crt-flicker {
+  0%, 100% { opacity: 1; }
+  48% { opacity: 0.98; }
+  50% { opacity: 0.93; }
+  52% { opacity: 0.99; }
+}
+
+.weatherverse .crt-flicker {
+  animation: weatherverse-crt-flicker 6s infinite;
+}
+
+@keyframes weatherverse-blink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+.weatherverse .blink { animation: weatherverse-blink 1.1s step-end infinite; }
+
+.weatherverse .ascii-panel {
+  background: var(--panel);
+  border: 1px solid var(--panel-border);
+  box-shadow: 0 0 0 1px rgba(94, 241, 255, 0.08), 0 18px 60px rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(6px);
+}
+
+.weatherverse .ascii-panel-heading {
+  background: linear-gradient(
+    90deg,
+    rgba(94, 241, 255, 0.12),
+    rgba(94, 241, 255, 0) 60%
+  );
+  border-bottom: 1px dashed var(--panel-border);
+}
+
+.weatherverse .sky-gradient {
+  background:
+    linear-gradient(180deg,
+      #0a1a2a 0%,
+      #0e2a45 18%,
+      #1a4870 38%,
+      #2d6b9f 60%,
+      #4791c0 80%,
+      #79b7d8 100%);
+}
+
+.weatherverse .globe-glow {
+  box-shadow:
+    inset 0 0 120px rgba(94, 241, 255, 0.08),
+    0 0 60px rgba(94, 241, 255, 0.05);
+}
+
+/* Thin scrollbars for weatherverse panels. */
+.weatherverse .slim-scroll::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.weatherverse .slim-scroll::-webkit-scrollbar-thumb {
+  background: rgba(94, 241, 255, 0.25);
+  border-radius: 3px;
+}
+.weatherverse .slim-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Infinite-scroll ticker. Duplicated track + translateX -50% for a
+   seamless loop; pauses on hover. */
+@keyframes weatherverse-ticker-scroll {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+.weatherverse .ticker-track {
+  animation: weatherverse-ticker-scroll 55s linear infinite;
+  will-change: transform;
+}
+.weatherverse .ticker-track:hover {
+  animation-play-state: paused;
+}
+
+.weatherverse .prob-bar {
+  position: relative;
+  height: 10px;
+  background: rgba(94, 241, 255, 0.08);
+  border: 1px solid rgba(94, 241, 255, 0.18);
+  overflow: hidden;
+}
+.weatherverse .prob-bar > span {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: linear-gradient(90deg, var(--cyan), var(--amber));
+  opacity: 0.75;
+}

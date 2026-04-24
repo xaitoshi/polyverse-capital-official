@@ -93,6 +93,18 @@ export default defineConfig(({mode}) => {
           changeOrigin: true,
           rewrite: (path: string) => path.replace(/^\/api\/massive/, ''),
         },
+        // Weatherverse proxies — free/public APIs that need CORS-free access.
+        '/api/open-meteo': {
+          target: 'https://api.open-meteo.com',
+          changeOrigin: true,
+          rewrite: (path: string) => path.replace(/^\/api\/open-meteo/, ''),
+        },
+        '/api/iowa-asos': {
+          target: 'https://mesonet.agron.iastate.edu',
+          changeOrigin: true,
+          rewrite: (path: string) =>
+            path.replace(/^\/api\/iowa-asos/, '/cgi-bin/request/asos.py'),
+        },
       },
     },
   };

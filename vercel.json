@@ -32,6 +32,18 @@
       "destination": "/index.html"
     },
     {
+      "source": "/weather",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/api/open-meteo/:path*",
+      "destination": "https://api.open-meteo.com/:path*"
+    },
+    {
+      "source": "/api/iowa-asos",
+      "destination": "https://mesonet.agron.iastate.edu/cgi-bin/request/asos.py"
+    },
+    {
       "source": "/api/poly-web/:path*",
       "destination": "https://polymarket.com/:path*"
     },

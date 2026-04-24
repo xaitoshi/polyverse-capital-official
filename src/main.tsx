@@ -9,6 +9,7 @@ import LiquidityDashboard from './components/LiquidityDashboard.tsx';
 import PolyLakePage from './components/PolyLakePage.tsx';
 import RewardsPage from './components/RewardsPage.tsx';
 import AuthPage from './components/AuthPage.tsx';
+import WeatherversePage from './components/weatherverse/WeatherversePage.tsx';
 import { AuthProvider, useAuth } from './contexts/AuthContext.tsx';
 import { wagmiConfig } from './lib/wagmi.ts';
 import './index.css';
@@ -21,6 +22,7 @@ function Router() {
 
   // Public routes — no auth required
   if (path === '/esports') return <EsportsPage />;
+  if (path === '/weather') return <WeatherversePage />;
 
   if (loading) {
     return (
