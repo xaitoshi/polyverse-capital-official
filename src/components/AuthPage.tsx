@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useConnect, useAccount } from 'wagmi';
 import { supabase } from '../lib/supabase';
+import GoldfishCanvas from './GoldfishCanvas';
 
 type AuthView = 'hidden' | 'choice' | 'email' | 'forgot' | 'forgot-sent';
 type EmailTab = 'login' | 'signup';
@@ -67,18 +68,11 @@ export default function AuthPage() {
   const strengthWidth = strength === 'weak' ? 'w-1/3' : strength === 'fair' ? 'w-2/3' : 'w-full';
 
   return (
-    <div className="min-h-screen bg-[#04070c] text-ink overflow-hidden relative flex flex-col">
+    <div className="min-h-screen bg-[#111214] text-ink overflow-hidden relative flex flex-col">
 
-      {/* ── Background ────────────────────────────────────────────────── */}
-      <div className="pointer-events-none absolute inset-0">
-        <img
-          src="/auth-bg.png"
-          alt=""
-          className="absolute inset-0 w-full h-full object-cover object-center opacity-60"
-        />
-        {/* Dark overlay so text stays readable */}
-        <div className="absolute inset-0 bg-[#04070c]/70" />
-      </div>
+      <GoldfishCanvas />
+      {/* Soft well behind the copy so the school stays visible in open water */}
+      <div className="pointer-events-none absolute inset-0 z-[1] bg-[radial-gradient(ellipse_at_18%_48%,rgba(17,18,20,0.78),transparent_46%)]" />
 
       {/* ── Navbar ────────────────────────────────────────────────────── */}
       <nav className="relative z-10 flex items-center justify-between px-8 py-6">
@@ -103,9 +97,7 @@ export default function AuthPage() {
 
       {/* ── Hero ──────────────────────────────────────────────────────── */}
       <div className="relative z-10 flex-1 flex items-center px-8 md:px-16 pb-16">
-        <div className="w-full max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-
-          {/* Left */}
+        <div className="w-full max-w-xl">
           <div className="space-y-8">
             {/* Headline */}
             <div className="space-y-0">
@@ -131,7 +123,8 @@ export default function AuthPage() {
             </div>
 
             {/* Sub */}
-            <p className="text-gray-500 text-sm leading-relaxed max-w-sm">
+            <p className="relative max-w-sm text-sm leading-relaxed text-gray-400">
+              <span className="pointer-events-none absolute -inset-x-3 -inset-y-2 -z-10 rounded-xl bg-[#111214]/82" />
               Track wallets, analyse trader behaviour, and find edges across Polymarket's niche events.{' '}
               <span className="block md:inline">All in one place.</span>
             </p>
@@ -324,54 +317,11 @@ export default function AuthPage() {
               </div>
             )}
           </div>
-
-          {/* Right — decorative cards */}
-          <div className="hidden lg:flex flex-col gap-4 items-end">
-            {/* Card 1 - market tracker */}
-            <div className="w-72 bg-white/[0.04] backdrop-blur-sm border border-white/10 rounded-2xl p-5 space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] text-gray-500 tracking-wider font-mono">TOP WALLET</span>
-                <span className="text-[10px] font-mono text-blue-400">0x4f2a…8e1c</span>
-              </div>
-              <div>
-                <div className="text-2xl font-bold">$84,230</div>
-                <div className="text-sm text-gray-500">portfolio value</div>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-400 font-mono">Win rate</span>
-                <span className="text-blue-400 font-bold font-mono">+68%</span>
-              </div>
-              <div className="h-px bg-white/5" />
-              <div className="space-y-1.5">
-                {[
-                  { label: 'YES · Will BTC hit $120k?', val: '+$2,140' },
-                  { label: 'NO · Fed rate cut in June?', val: '+$890' },
-                ].map(r => (
-                  <div key={r.label} className="flex items-center justify-between">
-                    <span className="text-[11px] text-gray-500 truncate max-w-[160px]">{r.label}</span>
-                    <span className="text-[11px] text-blue-400 font-mono shrink-0">{r.val}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Card 2 - market discovery */}
-            <div className="w-64 bg-white/[0.04] backdrop-blur-sm border border-white/10 rounded-2xl p-4 space-y-2">
-              <div className="text-[10px] text-gray-500 tracking-wider font-mono">MARKET DISCOVERY</div>
-              <div className="text-sm text-white font-semibold leading-snug">Will BYND beat Q1 earnings?</div>
-              <div className="flex items-center gap-2">
-                <div className="flex-1 h-1.5 rounded-full bg-white/10 overflow-hidden">
-                  <div className="h-full w-[38%] rounded-full bg-blue-500" />
-                </div>
-                <span className="text-[11px] text-gray-400 font-mono">38¢ YES</span>
-              </div>
-              <div className="text-[10px] text-gray-600">3 tracked wallets positioned</div>
-            </div>
-          </div>
         </div>
       </div>
 
-      <div className="relative z-10 pb-6 text-center">
+      <div className="relative z-10 pb-6 text-center space-y-2">
+        <p className="text-[10px] font-mono tracking-[0.22em] text-white/40">MOVE TO SCATTER · CLICK OPEN WATER TO FEED</p>
         <p className="text-[10px] text-gray-700">By continuing, you agree to our Terms of Service</p>
       </div>
     </div>

@@ -6,7 +6,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { ConnectionProvider, WalletProvider } from '@solana/wallet-adapter-react';
 import { PhantomWalletAdapter } from '@solana/wallet-adapter-phantom';
-import FlatMapView from './components/FlatMapView';
+import GoldfishCanvas from './components/GoldfishCanvas';
 import TopBar from './components/TopBar';
 import BottomOverlay from './components/BottomOverlay';
 import MarketPanel from './components/MarketPanel';
@@ -74,12 +74,17 @@ export default function App() {
       <WalletProvider wallets={wallets} autoConnect>
         <div className="bg-[#04070c] font-mono text-ink crt-flicker">
 
-          {/* Hero — full viewport map */}
-          <div className="relative w-full h-screen overflow-hidden">
-            <FlatMapView data={marketData} onMarkerClick={handleSelectMarket} osintAlerts={osintAlerts} />
+          {/* Hero — interactive blue goldfish */}
+          <div className="relative w-full h-screen overflow-hidden bg-[#111214]">
+            <GoldfishCanvas contained />
 
-            <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_center,transparent_0%,#04070c_100%)] opacity-70" />
+            <div className="absolute inset-0 z-[1] flex items-center justify-center pointer-events-none select-none px-6">
+              <p className="max-w-[14rem] sm:max-w-none text-center font-mono font-bold uppercase tracking-[0.14em] sm:tracking-[0.22em] text-blue-400/85 text-xs sm:text-sm leading-snug">
+                Home of Prediction Markets Research
+              </p>
+            </div>
 
+            <div data-goldfish-ui className="contents">
             <TopBar
               onOpenEcosystem={() => setIsEcosystemOpen(true)}
               onOpenPolyEarn={() => setIsPolyEarnOpen(true)}
@@ -132,6 +137,7 @@ export default function App() {
             )}
 
             <BottomOverlay />
+            </div>
 
             {/* Scroll hint */}
             <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 pointer-events-none animate-bounce">

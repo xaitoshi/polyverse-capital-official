@@ -37,7 +37,9 @@ function Router() {
     );
   }
 
-  if (!user) return <AuthPage />;
+  // Dev-only: /?preview=1 shows the signed-in home without an account.
+  const previewHome = import.meta.env.DEV && new URLSearchParams(window.location.search).has('preview');
+  if (!user && !previewHome) return <AuthPage />;
 
   if (path === '/earn') return <EarnPage />;
   if (path === '/liquidity') return <LiquidityDashboard onClose={() => { window.location.href = '/'; }} />;
