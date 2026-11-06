@@ -41,10 +41,11 @@ node scripts/pm-explorer-smoke.mjs
 
 Searchable team cards built from Oracle's Elixir public yearly CSVs.
 
-- Snapshots: `public/lolesports/` (index + per-team JSON). Do **not** commit raw OE CSVs or `oe.db`.
+- SPA route: `/lolesports` (HTML). Data assets: `/data/lolesports/` (JSON under `public/data/lolesports/`). Do **not** put `index.json` under `public/lolesports/` — that shadows the SPA.
+- Snapshots: `public/data/lolesports/` (index + per-team JSON). Do **not** commit raw OE CSVs or `oe.db`.
 - Rebuild data: `npm run build:lolesports-data` (requires local OE raw at `/workspace/lol-model/data/raw` or `LOL_OE_RAW`).
-- Scoring: Polyverse `polyverse-lolesports-v1` — see `public/lolesports/methodology.json`. Drafting grade is an opponent-adjusted **proxy**, not causal draft quality.
-- Dual honest cutoffs: **OE detailed player/combat stats** through the OE dump max; **match W/L + Elo** may extend via `lol-model/scrape_golgg.py` thin rows after OE lag (never invent GD@15/player combat). See `public/lolesports/meta.json` + `refresh_verification.json`.
+- Scoring: Polyverse `polyverse-lolesports-v1` — see `public/data/lolesports/methodology.json`. Drafting grade is an opponent-adjusted **proxy**, not causal draft quality.
+- Dual honest cutoffs: **OE detailed player/combat stats** through the OE dump max; **match W/L + Elo** may extend via `lol-model/scrape_golgg.py` thin rows after OE lag (never invent GD@15/player combat). See `public/data/lolesports/meta.json` + `refresh_verification.json`.
 - OE public Drive often quota-blocks; user Drive OE copy must be newer than local before replacing.
 - Tests: `npm run test:lolesports`
 

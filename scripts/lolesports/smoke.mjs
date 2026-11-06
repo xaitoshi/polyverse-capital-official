@@ -8,7 +8,9 @@ import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "../..");
-const pub = join(root, "public/lolesports");
+const DATA_PREFIX = "/data/lolesports";
+const pub = join(root, "public/data/lolesports");
+assert.equal(DATA_PREFIX, "/data/lolesports");
 
 function loadJson(p) {
   return JSON.parse(readFileSync(p, "utf8"));

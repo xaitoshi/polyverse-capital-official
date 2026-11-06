@@ -43,8 +43,8 @@ export default function LolesportsPage() {
     (async () => {
       try {
         const [idxRes, methRes] = await Promise.all([
-          fetch("/lolesports/index.json"),
-          fetch("/lolesports/methodology.json"),
+          fetch("/data/lolesports/index.json"),
+          fetch("/data/lolesports/methodology.json"),
         ]);
         if (!idxRes.ok) throw new Error(`index ${idxRes.status}`);
         const idx = (await idxRes.json()) as LolesportsIndex;
@@ -79,7 +79,7 @@ export default function LolesportsPage() {
     setCardLoad(selectedId);
     (async () => {
       try {
-        const r = await fetch(`/lolesports/teams/${selectedId}.json`);
+        const r = await fetch(`/data/lolesports/teams/${selectedId}.json`);
         if (!r.ok) throw new Error(`team ${r.status}`);
         const data = (await r.json()) as TeamCard;
         if (cancelled) return;
