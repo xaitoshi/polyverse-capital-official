@@ -1,4 +1,4 @@
-import { StrictMode } from 'react';
+import { StrictMode, lazy, Suspense } from 'react';
 import { createRoot } from 'react-dom/client';
 import { WagmiProvider } from 'wagmi';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -17,6 +17,7 @@ import './index.css';
 
 const queryClient = new QueryClient();
 const path = window.location.pathname;
+const VisualisePage = lazy(() => import('./components/visualise/VisualisePage.tsx'));
 
 function Router() {
   const { user, loading } = useAuth();
@@ -25,6 +26,17 @@ function Router() {
   if (path === '/esports') return <EsportsPage />;
   if (path === '/weather') return <WeatherversePage />;
   if (path === '/mentions') return <MentionsPage />;
+  if (path === '/visualise' || path === '/visualize') {
+    return (
+      <Suspense fallback={
+        <div className="min-h-screen bg-[#04070c] flex items-center justify-center font-mono">
+          <span className="text-[10px] uppercase tracking-[0.3em] text-blue-400/50">LOADING VISUALISE<span className="blink">_</span></span>
+        </div>
+      }>
+        <VisualisePage />
+      </Suspense>
+    );
+  }
 
   if (loading) {
     return (
