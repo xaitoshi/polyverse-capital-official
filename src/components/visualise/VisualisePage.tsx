@@ -20,8 +20,22 @@ import type {
 import { formatCents, formatSgt, formatUsd } from "../../lib/pm-explorer/format";
 import PriceBubbleChart from "./PriceBubbleChart";
 import WalletTable from "./WalletTable";
+import TradeInspectPanel from "./TradeInspectPanel";
+import SignificantMovesPanel from "./SignificantMovesPanel";
 import type { ClobInterval } from "../../lib/pm-explorer/adapters/clobPricesV1";
 import { parseVisualiseSearchParams } from "../../lib/pm-explorer/urlState";
+import {
+  detectSignificantMoves,
+  type MoveWindowKey,
+} from "../../lib/pm-explorer/significantMoves";
+import {
+  clearTradeInspect,
+  pickFromCluster,
+  selectTradeFromClick,
+  tradePointToChartDatum,
+  type ChartTradeDatum,
+  type TradeInspectState,
+} from "../../lib/pm-explorer/tradeSelection";
 
 type Status =
   | { kind: "idle" }
@@ -69,6 +83,10 @@ export default function VisualisePage() {
   const [brushRange, setBrushRange] = useState<[number, number] | null>(null);
   const [playhead, setPlayhead] = useState<string | null>(null);
   const [replaying, setReplaying] = useState(false);
+  const [showAllTrades, setShowAllTrades] = useState(false);
+  const [moveWindow, setMoveWindow] = useState<MoveWindowKey>("15m");
+  const [selectedMoveId, setSelectedMoveId] = useState<string | null>(null);
+  const [inspect, setInspect] = useState<TradeInspectState>(clearTradeInspect());
   const abortRef = useRef<AbortController | null>(null);
   const skipReloadRef = useRef(false);
   const searchTimer = useRef<number | null>(null);
@@ -104,6 +122,8 @@ export default function VisualisePage() {
     setBrushRange(null);
     setPlayhead(null);
     setReplaying(false);
+    setSelectedMoveId(null);
+    setInspect(clearTradeInspect());
     writeQuery({ q: undefined, event: undefined, market: undefined });
   }, []);
 
@@ -354,6 +374,84 @@ export default function VisualisePage() {
     return list;
   }, [payload, brushRange, playhead, sideFilter, minNotional, watchedOnly, watch, focusedWallet, selectedTokenIds]);
 
+
+  const primaryOutcome = useMemo(() => {
+    if (!payload) return null;
+    const selected = payload.outcomes.filter((o) => selectedTokenIds.has(o.tokenId));
+    // Prefer a single selected outcome for move detection; else first outcome.
+    return selected[0] || payload.outcomes[0] || null;
+  }, [payload, selectedTokenIds]);
+
+  const significantMoves = useMemo(() => {
+    if (!payload || !primaryOutcome) return [];
+    return detectSignificantMoves({
+      tokenId: primaryOutcome.tokenId,
+      outcomeLabel: primaryOutcome.label,
+      prices: payload.prices,
+      trades: payload.trades,
+      provenance: payload.provenance,
+      windowKey: moveWindow,
+      maxMoves: 6,
+      markers: payload.markers,
+      playheadMs: playhead ? Date.parse(playhead) : null,
+    });
+  }, [payload, primaryOutcome, moveWindow, playhead]);
+
+  // Esc clears inspect; pause replay when inspecting
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setInspect(clearTradeInspect());
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  useEffect(() => {
+    if (inspect.cluster.length && replaying) setReplaying(false);
+  }, [inspect.cluster.length, replaying]);
+
+  // Focus brush when a move is selected
+  useEffect(() => {
+    if (!selectedMoveId) return;
+    const m = significantMoves.find((x) => x.id === selectedMoveId);
+    if (m) setBrushRange([m.startMs, m.endMs]);
+  }, [selectedMoveId, significantMoves]);
+
+  const handleTradeClick = useCallback((datum: ChartTradeDatum, allVisible: ChartTradeDatum[]) => {
+    setReplaying(false);
+    setInspect(selectTradeFromClick(allVisible, datum));
+    setFocusedWallet(datum.wallet);
+  }, []);
+
+  const handleSelectTradeId = useCallback(
+    (tradeId: string) => {
+      if (!payload || !primaryOutcome) return;
+      setReplaying(false);
+      const watchAddrs = new Set(watch.flatMap((w) => w.addresses.map((a) => a.toLowerCase())));
+      const tr = payload.trades.find((x) => x.id === tradeId);
+      if (!tr) return;
+      const label =
+        payload.outcomes.find((o) => o.tokenId === tr.tokenId)?.label || primaryOutcome.label;
+      const datum = tradePointToChartDatum(
+        tr,
+        label,
+        watchAddrs.has(tr.wallet.toLowerCase()),
+        watch.length > 0
+      );
+      const all = payload.trades
+        .filter((t) => selectedTokenIds.has(t.tokenId))
+        .map((t) => {
+          const lab = payload.outcomes.find((o) => o.tokenId === t.tokenId)?.label || t.tokenId;
+          return tradePointToChartDatum(t, lab, watchAddrs.has(t.wallet.toLowerCase()), watch.length > 0);
+        });
+      const next = selectTradeFromClick(all, datum);
+      // Force selection even inside a cluster
+      setInspect(pickFromCluster({ ...next, cluster: next.cluster.length ? next.cluster : [datum] }, tradeId));
+      setFocusedWallet(tr.wallet);
+    },
+    [payload, primaryOutcome, watch, selectedTokenIds]
+  );
+
   return (
     <div className="min-h-screen w-full bg-[#04070c] font-mono text-ink" ref={wrapRef}>
       <div className="crt-vignette" />
@@ -503,6 +601,19 @@ export default function VisualisePage() {
           </div>
         </section>
 
+        {/* Interpretation intro */}
+        <section className="ascii-panel rounded-sm px-3 py-2 text-[11px] text-ink-dim">
+          <p className="phosphor text-[10px] uppercase tracking-[0.2em]">How to read this</p>
+          <p className="mt-1 normal-case tracking-normal">
+            Price lines are CLOB history. Bubbles are individual fills for the selected outcome token
+            (▲ BUY / ◆ SELL). <span className="text-ink">Click a bubble</span> to inspect wallet, size, and time —
+            hover is preview only. Overlapping icons open a disambiguation list. Significant-move cards
+            rank |Δpp| windows and list associated fills in that window; association is not proof those
+            fills moved the market. Trade history may be truncated (~800 fills) while prices cover a longer
+            span — coverage status is shown per move. No verified news/catalyst feed is attached.
+          </p>
+        </section>
+
         {/* Filters */}
         {markets.length > 0 && (
           <section className="ascii-panel flex flex-col gap-2 rounded-sm p-3">
@@ -612,6 +723,14 @@ export default function VisualisePage() {
                 />
                 Watched only
               </label>
+              <label className="flex items-center gap-1.5 text-[10px] text-ink-dim">
+                <input
+                  type="checkbox"
+                  checked={showAllTrades}
+                  onChange={(e) => setShowAllTrades(e.target.checked)}
+                />
+                Show all trade bubbles
+              </label>
               <button
                 type="button"
                 className="rounded-sm border border-blue-500/20 px-2 py-1 text-[10px] text-ink-dim hover:text-ink"
@@ -632,6 +751,9 @@ export default function VisualisePage() {
                   setSideFilter("ALL");
                   setMinNotional(0);
                   setWatchedOnly(false);
+                  setInspect(clearTradeInspect());
+                  setSelectedMoveId(null);
+                  setShowAllTrades(false);
                 }}
               >
                 Reset view
@@ -644,9 +766,9 @@ export default function VisualisePage() {
         <section className="ascii-panel flex min-h-[420px] flex-1 flex-col rounded-sm">
           <div className="ascii-panel-heading flex flex-wrap items-center gap-3 px-3 py-2 text-[10px] uppercase tracking-[0.2em] text-ink-dim">
             <Activity className="h-3.5 w-3.5 text-blue-400" />
-            <span>Price · time + trade bubbles</span>
+            <span>Price · time + interactive trades</span>
             <span className="normal-case tracking-normal">
-              Circles = BUY of outcome token · Diamonds = SELL · area ∝ USDC
+              Click bubble to inspect · muted unless &quot;Show all&quot; · area ∝ USDC
             </span>
             {payload && (
               <span className="ml-auto normal-case tracking-normal">
@@ -675,6 +797,12 @@ export default function VisualisePage() {
                 playheadTs={playhead}
                 brushRange={brushRange}
                 onBrushRange={setBrushRange}
+                showAllTrades={showAllTrades}
+                selectedTradeId={inspect.selectedId}
+                selectedMoveId={selectedMoveId}
+                moves={significantMoves}
+                isolateWallet={inspect.isolateWallet}
+                onTradeClick={handleTradeClick}
               />
             )}
           </div>
@@ -684,6 +812,73 @@ export default function VisualisePage() {
             {playhead && <span className="ml-2 phosphor-amber">playhead {formatSgt(playhead)}</span>}
           </div>
         </section>
+
+        {payload && inspect.cluster.length > 0 && (
+          <TradeInspectPanel
+            cluster={inspect.cluster}
+            selectedId={inspect.selectedId}
+            isolateWallet={inspect.isolateWallet}
+            onSelect={(id) => setInspect((s) => pickFromCluster(s, id))}
+            onClose={() => setInspect(clearTradeInspect())}
+            onToggleIsolate={() =>
+              setInspect((s) => ({ ...s, isolateWallet: !s.isolateWallet }))
+            }
+            onFocusWallet={(w) => setFocusedWallet(w)}
+          />
+        )}
+
+        {payload && primaryOutcome && (
+          <SignificantMovesPanel
+            moves={significantMoves}
+            windowKey={moveWindow}
+            onWindowKey={(k) => {
+              setMoveWindow(k);
+              setSelectedMoveId(null);
+            }}
+            selectedMoveId={selectedMoveId}
+            onSelectMove={setSelectedMoveId}
+            onSelectTradeId={handleSelectTradeId}
+            primaryLabel={primaryOutcome.label}
+          />
+        )}
+
+        {/* Keyboard / mobile trade list fallback */}
+        {payload && showAllTrades && (
+          <section className="ascii-panel rounded-sm p-3" aria-label="Trade list fallback">
+            <div className="mb-2 text-[10px] uppercase tracking-[0.2em] text-ink-dim">
+              › Trade list (keyboard / mobile fallback)
+            </div>
+            <ul className="max-h-56 space-y-0.5 overflow-y-auto text-[11px]">
+              {payload.trades
+                .filter((tr) => selectedTokenIds.has(tr.tokenId))
+                .filter((tr) => (sideFilter === "ALL" ? true : tr.side === sideFilter))
+                .filter((tr) => tr.notionalUsdc >= minNotional)
+                .slice(0, 120)
+                .map((tr) => {
+                  const label =
+                    payload.outcomes.find((o) => o.tokenId === tr.tokenId)?.label || tr.tokenId;
+                  return (
+                    <li key={tr.id}>
+                      <button
+                        type="button"
+                        className={`flex w-full flex-wrap gap-2 rounded-sm px-1 py-1 text-left hover:bg-blue-500/10 ${
+                          inspect.selectedId === tr.id ? "bg-amber/10" : ""
+                        }`}
+                        onClick={() => handleSelectTradeId(tr.id)}
+                      >
+                        <span className={tr.side === "BUY" ? "text-cyan" : "text-magenta"}>{tr.side}</span>
+                        <span>{label}</span>
+                        <span>{formatCents(tr.price)}</span>
+                        <span>{formatUsd(tr.notionalUsdc)}</span>
+                        <span className="font-mono text-[10px] text-ink-dim">{tr.walletName || tr.wallet.slice(0, 10)}</span>
+                        <span className="text-[10px] text-ink-dim">{formatSgt(tr.ts)}</span>
+                      </button>
+                    </li>
+                  );
+                })}
+            </ul>
+          </section>
+        )}
 
         {/* Liquidity strip */}
         {payload && (
