@@ -16,6 +16,7 @@ import type {
   EventConfig,
   MarketGraphPayload,
   SearchHit,
+  TradeFetchMeta,
 } from "../../lib/pm-explorer/types";
 import { formatCents, formatSgt, formatUsd } from "../../lib/pm-explorer/format";
 import PriceBubbleChart from "./PriceBubbleChart";
@@ -87,6 +88,7 @@ export default function VisualisePage() {
   const [moveWindow, setMoveWindow] = useState<MoveWindowKey>("15m");
   const [selectedMoveId, setSelectedMoveId] = useState<string | null>(null);
   const [inspect, setInspect] = useState<TradeInspectState>(clearTradeInspect());
+  const [tradeFetchLive, setTradeFetchLive] = useState<TradeFetchMeta | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const skipReloadRef = useRef(false);
   const searchTimer = useRef<number | null>(null);
@@ -124,6 +126,7 @@ export default function VisualisePage() {
     setReplaying(false);
     setSelectedMoveId(null);
     setInspect(clearTradeInspect());
+    setTradeFetchLive(null);
     writeQuery({ q: undefined, event: undefined, market: undefined });
   }, []);
 
@@ -136,6 +139,19 @@ export default function VisualisePage() {
       watchList = watch
     ) => {
       setStatus({ kind: "loading_series" });
+      setTradeFetchLive({
+        status: "loading",
+        loadedCount: 0,
+        pagesFetched: 0,
+        windowStartMs: null,
+        windowEndMs: null,
+        oldestLoadedMs: null,
+        newestLoadedMs: null,
+        reachedWindowStart: false,
+        exhaustedApi: false,
+        hitSafetyCeiling: false,
+        note: "Fetching fills for selected interval…",
+      });
       try {
         const series = await loadMarketSeries({
           event: ev,
@@ -144,9 +160,18 @@ export default function VisualisePage() {
           interval,
           watch: watchList,
           signal,
+          onTradesProgress: ({ trades, tradeFetch }) => {
+            if (signal.aborted) return;
+            setTradeFetchLive(tradeFetch);
+            setPayload((prev) => {
+              if (!prev || prev.market.marketId !== market.marketId) return prev;
+              return { ...prev, trades, tradeFetch };
+            });
+          },
         });
         if (signal.aborted) return;
         setPayload(series);
+        setTradeFetchLive(series.tradeFetch || null);
         const tokens = new Set(market.outcomes.slice(0, 4).map((o) => o.tokenId));
         setSelectedTokenIds(tokens);
         setStatus({ kind: "ready" });
@@ -609,8 +634,10 @@ export default function VisualisePage() {
             (▲ BUY / ◆ SELL). <span className="text-ink">Click a bubble</span> to inspect wallet, size, and time —
             hover is preview only. Overlapping icons open a disambiguation list. Significant-move cards
             rank |Δpp| windows and list associated fills in that window; association is not proof those
-            fills moved the market. Trade history may be truncated (~800 fills) while prices cover a longer
-            span — coverage status is shown per move. No verified news/catalyst feed is attached.
+            fills moved the market. Fills paginate newest→oldest for the selected interval (public data-api
+            has no server time filter); coverage shows loading/complete/partial. $ filters apply to all
+            loaded fills, not a fixed fetch cap. Chart mute is display-only — source fills stay loaded.
+            No verified news/catalyst feed is attached.
           </p>
         </section>
 
@@ -772,7 +799,9 @@ export default function VisualisePage() {
             </span>
             {payload && (
               <span className="ml-auto normal-case tracking-normal">
-                {payload.trades.length} trades · {payload.prices.length} ticks · mode={payload.mode}
+                {payload.trades.length} trades
+                {payload.tradeFetch ? ` · fills:${payload.tradeFetch.status}` : ""} ·{" "}
+                {payload.prices.length} ticks · mode={payload.mode}
               </span>
             )}
           </div>
@@ -812,6 +841,25 @@ export default function VisualisePage() {
             {playhead && <span className="ml-2 phosphor-amber">playhead {formatSgt(playhead)}</span>}
           </div>
         </section>
+
+        {(tradeFetchLive || payload?.tradeFetch) && (
+          <section className="ascii-panel rounded-sm px-3 py-2 text-[10px] text-ink-dim" aria-live="polite">
+            <span className="uppercase tracking-[0.2em]">› Fills coverage</span>{" "}
+            <span className="normal-case tracking-normal text-ink">
+              {(tradeFetchLive || payload!.tradeFetch)!.loadedCount} loaded ·{" "}
+              {(tradeFetchLive || payload!.tradeFetch)!.pagesFetched} pages ·{" "}
+              {(tradeFetchLive || payload!.tradeFetch)!.status}
+            </span>
+            <span className="ml-2 normal-case tracking-normal">
+              {(tradeFetchLive || payload!.tradeFetch)!.note}
+            </span>
+            {(tradeFetchLive || payload!.tradeFetch)!.hitSafetyCeiling && (
+              <span className="ml-2 text-amber">
+                Safety ceiling reached — not a complete on-chain archive; use an indexer for full history.
+              </span>
+            )}
+          </section>
+        )}
 
         {payload && inspect.cluster.length > 0 && (
           <TradeInspectPanel

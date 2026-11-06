@@ -135,6 +135,23 @@ export interface Provenance {
   adapterVersions: Record<string, string>;
 }
 
+/** Client-side trade ingestion status for the selected price interval window. */
+export type TradeFetchStatus = "idle" | "loading" | "complete" | "partial" | "error";
+
+export interface TradeFetchMeta {
+  status: TradeFetchStatus;
+  loadedCount: number;
+  pagesFetched: number;
+  windowStartMs: number | null;
+  windowEndMs: number | null;
+  oldestLoadedMs: number | null;
+  newestLoadedMs: number | null;
+  reachedWindowStart: boolean;
+  exhaustedApi: boolean;
+  hitSafetyCeiling: boolean;
+  note: string;
+}
+
 export interface MarketGraphPayload {
   event: EventConfig;
   market: ChildMarket;
@@ -148,6 +165,7 @@ export interface MarketGraphPayload {
   provenance: Provenance;
   mode: "live" | "fixture";
   resolvedFrom: ResolveRequest;
+  tradeFetch?: TradeFetchMeta;
 }
 
 export interface ResolveResult {

@@ -146,7 +146,8 @@ export default function PriceBubbleChart({
     return visibleOutcomes.map((o, i) => {
       let points = allVisibleDatums.filter((d) => d.tokenId === o.tokenId);
       if (!showAllTrades) {
-        // Mute: keep large notionals + anything highlighted; others dropped from scatter
+        // Display mute only — source payload retains all loaded fills for filters/table/inspect.
+        // Scatter keeps large notionals + highlights to avoid icon clutter.
         points = points.filter((d) => highlightIds.has(d.tradeId) || d.notional >= 250);
       }
       points = points.map((d) => {

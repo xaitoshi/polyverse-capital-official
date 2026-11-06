@@ -10,6 +10,7 @@ import type {
   Provenance,
   ResolveRequest,
   SearchHit,
+  TradeFetchMeta,
   WatchWallet,
 } from "./types";
 import type { ClobInterval } from "./adapters/clobPricesV1";
@@ -17,6 +18,7 @@ import type { ClobInterval } from "./adapters/clobPricesV1";
 export { classifyInput, parseExplorerInput, isBlockedHostname } from "./urlParse";
 export { EXPLORER_PRESETS, WATCH_PRESETS, ADAPTER_VERSIONS, DISPLAY_TZ_LABEL } from "./config";
 export type { ExplorerPreset };
+export { intervalWindowStartMs } from "./adapters/dataTradesV2";
 
 function mergeProvenance(parts: Provenance[]): Provenance {
   const warnings = parts.flatMap((p) => p.warnings);
@@ -58,8 +60,14 @@ export async function loadMarketSeries(opts: {
   interval?: ClobInterval;
   watch?: WatchWallet[];
   signal?: AbortSignal;
+  /** Progressive trade pages (newest→oldest within interval window). */
+  onTradesProgress?: ( partial: {
+    trades: MarketGraphPayload["trades"];
+    tradeFetch: TradeFetchMeta;
+    provenanceWarnings: string[];
+  }) => void;
 }): Promise<MarketGraphPayload> {
-  const { market, event, resolvedFrom, interval = "1w", watch = [], signal } = opts;
+  const { market, event, resolvedFrom, interval = "1w", watch = [], signal, onTradesProgress } = opts;
   const tokens = market.outcomes.filter((o) => o.tokenId);
 
   const priceResults = await Promise.all(
@@ -81,16 +89,50 @@ export async function loadMarketSeries(opts: {
     })
   );
 
-  const tradesPromise = dataTrades.getTradesUntilCap(market.conditionId, signal).catch((e) => ({
-    trades: [] as Awaited<ReturnType<typeof dataTrades.getTradesUntilCap>>["trades"],
-    provenance: {
-      asOf: new Date().toISOString(),
-      sources: ["data-api.polymarket.com/v2/trades"],
-      completeness: "unknown" as const,
-      warnings: [`Trades unavailable: ${(e as Error).message}`],
-      adapterVersions: { dataTrades: ADAPTER_VERSIONS.dataTrades },
-    },
-  }));
+  const windowStartMs = dataTrades.intervalWindowStartMs(interval);
+  const windowEndMs = Date.now();
+
+  const tradesPromise = dataTrades
+    .getTradesForWindow(market.conditionId, {
+      windowStartMs,
+      windowEndMs,
+      signal,
+      onProgress: (p) => {
+        onTradesProgress?.({
+          trades: p.trades,
+          tradeFetch: p.meta,
+          provenanceWarnings: p.meta.status === "partial" ? [p.meta.note] : [],
+        });
+      },
+    })
+    .catch((e) => {
+      if ((e as Error).name === "AbortError") throw e;
+      const meta: TradeFetchMeta = {
+        status: "error",
+        loadedCount: 0,
+        pagesFetched: 0,
+        windowStartMs,
+        windowEndMs,
+        oldestLoadedMs: null,
+        newestLoadedMs: null,
+        reachedWindowStart: false,
+        exhaustedApi: false,
+        hitSafetyCeiling: false,
+        note: `Trades unavailable: ${(e as Error).message}`,
+      };
+      onTradesProgress?.({ trades: [], tradeFetch: meta, provenanceWarnings: [meta.note] });
+      return {
+        trades: [] as Awaited<ReturnType<typeof dataTrades.getTradesForWindow>>["trades"],
+        provenance: {
+          asOf: new Date().toISOString(),
+          sources: ["data-api.polymarket.com/v2/trades"],
+          completeness: "unknown" as const,
+          warnings: [meta.note],
+          adapterVersions: { dataTrades: ADAPTER_VERSIONS.dataTrades },
+        },
+        meta,
+      };
+    });
 
   const bookPromises = tokens.slice(0, 4).map(async (o) => {
     const book = await clobBook.getBook(o.tokenId, signal);
@@ -128,7 +170,7 @@ export async function loadMarketSeries(opts: {
     },
   ]);
 
-  // Dedupe trades by id
+  // Dedupe trades by id (adapter already dedupes; belt-and-suspenders)
   const seen = new Set<string>();
   const trades = tradesResult.trades.filter((t) => {
     if (seen.has(t.id)) return false;
@@ -149,6 +191,7 @@ export async function loadMarketSeries(opts: {
     provenance,
     mode: "live",
     resolvedFrom,
+    tradeFetch: tradesResult.meta,
   };
 }
 
@@ -168,7 +211,6 @@ export function pickPreferredMarket(
       if (hit) return hit;
     }
   }
-  // Prefer highest volume moneyline-ish
   const money = markets.find((m) => m.kind === "series_match_winner" || m.kind === "binary");
   return money || markets[0];
 }
@@ -185,6 +227,7 @@ export function healthSnapshot() {
     notes: [
       "Client uses host proxies /api/polymarket, /api/clob, /api/poly-data",
       "data-api v1 is retired (410); trades adapter locks v2 snake_case",
+      "Trades: cursor-paginate newest→oldest until interval start (no server time filter)",
     ],
   };
 }

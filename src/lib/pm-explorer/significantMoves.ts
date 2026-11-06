@@ -3,12 +3,11 @@
  *
  * Honest limits:
  * - Moves come from CLOB price-history ticks (often sparse; window size adapts to tick gaps).
- * - Associated trades are ONLY fills present in the loaded sample (≤ TRADE_MAX_PAGES*TRADE_PAGE_LIMIT).
+ * - Associated trades are ONLY fills present in the loaded sample for the selected interval window.
  * - Never attributes a full move to incomplete trade coverage.
  * - No causal / informed-wallet / maker-taker / news claims.
  */
 
-import { TRADE_MAX_PAGES, TRADE_PAGE_LIMIT } from "./config";
 import type { PricePoint, Provenance, TradePoint } from "./types";
 
 export const MOVE_WINDOWS_MS = {
@@ -312,7 +311,7 @@ export function detectSignificantMoves(opts: DetectMovesOpts): SignificantMove[]
 
     const coverageNote = (() => {
       if (coverageStatus === "truncated_sample") {
-        return `Trade sample is ${opts.provenance.completeness} (≤${TRADE_MAX_PAGES * TRADE_PAGE_LIMIT} fills). Do not attribute the full ${c.absPp.toFixed(1)}pp move to these trades alone.`;
+        return `Trade sample is ${opts.provenance.completeness} (interval window may be partial). Do not attribute the full ${c.absPp.toFixed(1)}pp move to these trades alone.`;
       }
       if (coverageStatus === "no_overlap") {
         return "No loaded fills overlap this price window — move is from price ticks only; associated volume unknown.";

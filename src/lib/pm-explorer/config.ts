@@ -20,12 +20,21 @@ export const ADAPTER_VERSIONS = {
   gammaEvents: "gammaEventsV1@2026-11-06",
   clobPrices: "clobPricesV1@2026-11-06",
   clobBook: "clobBookV1@2026-11-06",
-  dataTrades: "dataTradesV2@2026-11-06",
+  dataTrades: "dataTradesV2@2026-11-06-window",
   modelFair: "modelFairUnavailable@2026-11-06",
 } as const;
 
 export const TRADE_PAGE_LIMIT = 100;
-export const TRADE_MAX_PAGES = 8; // 800 trades max per load
+/** @deprecated Hard 800 cap removed — kept for message compatibility in older docs/tests. */
+export const TRADE_MAX_PAGES = 8;
+/**
+ * Safety ceiling only (vendor respect / runaway loops). Not a product “complete history”
+ * claim. data-api v2 exposes cursor pages of `limit` with no documented server-side
+ * time filter; we paginate newest→oldest until the selected window start or exhaustion.
+ */
+export const TRADE_PAGE_SAFETY_CEILING = 200; // ≤ 20_000 fills per load
+export const TRADE_RETRY_MAX = 3;
+export const TRADE_RETRY_BASE_MS = 400;
 export const SEARCH_DEBOUNCE_MS = 280;
 
 export interface ExplorerPreset {
