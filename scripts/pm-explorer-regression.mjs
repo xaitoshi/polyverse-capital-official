@@ -55,18 +55,33 @@ async function main() {
   } catch (e) { fail("market bestBid/Ask only attach to outcome index 0", e); }
 
   try {
-    // Esports Polymarket event URL → eventSlug (same market as deep-link QA)
     const { classifyInput, parseExplorerInput } = await import("./src/lib/pm-explorer/urlParse.ts");
-    const esportsUrl = "https://polymarket.com/event/lol-kc-t1-2026-11-04";
+    // Canonical /event path (still supported)
+    const eventUrl = "https://polymarket.com/event/lol-kc-t1-2026-11-04";
+    const eventParsed = parseExplorerInput(eventUrl);
+    if (!eventParsed.ok || eventParsed.kind !== "url") throw new Error("event parse: " + JSON.stringify(eventParsed));
+    if (eventParsed.eventSlug !== "lol-kc-t1-2026-11-04") throw new Error("eventSlug " + (eventParsed as any).eventSlug);
+
+    // Exact user esports path (previously unsupported)
+    const esportsUrl = "https://polymarket.com/esports/league-of-legends/worlds/lol-ig1-gen-2026-11-07";
     const parsed = parseExplorerInput(esportsUrl);
-    if (!parsed.ok || parsed.kind !== "url") throw new Error("parse not ok: " + JSON.stringify(parsed));
-    if (parsed.eventSlug !== "lol-kc-t1-2026-11-04") throw new Error("eventSlug " + (parsed as any).eventSlug);
+    if (!parsed.ok || parsed.kind !== "url") throw new Error("esports parse not ok: " + JSON.stringify(parsed));
+    if (parsed.eventSlug !== "lol-ig1-gen-2026-11-07") throw new Error("parsed slug=" + (parsed as any).eventSlug);
     const cls = classifyInput(esportsUrl);
-    if (cls.kind !== "url") throw new Error("classify kind " + cls.kind);
-    const bare = parseExplorerInput("lol-kc-t1-2026-11-04");
-    if (!bare.ok || bare.kind !== "slug" || bare.eventSlug !== "lol-kc-t1-2026-11-04") throw new Error("bare slug");
-    pass("esports Polymarket /event URL + bare slug parse");
-  } catch (e) { fail("esports Polymarket /event URL + bare slug parse", e); }
+    if (cls.kind !== "url" || !cls.parse.ok) throw new Error("classify " + JSON.stringify(cls));
+
+    // Live resolve via gamma (same path resolveEventBySlug uses)
+    const res = await fetch("https://gamma-api.polymarket.com/events?slug=" + encodeURIComponent(parsed.eventSlug!));
+    const events = await res.json();
+    if (!Array.isArray(events) || !events[0]) throw new Error("gamma empty for " + parsed.eventSlug);
+    const ev = events[0];
+    if (String(ev.slug) !== "lol-ig1-gen-2026-11-07") throw new Error("returned slug " + ev.slug);
+    if (String(ev.id) !== "1317036") throw new Error("returned id " + ev.id + " (expected 1317036)");
+    const title = String(ev.title || "");
+    if (!/Invictus Gaming/i.test(title) || !/Gen\.G/i.test(title)) throw new Error("title " + title);
+    console.log("  esports URL parsed slug", parsed.eventSlug, "→ id", ev.id, "title", title);
+    pass("exact /esports/.../lol-ig1-gen-2026-11-07 parse + live gamma resolve");
+  } catch (e) { fail("exact /esports/.../lol-ig1-gen-2026-11-07 parse + live gamma resolve", e); }
 
   try {
     const kind = detectMarketKind({

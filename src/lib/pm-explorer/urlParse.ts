@@ -4,6 +4,18 @@ import type { UrlParseResult } from "./types";
 const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/i;
 
 /**
+ * Last path segment that looks like a Polymarket event/market slug.
+ * Used for market-bearing paths such as /esports/.../<event-slug>.
+ */
+export function extractTrailingSlug(parts: string[]): string | undefined {
+  for (let i = parts.length - 1; i >= 0; i--) {
+    const seg = parts[i];
+    if (SLUG_RE.test(seg)) return seg.toLowerCase();
+  }
+  return undefined;
+}
+
+/**
  * Parse keyword / Polymarket URL / bare slug without fetching.
  * Never follows redirects; rejects non-allowlisted hosts (SSRF guard).
  */
@@ -17,7 +29,11 @@ export function parseExplorerInput(rawInput: string): UrlParseResult {
   }
 
   // Looks like URL
-  if (/^https?:\/\//i.test(raw) || raw.toLowerCase().startsWith("polymarket.com") || raw.toLowerCase().startsWith("www.polymarket.com")) {
+  if (
+    /^https?:\/\//i.test(raw) ||
+    raw.toLowerCase().startsWith("polymarket.com") ||
+    raw.toLowerCase().startsWith("www.polymarket.com")
+  ) {
     let url: URL;
     try {
       const withScheme = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
@@ -47,8 +63,8 @@ export function parseExplorerInput(rawInput: string): UrlParseResult {
       return {
         ok: true,
         kind: "url",
-        eventSlug: parts[1],
-        marketSlug: parts[2],
+        eventSlug: parts[1].toLowerCase(),
+        marketSlug: parts[2]?.toLowerCase(),
         rawHost: host,
       };
     }
@@ -58,14 +74,26 @@ export function parseExplorerInput(rawInput: string): UrlParseResult {
       return {
         ok: true,
         kind: "url",
-        marketSlug: parts[1],
+        marketSlug: parts[1].toLowerCase(),
+        rawHost: host,
+      };
+    }
+
+    // Any other market-bearing Polymarket path (e.g. /esports/lol/.../<event-slug>):
+    // take the trailing slug-shaped segment as the event slug.
+    const trailing = extractTrailingSlug(parts);
+    if (trailing) {
+      return {
+        ok: true,
+        kind: "url",
+        eventSlug: trailing,
         rawHost: host,
       };
     }
 
     return {
       ok: false,
-      reason: "This link type isn’t supported yet. Use /event/<slug> or paste a keyword.",
+      reason: "This link type isn’t supported yet. Use /event/<slug>, /esports/…/<slug>, or paste a keyword.",
       code: "unsupported",
     };
   }
@@ -81,7 +109,11 @@ export function classifyInput(raw: string): {
   const trimmed = raw.trim();
   if (!trimmed) return { kind: "keyword", parse: { ok: false, reason: "Empty", code: "empty" } };
 
-  if (/^https?:\/\//i.test(trimmed) || /^www\.polymarket\.com/i.test(trimmed) || /^polymarket\.com/i.test(trimmed)) {
+  if (
+    /^https?:\/\//i.test(trimmed) ||
+    /^www\.polymarket\.com/i.test(trimmed) ||
+    /^polymarket\.com/i.test(trimmed)
+  ) {
     return { kind: "url", parse: parseExplorerInput(trimmed) };
   }
   if (!/\s/.test(trimmed) && SLUG_RE.test(trimmed) && trimmed.includes("-")) {
