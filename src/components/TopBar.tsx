@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ExternalLink, Search, Globe2, Droplets, Layers, TrendingUp, Menu, X, Gamepad2, Bot, Fish, Gift, Cloud, MessageSquare } from 'lucide-react';
+import { ExternalLink, Search, Globe2, Droplets, Layers, TrendingUp, Menu, X, Gamepad2, Bot, Fish, Gift, Cloud, MessageSquare, Activity } from 'lucide-react';
 import { MarketData } from '../data/mockData';
 
 interface SearchResult {
@@ -67,6 +67,7 @@ export default function TopBar({ onOpenEcosystem, onOpenPolyEarn, onOpenOsint, o
     { label: 'POLYLAKE',  icon: <Fish       className="w-3.5 h-3.5" />, href: '/polylake' },
     { label: 'REWARDS',   icon: <Gift       className="w-3.5 h-3.5" />, href: '/rewards' },
     { label: 'WEATHER',   icon: <Cloud      className="w-3.5 h-3.5" />, href: '/weather' },
+    { label: 'VISUALISE', icon: <Activity   className="w-3.5 h-3.5" />, href: '/visualise' },
   ] as const;
 
   const SearchDropdown = () => isOpen && results.length > 0 ? (

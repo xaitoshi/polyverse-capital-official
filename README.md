@@ -18,3 +18,21 @@ View your app in AI Studio: https://ai.studio/apps/67e1ba6c-249a-401e-ab17-50bc7
 2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
 3. Run the app:
    `npm run dev`
+
+
+## Polymarket Visualise (`/visualise`)
+
+Interactive, read-only Polymarket market explorer at **https://polyverse.capital/visualise**.
+
+1. Open `/visualise`
+2. Search any market by keyword **or** paste a Polymarket event URL (`https://polymarket.com/event/<slug>`)
+3. Pick a child market; explore price lines, trade bubbles, wallet table
+4. Optional LoL QA preset chip loads KC vs T1 + paper-book watch wallets
+
+Data uses existing host proxies (`/api/polymarket`, `/api/clob`, `/api/poly-data/v2/...`). Adapter versions are shown in the page footer. No trading / signing.
+
+Smoke / schema lock (network):
+
+```bash
+node scripts/pm-explorer-smoke.mjs
+```
