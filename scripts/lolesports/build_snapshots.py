@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Build lightweight /lolesports snapshots from Oracle's Elixir raw CSVs.
 
-Reads ONLY public OE yearly CSVs (no secrets). Writes JSON under public/lolesports/.
+Reads ONLY public OE yearly CSVs (no secrets). Writes JSON under public/data/lolesports/.
 Scoring version: polyverse-lolesports-v1 (documented in methodology.json).
 
 No fabricated stats. Missing fields are omitted / null, never coerced to 0.
@@ -377,7 +377,7 @@ def player_strengths_weaknesses(metrics: dict[str, float | None], peer_pcts: dic
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--raw-dir", default=os.environ.get("LOL_OE_RAW", "/workspace/lol-model/data/raw"))
-    ap.add_argument("--out-dir", default=str(Path(__file__).resolve().parents[2] / "public" / "lolesports"))
+    ap.add_argument("--out-dir", default=str(Path(__file__).resolve().parents[2] / "public" / "data" / "lolesports"))
     ap.add_argument("--years", default="2024,2025,2026")
     ap.add_argument("--season-year", type=int, default=2026)
     ap.add_argument("--maps-db", default=os.environ.get("LOL_MAPS_DB", "/workspace/lol-model/data/maps.db"),

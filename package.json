@@ -16,8 +16,9 @@
     "test:pm-explorer-significant-moves": "node scripts/pm-explorer-significant-moves.mjs",
     "test:pm-explorer-trade-selection": "node scripts/pm-explorer-trade-selection.mjs",
     "test:pm-explorer-trades-window": "node scripts/pm-explorer-trades-window.mjs",
-    "test:lolesports": "node scripts/lolesports/smoke.mjs",
-    "build:lolesports-data": "python3 scripts/lolesports/build_snapshots.py"
+    "test:lolesports": "node scripts/lolesports/smoke.mjs && node scripts/lolesports/route-regression.mjs",
+    "build:lolesports-data": "python3 scripts/lolesports/build_snapshots.py",
+    "test:lolesports-route": "node scripts/lolesports/route-regression.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.49.4",
