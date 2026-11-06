@@ -55,6 +55,20 @@ async function main() {
   } catch (e) { fail("market bestBid/Ask only attach to outcome index 0", e); }
 
   try {
+    // Esports Polymarket event URL → eventSlug (same market as deep-link QA)
+    const { classifyInput, parseExplorerInput } = await import("./src/lib/pm-explorer/urlParse.ts");
+    const esportsUrl = "https://polymarket.com/event/lol-kc-t1-2026-11-04";
+    const parsed = parseExplorerInput(esportsUrl);
+    if (!parsed.ok || parsed.kind !== "url") throw new Error("parse not ok: " + JSON.stringify(parsed));
+    if (parsed.eventSlug !== "lol-kc-t1-2026-11-04") throw new Error("eventSlug " + (parsed as any).eventSlug);
+    const cls = classifyInput(esportsUrl);
+    if (cls.kind !== "url") throw new Error("classify kind " + cls.kind);
+    const bare = parseExplorerInput("lol-kc-t1-2026-11-04");
+    if (!bare.ok || bare.kind !== "slug" || bare.eventSlug !== "lol-kc-t1-2026-11-04") throw new Error("bare slug");
+    pass("esports Polymarket /event URL + bare slug parse");
+  } catch (e) { fail("esports Polymarket /event URL + bare slug parse", e); }
+
+  try {
     const kind = detectMarketKind({
       question: "LoL: Karmine Corp vs T1 (BO5) - Worlds Playoffs",
       outcomes: ["Karmine Corp", "T1"],
