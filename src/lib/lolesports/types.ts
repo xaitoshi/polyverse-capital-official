@@ -50,6 +50,22 @@ export interface ChampRef {
   global_role_games?: number;
   ringed?: boolean;
   team_share?: number;
+  status?: string;
+  label?: string;
+  pb_rate?: number | null;
+  pb_pct?: number | null;
+  pick_maps?: number | null;
+  ban_maps?: number | null;
+  presence_maps?: number | null;
+  eligible_n?: number | null;
+  window?: Record<string, unknown>;
+  off_role?: {
+    off_role?: boolean | null;
+    modal_role?: string | null;
+    role_n?: number;
+    note?: string;
+  };
+  classification_version?: string;
 }
 
 export interface StrengthWeakness {

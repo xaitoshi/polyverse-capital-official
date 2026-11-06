@@ -1,5 +1,5 @@
 {
-  "scoring_version": "polyverse-lolesports-v1",
+  "scoring_version": "polyverse-lolesports-v1.1",
   "title": "Polyverse LoL Esports scoring (transparent)",
   "not_copied": "Letter grades and numeric ratings are Polyverse-defined. They are not tak_01_ / third-party unpublished scores.",
   "formulas": {
@@ -10,7 +10,10 @@
     "laning": "100 \u00d7 mean of GD@15 and CSD@15 peer percentiles (role peers).",
     "gd15_display": "Player mean golddiffat15 and its role-peer percentile.",
     "strengths_weaknesses": "Strengths: metrics with peer percentile \u226570 (top 2). Weaknesses: metrics with peer percentile \u226430 (bottom 2). Tied to measured fields only.",
-    "off_meta": "Champion used by player whose season role share across all OE games < 2%.",
+    "off_meta": "v1.1 pb-presence-v1: PB% = (# maps with champ picked or banned, deduped) / eligible draft-complete maps in tier peer window through OE detail cutoff. Off-meta if PB% < 1% and window N adequate. Role-pick share is NOT used. Fearless series locks not separately available in OE.",
+    "off_role": "Separate flag vs champion modal role among season players; never inferred from bans.",
+    "signature_picks": "Team role over-index vs role baseline \u2014 not off-meta.",
+    "drafting_proxy_unchanged": "Drafting grade remains opponent-adjusted Elo residual proxy; it does not use champion rarity/PB%.",
     "side_pick_order": "Win-loss by Blue/Red \u00d7 firstPick (1st/2nd) \u00d7 series game number G1\u2013G5 from OE firstPick + game fields.",
     "tiers": "majors vs academy_erl classified from home league; Challengers/Academy orgs stay distinct from main teams.",
     "confidence": "insufficient / low / medium / high from sample size vs min games."
