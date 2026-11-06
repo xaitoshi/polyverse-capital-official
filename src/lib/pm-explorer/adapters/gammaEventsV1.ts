@@ -9,6 +9,7 @@ import type {
   SearchHit,
 } from "../types";
 import { classifyInput } from "../urlParse";
+import { resolveOutcomeBookSide, resolveOutcomeLastPrice } from "../outcomePrices";
 
 export const version = ADAPTER_VERSIONS.gammaEvents;
 const GAMMA = "/api/polymarket";
@@ -71,6 +72,11 @@ function mapMarket(m: Record<string, unknown>, eventId: string): ChildMarket | n
     outcomes: labels,
   });
 
+  const marketLast =
+    typeof m.lastTradePrice === "number" ? m.lastTradePrice : undefined;
+  const marketBid = typeof m.bestBid === "number" ? m.bestBid : undefined;
+  const marketAsk = typeof m.bestAsk === "number" ? m.bestAsk : undefined;
+
   const outcomes: OutcomeRef[] = labels.map((label, i) => ({
     marketId,
     conditionId,
@@ -82,14 +88,9 @@ function mapMarket(m: Record<string, unknown>, eventId: string): ChildMarket | n
     marketQuestion: question,
     marketSlug: slug,
     volumeNum: typeof m.volumeNum === "number" ? m.volumeNum : undefined,
-    bestBid: typeof m.bestBid === "number" ? m.bestBid : undefined,
-    bestAsk: typeof m.bestAsk === "number" ? m.bestAsk : undefined,
-    lastTradePrice:
-      typeof m.lastTradePrice === "number"
-        ? m.lastTradePrice
-        : Number.isFinite(prices[i])
-          ? prices[i]
-          : undefined,
+    bestBid: resolveOutcomeBookSide(i, "bid", marketBid, marketAsk),
+    bestAsk: resolveOutcomeBookSide(i, "ask", marketBid, marketAsk),
+    lastTradePrice: resolveOutcomeLastPrice(i, prices, marketLast),
   }));
 
   return {

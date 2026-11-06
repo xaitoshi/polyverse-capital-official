@@ -21,6 +21,7 @@ import { formatCents, formatSgt, formatUsd } from "../../lib/pm-explorer/format"
 import PriceBubbleChart from "./PriceBubbleChart";
 import WalletTable from "./WalletTable";
 import type { ClobInterval } from "../../lib/pm-explorer/adapters/clobPricesV1";
+import { parseVisualiseSearchParams } from "../../lib/pm-explorer/urlState";
 
 type Status =
   | { kind: "idle" }
@@ -31,14 +32,7 @@ type Status =
   | { kind: "error"; message: string };
 
 function readQuery() {
-  const sp = new URLSearchParams(window.location.search);
-  return {
-    q: sp.get("q") || "",
-    event: sp.get("event") || "",
-    market: sp.get("market") || "",
-    interval: (sp.get("interval") as ClobInterval | null) || "1w",
-    wallets: sp.get("wallets") || "",
-  };
+  return parseVisualiseSearchParams(window.location.search);
 }
 
 function writeQuery(next: Record<string, string | undefined>) {
@@ -76,6 +70,7 @@ export default function VisualisePage() {
   const [playhead, setPlayhead] = useState<string | null>(null);
   const [replaying, setReplaying] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
+  const skipReloadRef = useRef(false);
   const searchTimer = useRef<number | null>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
 
@@ -189,6 +184,7 @@ export default function VisualisePage() {
           setPayload(null);
           return;
         }
+        skipReloadRef.current = true;
         setSelectedMarketId(market.marketId);
         const watchList = opts?.preset
           ? applyPresetWatch(opts.preset)
@@ -249,10 +245,22 @@ export default function VisualisePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Reload series when interval or market changes after ready
+  // Reload series when interval or market changes after ready.
+  // Skip the synthetic run caused by deep-link setSelectedMarketId so we don't
+  // abort the in-flight boot loadSeries via cancelInflight().
   useEffect(() => {
     if (!event || !selectedMarket) return;
-    if (status.kind === "resolving" || status.kind === "searching") return;
+    if (skipReloadRef.current) {
+      skipReloadRef.current = false;
+      return;
+    }
+    if (
+      status.kind === "resolving" ||
+      status.kind === "searching" ||
+      status.kind === "loading_series"
+    ) {
+      return;
+    }
     const signal = cancelInflight();
     loadSeries(event, selectedMarket, { raw: event.slug, kind: "slug" }, signal);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -646,7 +654,7 @@ export default function VisualisePage() {
               </span>
             )}
           </div>
-          <div className="min-h-[380px] flex-1 p-2 lg:min-h-[520px]">
+          <div className="p-2" style={{ minHeight: 420, height: 420 }}>
             {!payload ? (
               <div className="flex h-full min-h-[360px] flex-col items-center justify-center gap-2 text-[12px] text-ink-dim">
                 <Link2 className="h-5 w-5 text-blue-400/50" />
