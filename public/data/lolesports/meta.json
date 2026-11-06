@@ -1,5 +1,5 @@
 {
-  "scoring_version": "polyverse-lolesports-v1",
+  "scoring_version": "polyverse-lolesports-v1.1",
   "coverage": {
     "start": "2024-01-01",
     "detailed_stats_through": "2026-10-24",
@@ -12,7 +12,7 @@
     "timezone_note": "Cutoffs are source date stamps (OE/gol.gg). Asia/Singapore wall clock is used only for refresh attempt labeling, not as OE's native zone.",
     "refresh": "OE: lol-model/download.py (public Drive; often quota-blocked). Fallback match results: lol-model/scrape_golgg.py S16 + normalize.py. Then npm run build:lolesports-data.",
     "refresh_attempt": {
-      "attempted_at_sgt": "2026-11-06 14:25 UTC+08:00",
+      "attempted_at_sgt": "2026-11-06 15:02 UTC+08:00",
       "oe_public_gdown": "quota_exceeded",
       "oe_user_drive_copy_max": "2026-10-18 (stale vs local OE 2026-10-24; not applied)",
       "golgg_scrape": "S16 incremental applied",

@@ -21,12 +21,15 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from golgg_supplement import build_name_map, load_golgg_maps, summarize_extension
+from offmeta import (
+    OFF_META_PB_THRESHOLD, OFFMETA_VERSION, build_map_drafts_from_team_rows,
+    classify_champion, compute_presence, off_role_flag, peer_window_for_tier,
+)
 
-SCORING_VERSION = "polyverse-lolesports-v1"
+SCORING_VERSION = "polyverse-lolesports-v1.1"
 MIN_TEAM_GAMES = 8
 MIN_PLAYER_GAMES = 5
 RECENT_DAYS = 90
-OFF_META_ROLE_SHARE = 0.02
 SHRINK_K = 8.0  # Bayesian shrinkage toward peer mean
 
 # League classification (aligned with lol-model/model.py MAJOR / academy heuristics)
@@ -54,6 +57,8 @@ USECOLS = [
     "damageshare", "earnedgoldshare", "dpm", "vspm", "cspm",
     "golddiffat15", "xpdiffat15", "csdiffat15", "golddiffat10",
     "firstdragon", "firstherald", "firsttower", "firstblood",
+    "ban1", "ban2", "ban3", "ban4", "ban5",
+    "pick1", "pick2", "pick3", "pick4", "pick5",
 ]
 
 
@@ -452,12 +457,38 @@ def main():
     recent_teams = team_for_records[(team_for_records.date >= recent_start) & (team_for_records.date <= match_cutoff)].copy()
     cutoff = match_cutoff  # primary UI match-results end; detailed OE kept as oe_cutoff
 
-    # Role-wide champion usage for off-meta (season, all leagues in df season)
+    # Role-pick shares for SIGNATURE over-index only (NOT off-meta classification).
     role_champ_n = season_players.groupby(["position", "champion"]).size()
     role_n = season_players.groupby("position").size()
     role_champ_share = {}
     for (role, champ), n in role_champ_n.items():
         role_champ_share[(role, champ)] = n / role_n[role] if role_n[role] else 0
+
+    # Off-meta PB presence tables by peer window (OE detail cutoff only; no future maps).
+    # Team rows need ban/pick columns from OE.
+    team_rows_for_draft = team_all[(team_all.date >= season_start) & (team_all.date <= oe_cutoff)]
+    map_drafts = build_map_drafts_from_team_rows(team_rows_for_draft.to_dict("records"))
+    presence_by_tier = {}
+    presence_meta_by_tier = {}
+    for tier_key, buckets in (
+        ("majors", peer_window_for_tier("majors")),
+        ("academy_erl", peer_window_for_tier("academy_erl")),
+    ):
+        stats, meta = compute_presence(
+            map_drafts,
+            buckets=buckets,
+            date_start=season_start.strftime("%Y-%m-%d"),
+            date_end=oe_cutoff.strftime("%Y-%m-%d %H:%M:%S"),
+        )
+        presence_by_tier[tier_key] = stats
+        presence_meta_by_tier[tier_key] = meta
+        print(f"off-meta window {tier_key}: eligible_n={meta['eligible_n']} champs={len(stats)}")
+
+    # Modal role per champion within OE season players (for off-role flag only).
+    champ_roles_all = season_players.groupby("champion")["position"].value_counts().to_dict()
+    champ_role_counter = defaultdict(Counter)
+    for (champ, role), n in champ_roles_all.items():
+        champ_role_counter[champ][role] += int(n)
 
     # Peer groups for percentiles
     # Build per-team season aggregates first
@@ -630,26 +661,45 @@ def main():
         c = g["champion"].value_counts().head(n)
         return [{"champion": k, "games": int(v), "cdn": champion_cdn_name(k)} for k, v in c.items()]
 
-    def off_meta_for_player(g: pd.DataFrame, role: str):
+    def off_meta_for_player(g: pd.DataFrame, role: str, team_tier: str):
+        """List player's champs with PB-presence classification (not role-share)."""
+        stats_table = presence_by_tier.get(team_tier, {})
         out = []
         for champ, sub in g.groupby("champion"):
-            share = role_champ_share.get((role, champ), 0)
-            if share >= OFF_META_ROLE_SHARE:
+            if not isinstance(champ, str) or not champ:
                 continue
             w = int((sub.result == 1).sum())
             l = int((sub.result == 0).sum())
-            # global games on champ in role this season
-            global_n = int(role_champ_n.get((role, champ), 0))
+            cls = classify_champion(stats_table.get(champ))
+            role_info = off_role_flag(role, champ_role_counter.get(champ, _Counter()))
+            # Include off_meta + rare_low_sample; skip clear meta-band unless off-role showcase? 
+            # Product: panel is "off-meta picks" — only statuses off_meta / rare_low_sample.
+            if cls["status"] not in {"off_meta", "rare_low_sample"}:
+                continue
             out.append({
                 "champion": champ,
                 "cdn": champion_cdn_name(champ),
                 "w": w,
                 "l": l,
-                "role_share": round(share, 5),
-                "global_role_games": global_n,
-                "ringed": global_n <= 10,
+                "status": cls["status"],
+                "label": cls["label"],
+                "pb_rate": None if cls["pb_rate"] is None else round(cls["pb_rate"], 5),
+                "pb_pct": None if cls["pb_rate"] is None else round(cls["pb_rate"] * 100, 2),
+                "pick_maps": cls["pick_maps"],
+                "ban_maps": cls["ban_maps"],
+                "presence_maps": cls["presence_maps"],
+                "eligible_n": cls["eligible_n"],
+                "window": {
+                    "date_start": cls.get("date_start"),
+                    "date_end": cls.get("date_end"),
+                    "buckets": cls.get("buckets"),
+                    "patches": cls.get("patches"),
+                },
+                "off_role": role_info,
+                "ringed": cls["status"] == "rare_low_sample",
+                "classification_version": OFFMETA_VERSION,
             })
-        out.sort(key=lambda x: -(x["w"] + x["l"]))
+        out.sort(key=lambda x: (0 if x["status"] == "off_meta" else 1, -(x["w"] + x["l"])))
         return out[:8]
 
     # Peer strength maps by tier and by league
@@ -752,7 +802,7 @@ def main():
             pg = rp[rp.playername == pname]
             scored = score_player(role, player_metrics(pg))
             champs = most_played(pg, 3)
-            offmeta = off_meta_for_player(pg, role)
+            offmeta = off_meta_for_player(pg, role, tier)
             roster.append({
                 "role": role,
                 "role_label": ROLE_LABEL[role],
@@ -784,7 +834,7 @@ def main():
                 if n < 4:
                     continue
                 share = role_champ_share.get((role, champ), 0)
-                # signature = over-indexed vs role baseline
+                # signature = over-indexed vs role baseline (NOT off-meta; role rarity ≠ champion PB rarity)
                 team_role_n = len(tp[tp.position == role]) or 1
                 team_share = n / team_role_n
                 if share > 0 and team_share / max(share, 1e-6) < 1.8:
@@ -918,8 +968,22 @@ def main():
             },
             "side_pick_order": side_pick,
             "off_meta_definition": {
-                "rule": f"Champion share of all season pro games in that role < {OFF_META_ROLE_SHARE*100:.0f}%",
-                "ringed": "global_role_games ≤ 10 in season window",
+                "version": OFFMETA_VERSION,
+                "scoring_version": SCORING_VERSION,
+                "rule": (
+                    f"PB% = maps where champion is picked OR banned (deduped per map) / eligible draft-complete maps; "
+                    f"off-meta if PB% < {OFF_META_PB_THRESHOLD*100:.0f}% with eligible_n ≥ {presence_meta_by_tier.get(tier, {}).get('min_eligible_maps', 200)}. "
+                    "Not role-pick share. High-ban low-pick ⇒ high PB% ⇒ not off-meta."
+                ),
+                "threshold": OFF_META_PB_THRESHOLD,
+                "window": presence_meta_by_tier.get(tier),
+                "ringed": "rare_low_sample: presence_maps < 5 (shown but not definitive)",
+                "fearless": (
+                    "OE only has ban1–5 per map. Fearless/series unavailability is not separately tagged; "
+                    "do not treat unknown fearless locks as ordinary bans beyond recorded ban fields."
+                ),
+                "off_role_separate": "Off-role rarity is labeled separately and does not alone imply off-meta. Ban role is never inferred.",
+                "signature_picks_separate": "Signature picks use role over-index vs role baseline; not the off-meta classifier.",
             },
             "gaps": [
                 g for g in [
@@ -1024,7 +1088,16 @@ def main():
                 "Strengths: metrics with peer percentile ≥70 (top 2). "
                 "Weaknesses: metrics with peer percentile ≤30 (bottom 2). Tied to measured fields only."
             ),
-            "off_meta": f"Champion used by player whose season role share across all OE games < {OFF_META_ROLE_SHARE*100:.0f}%.",
+            "off_meta": (
+                f"v1.1 {OFFMETA_VERSION}: PB% = (# maps with champ picked or banned, deduped) / eligible draft-complete maps "
+                f"in tier peer window through OE detail cutoff. Off-meta if PB% < {OFF_META_PB_THRESHOLD*100:.0f}% and window N adequate. "
+                "Role-pick share is NOT used. Fearless series locks not separately available in OE."
+            ),
+            "off_role": "Separate flag vs champion modal role among season players; never inferred from bans.",
+            "signature_picks": "Team role over-index vs role baseline — not off-meta.",
+            "drafting_proxy_unchanged": (
+                "Drafting grade remains opponent-adjusted Elo residual proxy; it does not use champion rarity/PB%."
+            ),
             "side_pick_order": "Win-loss by Blue/Red × firstPick (1st/2nd) × series game number G1–G5 from OE firstPick + game fields.",
             "tiers": "majors vs academy_erl classified from home league; Challengers/Academy orgs stay distinct from main teams.",
             "confidence": "insufficient / low / medium / high from sample size vs min games.",
