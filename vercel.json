@@ -57,6 +57,10 @@
       "destination": "/index.html"
     },
     {
+      "source": "/lolesports",
+      "destination": "/index.html"
+    },
+    {
       "source": "/visualise",
       "destination": "/index.html"
     },

@@ -1,0 +1,64 @@
+{
+  "refreshed_at_sgt": "2026-11-06 14:26 UTC+08:00",
+  "request": "Update through Nov 6 2026 Asia/Singapore including completed Worlds",
+  "oe_public_gdown": {
+    "status": "quota_exceeded",
+    "folder": "1gLSw0RLjBbtaNy0dgnGQDAZOHIgCe-HH",
+    "file_2026_id": "1hnpbrUpBMS1TZI7IovfpKeZfWJH1Aptm"
+  },
+  "oe_user_drive_copy": {
+    "file_id": "1et8Rvn2-IM3wfIY0RRTTGgwEoLlPvFL5",
+    "drive_modified_utc": "2026-10-21T05:55:37.838Z",
+    "csv_max_date": "2026-10-18 19:48:36",
+    "applied": false,
+    "reason": "Stale vs existing local OE through 2026-10-24 23:19:46"
+  },
+  "oe_local_kept": {
+    "detailed_stats_through": "2026-10-24 23:19:46",
+    "note": "Source-native OE timestamps (not labeled as SGT)."
+  },
+  "golgg": {
+    "command": "python scrape_golgg.py S16 && python normalize.py",
+    "maps_db_max_date": "2026-11-05",
+    "post_oe_team_rows": 90,
+    "worlds_qf_blg_dk": {
+      "golgg_date_stamp": "2026-11-05",
+      "map_results": [
+        {
+          "game": 1,
+          "winner": "Bilibili Gaming",
+          "loser": "Dplus KIA"
+        },
+        {
+          "game": 2,
+          "winner": "Bilibili Gaming",
+          "loser": "Dplus KIA"
+        },
+        {
+          "game": 3,
+          "winner": "Bilibili Gaming",
+          "loser": "Dplus KIA"
+        }
+      ],
+      "series": "BLG 3-0 DK",
+      "lolesports_api_sgt": {
+        "start": "2026-11-06 06:00 UTC+08:00",
+        "state": "completed",
+        "score": "BLG 3 - DK 0",
+        "note": "Same series as gol.gg 2026-11-05 date stamp; API start is morning SGT Nov 6."
+      },
+      "golgg_matchlist_text_warning": "Matchlist summary text wrongly showed '3-0 Dplus KIA'; per-map pages + Riot API agree BLG won 3-0."
+    },
+    "kc_t1": {
+      "golgg_matchlist": "listed 2026-11-06 without completed score",
+      "lolesports_api_sgt": "2026-11-07 06:00 UTC+08:00 unstarted",
+      "included_in_snapshots": false,
+      "reason": "Not completed in sources at refresh time"
+    }
+  },
+  "coverage_policy": {
+    "match_results_through": "2026-11-05 (gol.gg date stamps)",
+    "detailed_player_combat_stats_through": "2026-10-24 (OE)",
+    "not_done": "Did not invent OE player/GD@15 rows for post-OE Worlds maps; thin gol.gg rows only feed W/L + Elo."
+  }
+}

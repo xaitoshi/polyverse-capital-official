@@ -64,6 +64,7 @@ export default function TopBar({ onOpenEcosystem, onOpenPolyEarn, onOpenOsint, o
     { label: 'POLYEARN',  icon: <TrendingUp className="w-3.5 h-3.5" />, action: () => { onOpenPolyEarn(); closeAll(); } },
     { label: 'ODDIE',     icon: <Bot        className="w-3.5 h-3.5" />, href: 'https://t.me/oddiepmbot', external: true },
     { label: 'ESPORTS',   icon: <Gamepad2   className="w-3.5 h-3.5" />, href: '/esports' },
+    { label: 'LOL TEAMS', icon: <Gamepad2   className="w-3.5 h-3.5" />, href: '/lolesports' },
     { label: 'POLYLAKE',  icon: <Fish       className="w-3.5 h-3.5" />, href: '/polylake' },
     { label: 'REWARDS',   icon: <Gift       className="w-3.5 h-3.5" />, href: '/rewards' },
     { label: 'WEATHER',   icon: <Cloud      className="w-3.5 h-3.5" />, href: '/weather' },

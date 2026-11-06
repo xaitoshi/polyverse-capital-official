@@ -18,6 +18,7 @@ import './index.css';
 const queryClient = new QueryClient();
 const path = window.location.pathname;
 const VisualisePage = lazy(() => import('./components/visualise/VisualisePage.tsx'));
+const LolesportsPage = lazy(() => import('./components/lolesports/LolesportsPage.tsx'));
 
 function Router() {
   const { user, loading } = useAuth();
@@ -26,6 +27,17 @@ function Router() {
   if (path === '/esports') return <EsportsPage />;
   if (path === '/weather') return <WeatherversePage />;
   if (path === '/mentions') return <MentionsPage />;
+  if (path === '/lolesports') {
+    return (
+      <Suspense fallback={
+        <div className="min-h-screen bg-[#04070c] flex items-center justify-center font-mono">
+          <span className="text-[10px] uppercase tracking-[0.3em] text-blue-400/50">LOADING LOLESPORTS<span className="blink">_</span></span>
+        </div>
+      }>
+        <LolesportsPage />
+      </Suspense>
+    );
+  }
   if (path === '/visualise' || path === '/visualize') {
     return (
       <Suspense fallback={

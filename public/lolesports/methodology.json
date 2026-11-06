@@ -1,0 +1,26 @@
+{
+  "scoring_version": "polyverse-lolesports-v1",
+  "title": "Polyverse LoL Esports scoring (transparent)",
+  "not_copied": "Letter grades and numeric ratings are Polyverse-defined. They are not tak_01_ / third-party unpublished scores.",
+  "formulas": {
+    "team_strength_elo": "Sequential hierarchical Elo over OE maps ordered by date: strength = L[home_league] + T[team]. Predict then update (no lookahead). Cross-league maps move league ratings. Half-life decay toward prior.",
+    "strength_grade": "Percentile of strength_elo among home-league peers with \u2265 min team games, mapped to letters: S\u226590, A\u226575, B\u226555, C\u226535, D\u226515, else F.",
+    "drafting_proxy": "For each map, residual = result - p_pre where p_pre is pre-update Elo win probability. Team drafting_proxy = mean residual in window. Ranked among tier peers for grade. LABEL: proxy only \u2014 does not claim causal draft quality; can reflect prep, form, or variance. Opponent-adjusted by construction via p_pre.",
+    "player_rating": "Role-adjusted mean of peer percentiles (after Bayesian shrinkage toward role mean with k=8): carry roles use KDA, GD@15, damage share, gold share; jungle adds vision; support emphasizes vision. Displayed on 0\u2013100 scale = 100 \u00d7 mean percentile.",
+    "laning": "100 \u00d7 mean of GD@15 and CSD@15 peer percentiles (role peers).",
+    "gd15_display": "Player mean golddiffat15 and its role-peer percentile.",
+    "strengths_weaknesses": "Strengths: metrics with peer percentile \u226570 (top 2). Weaknesses: metrics with peer percentile \u226430 (bottom 2). Tied to measured fields only.",
+    "off_meta": "Champion used by player whose season role share across all OE games < 2%.",
+    "side_pick_order": "Win-loss by Blue/Red \u00d7 firstPick (1st/2nd) \u00d7 series game number G1\u2013G5 from OE firstPick + game fields.",
+    "tiers": "majors vs academy_erl classified from home league; Challengers/Academy orgs stay distinct from main teams.",
+    "confidence": "insufficient / low / medium / high from sample size vs min games."
+  },
+  "grade_thresholds": {
+    "S": 0.9,
+    "A": 0.75,
+    "B": 0.55,
+    "C": 0.35,
+    "D": 0.15,
+    "F": 0.0
+  }
+}
