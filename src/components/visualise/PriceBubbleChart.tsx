@@ -134,9 +134,13 @@ export default function PriceBubbleChart({
     );
   }
 
+  // Explicit pixel height — percentage height on ResponsiveContainer collapses to 0x0
+  // when the flex parent only has min-height (confirmed in production browser QA).
+  const chartHeight = 420;
+
   return (
-    <div className="h-full min-h-[360px] w-full">
-      <ResponsiveContainer width="100%" height="100%">
+    <div className="w-full" style={{ width: "100%", height: chartHeight, minHeight: chartHeight }}>
+      <ResponsiveContainer width="100%" height={chartHeight}>
         <ComposedChart
           data={lineData}
           margin={{ top: 12, right: 16, bottom: 8, left: 0 }}
