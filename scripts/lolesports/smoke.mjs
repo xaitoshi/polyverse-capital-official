@@ -87,7 +87,9 @@ const method = loadJson(join(pub, "methodology.json"));
 assert.equal(method.scoring_version, index.meta.scoring_version);
 assert.ok(index.teams.length > 50, "expected many teams");
 assert.equal(index.meta.coverage.honest_cutoff, true);
-assert.ok(String(index.meta.coverage.end).startsWith("2026-10"), "cutoff should be Oct 2026 OE");
+assert.ok(String(index.meta.coverage.detailed_stats_through || "").startsWith("2026-10-24"), "OE detail cutoff");
+assert.ok(String(index.meta.coverage.match_results_through || index.meta.coverage.end) >= "2026-11-05", "match results should reach Nov 5 gol.gg");
+assert.notEqual(index.meta.coverage.detailed_stats_through, index.meta.coverage.match_results_through, "dual cutoffs must differ while OE lags");
 
 const majors = index.teams.filter((t) => t.tier === "majors");
 const academy = index.teams.filter((t) => t.tier === "academy_erl");
@@ -125,7 +127,15 @@ assert.ok(/not causal|NOT causal|proxy/i.test(card.drafting.analysis));
 assert.ok(Array.isArray(card.gaps));
 // missing must not be silently zeroed for GD when present — mean can be number
 assert.equal(typeof card.kpis.golddiffat15.mean, "number");
-assert.ok(card.provenance.source.includes("Oracle"));
+assert.ok(/Oracle|OE/i.test(card.provenance.source));
+assert.ok(card.window.detailed_stats_through);
+assert.ok(card.window.match_results_through);
+assert.ok(card.gaps.some((g) => /post-OE|detailed/i.test(g)), "expect honest post-OE gap");
+// BLG 3-0 DK QF should move DK Worlds losses via gol.gg thin maps
+const intl = card.kpis.international.by_event || [];
+const worlds = intl.find((e) => /world/i.test(e.league));
+assert.ok(worlds, "DK should have Worlds/intl event rows");
+assert.ok(worlds.l >= 3, "DK should include QF map losses vs BLG (gol.gg)");
 
 // no-data path: invent missing team file check
 assert.equal(existsSync(join(pub, "teams", "definitely-not-a-team.json")), false);

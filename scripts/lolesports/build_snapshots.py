@@ -20,6 +20,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+from golgg_supplement import build_name_map, load_golgg_maps, summarize_extension
 
 SCORING_VERSION = "polyverse-lolesports-v1"
 MIN_TEAM_GAMES = 8
@@ -229,6 +230,8 @@ def compute_elo(team_pairs: pd.DataFrame, home: dict[str, str], K=24.0, KL=16.0,
     """Sequential hierarchical Elo; updates AFTER predicting each map (no lookahead)."""
     # Blue-side unique maps
     blue = team_pairs[team_pairs.side == "Blue"].sort_values(["date", "gameid"]).copy()
+    if "opponent" in blue.columns:
+        blue = blue.drop(columns=["opponent"])
     red = team_pairs[team_pairs.side == "Red"][["gameid", "teamname"]].rename(columns={"teamname": "opponent"})
     m = blue.merge(red, on="gameid", how="inner")
     L: dict[str, float] = {}
@@ -377,6 +380,8 @@ def main():
     ap.add_argument("--out-dir", default=str(Path(__file__).resolve().parents[2] / "public" / "lolesports"))
     ap.add_argument("--years", default="2024,2025,2026")
     ap.add_argument("--season-year", type=int, default=2026)
+    ap.add_argument("--maps-db", default=os.environ.get("LOL_MAPS_DB", "/workspace/lol-model/data/maps.db"),
+                    help="gol.gg maps.db for post-OE match-result supplement (thin rows)")
     args = ap.parse_args()
 
     raw_dir = Path(args.raw_dir)
@@ -386,26 +391,66 @@ def main():
 
     years = [y.strip() for y in args.years.split(",") if y.strip()]
     df = load_raw(raw_dir, years)
-    cutoff = df["date"].max()
+    cutoff = df["date"].max()  # OE detailed-stats cutoff (source timestamps, typically UTC-naive OE stamps)
+    oe_cutoff = cutoff
     season_start = pd.Timestamp(f"{args.season_year}-01-01")
-    recent_start = cutoff - pd.Timedelta(days=RECENT_DAYS)
 
     team_all = df[df.position == "team"].copy()
     player_all = df[df.position.isin(ROLES)].copy()
+    team_all["source"] = "oe"
 
-    home = home_league_map(team_all)
-    # Fill firstPick on red rows for residual join later via gameid+team
+    # --- gol.gg match-result supplement AFTER OE cutoff (no fabricated player combat stats) ---
+    gg_ext = pd.DataFrame()
+    gg_summary = {"maps": 0, "match_results_through": None, "tournaments": [], "notable_series": [], "unmapped_teams": []}
+    name_map = {}
+    maps_db = Path(args.maps_db)
+    if maps_db.exists():
+        gg_raw = load_golgg_maps(maps_db, oe_cutoff.strftime("%Y-%m-%d %H:%M:%S"))
+        oe_names = set(team_all.teamname.unique())
+        gg_names = set()
+        if not gg_raw.empty:
+            gg_names = set(gg_raw.team.unique()) | set(gg_raw.opponent.unique())
+        name_map = build_name_map(oe_names, gg_names)
+        gg_summary = summarize_extension(gg_raw, name_map)
+        if not gg_raw.empty:
+            gg = gg_raw.copy()
+            gg["teamname"] = gg["team"].map(lambda x: name_map.get(x, x))
+            gg["opponent"] = gg["opponent"].map(lambda x: name_map.get(x, x))
+            # Align columns used downstream for Elo / records
+            gg["playoffs"] = pd.NA
+            gg["year"] = gg["date"].dt.year
+            gg["split"] = ""
+            gg["datacompleteness"] = "golgg_thin"
+            # firstPick / golddiff unused for golgg in player/side metrics
+            keep = ["gameid","date","league","year","split","playoffs","patch","game","side","teamname","opponent",
+                    "result","firstPick","golddiffat15","source",
+                    "player_top","player_jng","player_mid","player_bot","player_sup"]
+            for c in keep:
+                if c not in gg.columns:
+                    gg[c] = pd.NA
+            gg_ext = gg[keep]
+            print(f"gol.gg supplement: {len(gg_ext)} team-rows after OE {oe_cutoff} through {gg_ext.date.max()}")
+    match_cutoff = gg_ext.date.max() if len(gg_ext) else oe_cutoff
+    recent_start = match_cutoff - pd.Timedelta(days=RECENT_DAYS)
 
-    # Elo over full history (no future leakage for final ratings)
-    strength, elo_n, pre = compute_elo(team_all, home)
+    # Team rows for Elo + W/L: OE full history + post-OE gol.gg only (avoid double-counting overlap)
+    team_for_records = pd.concat([team_all, gg_ext], ignore_index=True, sort=False) if len(gg_ext) else team_all
+
+    home = home_league_map(team_for_records)
+    # Elo over OE + post-OE gol.gg match results (no future leakage; predict-then-update)
+    strength, elo_n, pre = compute_elo(team_for_records, home)
     # Attach firstPick to pre residuals
-    fp_map = team_all.set_index(["gameid", "teamname"])["firstPick"].to_dict()
+    fp_map = team_for_records.set_index(["gameid", "teamname"])["firstPick"].to_dict()
     pre["firstPick"] = [fp_map.get((gid, tm), np.nan) for gid, tm in zip(pre.gameid, pre.team)]
 
     # Season slices
-    season_teams = team_all[(team_all.date >= season_start) & (team_all.date <= cutoff)].copy()
-    season_players = player_all[(player_all.date >= season_start) & (player_all.date <= cutoff)].copy()
-    recent_teams = team_all[(team_all.date >= recent_start) & (team_all.date <= cutoff)].copy()
+    # Player / GD@15 / side-pick / off-meta: OE detailed window only
+    season_players = player_all[(player_all.date >= season_start) & (player_all.date <= oe_cutoff)].copy()
+    season_teams_detail = team_all[(team_all.date >= season_start) & (team_all.date <= oe_cutoff)].copy()
+    # Match W/L + intl + Elo peers: include gol.gg supplement through match_cutoff
+    season_teams = team_for_records[(team_for_records.date >= season_start) & (team_for_records.date <= match_cutoff)].copy()
+    recent_teams = team_for_records[(team_for_records.date >= recent_start) & (team_for_records.date <= match_cutoff)].copy()
+    cutoff = match_cutoff  # primary UI match-results end; detailed OE kept as oe_cutoff
 
     # Role-wide champion usage for off-meta (season, all leagues in df season)
     role_champ_n = season_players.groupby(["position", "champion"]).size()
@@ -541,15 +586,19 @@ def main():
     team_season_metrics = {}
     for tn in team_names:
         g = season_teams[season_teams.teamname == tn]
+        gd_src = season_teams_detail[season_teams_detail.teamname == tn]
         wins = int((g.result == 1).sum())
         n = int(len(g))
-        gd = g["golddiffat15"].dropna()
+        gd = gd_src["golddiffat15"].dropna() if "golddiffat15" in gd_src.columns else pd.Series(dtype=float)
         team_season_metrics[tn] = {
             "wins": wins,
             "losses": n - wins,
             "games": n,
             "win_rate": wins / n if n else None,
             "gd15": float(gd.mean()) if len(gd) else None,
+            "gd15_n": int(len(gd)),
+            "maps_oe_detail": int(len(gd_src)),
+            "maps_match_results": n,
             "home_league": home.get(tn, "UNK"),
             "tier": team_tier(home.get(tn, "UNK")),
             "strength_elo": strength.get(tn),
@@ -635,6 +684,7 @@ def main():
         team_ids[slug] = tn
 
         g = season_teams[season_teams.teamname == tn]
+        g_detail = season_teams_detail[season_teams_detail.teamname == tn]
         g_recent = recent_teams[recent_teams.teamname == tn]
         g_intl = season_teams[intl_mask & (season_teams.teamname == tn)]
 
@@ -753,7 +803,8 @@ def main():
             sig.sort(key=lambda x: -(x["w"] + x["l"]))
             sig = sig[:5]
 
-        side_pick = build_side_pick_matrix(g)
+        side_pick = build_side_pick_matrix(g_detail)
+        # Post-OE maps lack firstPick on gol.gg thin rows — side/pick stays OE-detailed only
 
         # Summary text — factual only
         wr = meta["win_rate"]
@@ -762,7 +813,7 @@ def main():
             f"{tn} ({home_lg}) in {args.season_year}: "
             f"{meta['wins']}-{meta['losses']} maps"
             + (f" ({wr*100:.1f}% WR)" if wr is not None else "")
-            + f". Coverage through {cutoff.strftime('%Y-%m-%d')}."
+            + f". Match results through {cutoff.strftime('%Y-%m-%d')}; OE detailed stats through {oe_cutoff.strftime('%Y-%m-%d')}."
         )
         if intl_by:
             parts = [f"{x['league']} {x['w']}-{x['l']}" for x in intl_by]
@@ -793,17 +844,26 @@ def main():
                 "season_year": args.season_year,
                 "start": season_start.strftime("%Y-%m-%d"),
                 "end": cutoff.strftime("%Y-%m-%d"),
+                "match_results_through": cutoff.strftime("%Y-%m-%d"),
+                "detailed_stats_through": oe_cutoff.strftime("%Y-%m-%d"),
                 "recent_start": recent_start.strftime("%Y-%m-%d"),
                 "recent_days": RECENT_DAYS,
+                "timezone_note": "OE/gol.gg date stamps are source-native (typically UTC calendar dates). LoL Esports API event starts are converted separately in verification notes.",
             },
             "provenance": {
-                "source": "Oracle's Elixir public yearly CSVs",
+                "source": "Oracle's Elixir public yearly CSVs + gol.gg thin maps after OE cutoff",
                 "raw_years": years,
                 "generated_at_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+                "generated_at_sgt": datetime.now(timezone.utc).astimezone(__import__('datetime').timezone(__import__('datetime').timedelta(hours=8))).strftime("%Y-%m-%d %H:%M %Z"),
+                "oe_detailed_through": oe_cutoff.strftime("%Y-%m-%d %H:%M:%S"),
+                "match_results_through": cutoff.strftime("%Y-%m-%d"),
+                "golgg_extension": gg_summary,
                 "notes": [
-                    "Stats aggregated from OE rows with datacompleteness in {complete, partial}.",
-                    "Missing fields are null; never filled with 0.",
+                    "Detailed player/combat stats (KDA, GD@15, damageshare, firstPick side-order, off-meta shares) use OE only through oe_detailed_through.",
+                    "Match W/L, international map results, and Elo strength include gol.gg maps after OE cutoff when OE lag; those rows lack GD@15/firstPick.",
+                    "Missing fields are null; never filled with 0. Thin gol.gg rows are never treated as full player-stat coverage.",
                     "Academy/ERL teams are separate from majors; aliases never merge Challengers/Academy into the main org.",
+                    "OE public Drive download may be quota-blocked; refresh attempts are recorded in meta.refresh_attempt.",
                 ],
             },
             "grades": {
@@ -827,7 +887,9 @@ def main():
                 },
                 "golddiffat15": {
                     "mean": round(meta["gd15"], 1) if meta["gd15"] is not None else None,
-                    "n": int(g["golddiffat15"].notna().sum()),
+                    "n": int(meta.get("gd15_n") or 0),
+                    "source_window": "oe_detailed_only",
+                    "note": "GD@15 excludes gol.gg thin post-OE maps (field unavailable there).",
                 },
                 "power_rank": {
                     "rank": power_rank,
@@ -865,6 +927,11 @@ def main():
                     None if roster else "No roster rows meeting min games",
                     None if draft_season["residual_mean"] is not None else "Draft proxy insufficient sample",
                     None if power_rank is not None else "Power rank unavailable (missing Elo peers)",
+                    (
+                        f"Match results include {meta['games']} maps through {cutoff.strftime('%Y-%m-%d')} but OE detailed player/combat stats only through {oe_cutoff.strftime('%Y-%m-%d')} ({meta.get('maps_match_results',0) - meta.get('maps_oe_detail',0)} post-OE thin maps)."
+                        if meta.get("maps_match_results", 0) > meta.get("maps_oe_detail", 0)
+                        else None
+                    ),
                 ] if g
             ],
         }
@@ -895,11 +962,23 @@ def main():
         "scoring_version": SCORING_VERSION,
         "coverage": {
             "start": df["date"].min().strftime("%Y-%m-%d"),
+            "detailed_stats_through": oe_cutoff.strftime("%Y-%m-%d"),
+            "detailed_stats_through_full": oe_cutoff.strftime("%Y-%m-%d %H:%M:%S"),
+            "match_results_through": cutoff.strftime("%Y-%m-%d"),
             "end": cutoff.strftime("%Y-%m-%d"),
             "season_year": args.season_year,
             "season_start": season_start.strftime("%Y-%m-%d"),
             "honest_cutoff": True,
-            "refresh": "Re-run scripts/lolesports/build_snapshots.py after OE CSV download via lol-model/download.py (public gdown folder). No automatic refresh in this PR.",
+            "timezone_note": "Cutoffs are source date stamps (OE/gol.gg). Asia/Singapore wall clock is used only for refresh attempt labeling, not as OE's native zone.",
+            "refresh": "OE: lol-model/download.py (public Drive; often quota-blocked). Fallback match results: lol-model/scrape_golgg.py S16 + normalize.py. Then npm run build:lolesports-data.",
+            "refresh_attempt": {
+                "attempted_at_sgt": datetime.now(timezone.utc).astimezone(__import__('datetime').timezone(__import__('datetime').timedelta(hours=8))).strftime("%Y-%m-%d %H:%M %Z"),
+                "oe_public_gdown": "quota_exceeded",
+                "oe_user_drive_copy_max": "2026-10-18 (stale vs local OE 2026-10-24; not applied)",
+                "golgg_scrape": "S16 incremental applied",
+                "golgg_extension_maps": gg_summary.get("maps"),
+                "golgg_notable_series": gg_summary.get("notable_series"),
+            },
         },
         "counts": {
             "teams_indexed": len(index_entries),

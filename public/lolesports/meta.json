@@ -2,16 +2,169 @@
   "scoring_version": "polyverse-lolesports-v1",
   "coverage": {
     "start": "2024-01-01",
-    "end": "2026-10-24",
+    "detailed_stats_through": "2026-10-24",
+    "detailed_stats_through_full": "2026-10-24 23:19:46",
+    "match_results_through": "2026-11-05",
+    "end": "2026-11-05",
     "season_year": 2026,
     "season_start": "2026-01-01",
     "honest_cutoff": true,
-    "refresh": "Re-run scripts/lolesports/build_snapshots.py after OE CSV download via lol-model/download.py (public gdown folder). No automatic refresh in this PR."
+    "timezone_note": "Cutoffs are source date stamps (OE/gol.gg). Asia/Singapore wall clock is used only for refresh attempt labeling, not as OE's native zone.",
+    "refresh": "OE: lol-model/download.py (public Drive; often quota-blocked). Fallback match results: lol-model/scrape_golgg.py S16 + normalize.py. Then npm run build:lolesports-data.",
+    "refresh_attempt": {
+      "attempted_at_sgt": "2026-11-06 14:25 UTC+08:00",
+      "oe_public_gdown": "quota_exceeded",
+      "oe_user_drive_copy_max": "2026-10-18 (stale vs local OE 2026-10-24; not applied)",
+      "golgg_scrape": "S16 incremental applied",
+      "golgg_extension_maps": 90,
+      "golgg_notable_series": [
+        {
+          "date": "2026-10-28",
+          "team": "Invictus Gaming",
+          "opponent": "LYON",
+          "map_score": "0-1",
+          "source": "golgg"
+        },
+        {
+          "date": "2026-10-28",
+          "team": "LYON",
+          "opponent": "Invictus Gaming",
+          "map_score": "0-2",
+          "source": "golgg"
+        },
+        {
+          "date": "2026-10-28",
+          "team": "T1",
+          "opponent": "Movistar KOI",
+          "map_score": "2-0",
+          "source": "golgg"
+        },
+        {
+          "date": "2026-10-29",
+          "team": "Bilibili Gaming",
+          "opponent": "Top Esports",
+          "map_score": "1-1",
+          "source": "golgg"
+        },
+        {
+          "date": "2026-10-29",
+          "team": "CTBC Flying Oyster",
+          "opponent": "Karmine Corp",
+          "map_score": "0-1",
+          "source": "golgg"
+        },
+        {
+          "date": "2026-10-29",
+          "team": "Karmine Corp",
+          "opponent": "CTBC Flying Oyster",
+          "map_score": "1-0",
+          "source": "golgg"
+        },
+        {
+          "date": "2026-10-29",
+          "team": "Top Esports",
+          "opponent": "Bilibili Gaming",
+          "map_score": "1-0",
+          "source": "golgg"
+        },
+        {
+          "date": "2026-10-30",
+          "team": "G2 Esports",
+          "opponent": "Hanwha Life Esports",
+          "map_score": "0-1",
+          "source": "golgg"
+        },
+        {
+          "date": "2026-10-30",
+          "team": "Hanwha Life Esports",
+          "opponent": "G2 Esports",
+          "map_score": "1-0",
+          "source": "golgg"
+        },
+        {
+          "date": "2026-10-30",
+          "team": "Los Grandes",
+          "opponent": "Team Liquid",
+          "map_score": "1-1",
+          "source": "golgg"
+        },
+        {
+          "date": "2026-10-30",
+          "team": "Team Liquid",
+          "opponent": "Los Grandes",
+          "map_score": "0-1",
+          "source": "golgg"
+        },
+        {
+          "date": "2026-10-31",
+          "team": "Bilibili Gaming",
+          "opponent": "Hanwha Life Esports",
+          "map_score": "2-0",
+          "source": "golgg"
+        },
+        {
+          "date": "2026-10-31",
+          "team": "Karmine Corp",
+          "opponent": "Movistar KOI",
+          "map_score": "2-0",
+          "source": "golgg"
+        },
+        {
+          "date": "2026-10-31",
+          "team": "LYON",
+          "opponent": "Los Grandes",
+          "map_score": "1-1",
+          "source": "golgg"
+        },
+        {
+          "date": "2026-10-31",
+          "team": "Los Grandes",
+          "opponent": "LYON",
+          "map_score": "0-1",
+          "source": "golgg"
+        },
+        {
+          "date": "2026-11-03",
+          "team": "Invictus Gaming",
+          "opponent": "Top Esports",
+          "map_score": "2-1",
+          "source": "golgg"
+        },
+        {
+          "date": "2026-11-03",
+          "team": "Top Esports",
+          "opponent": "Invictus Gaming",
+          "map_score": "0-1",
+          "source": "golgg"
+        },
+        {
+          "date": "2026-11-04",
+          "team": "Gen.G",
+          "opponent": "LYON",
+          "map_score": "3-0",
+          "source": "golgg"
+        },
+        {
+          "date": "2026-11-05",
+          "team": "Bilibili Gaming",
+          "opponent": "Dplus Kia",
+          "map_score": "1-0",
+          "source": "golgg"
+        },
+        {
+          "date": "2026-11-05",
+          "team": "Dplus Kia",
+          "opponent": "Bilibili Gaming",
+          "map_score": "0-2",
+          "source": "golgg"
+        }
+      ]
+    }
   },
   "counts": {
-    "teams_indexed": 344,
+    "teams_indexed": 345,
     "majors": 104,
-    "academy_erl": 240
+    "academy_erl": 241
   },
   "min_samples": {
     "team_games": 8,

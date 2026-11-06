@@ -173,7 +173,9 @@ export default function LolesportsPage() {
           </a>
           <div className="flex items-center gap-2 text-[10px] text-ink-dim">
             <span>
-              OE coverage {meta.coverage.start} → {meta.coverage.end}
+              Match results → {meta.coverage.match_results_through || meta.coverage.end}
+              {" · "}
+              OE detail → {meta.coverage.detailed_stats_through || meta.coverage.end}
             </span>
             <span className="hidden sm:inline">·</span>
             <span className="hidden sm:inline">{meta.scoring_version}</span>
@@ -286,8 +288,10 @@ export default function LolesportsPage() {
           </div>
           <p className="text-[10px] text-ink-dim">
             {meta.counts.majors} majors · {meta.counts.academy_erl} academy/ERL · season{" "}
-            {meta.coverage.season_year}. Honest cutoff — raw OE not refreshed past{" "}
-            {meta.coverage.end}.
+            {meta.coverage.season_year}. Match W/L through{" "}
+            {meta.coverage.match_results_through || meta.coverage.end}; OE player/combat detail
+            through {meta.coverage.detailed_stats_through || meta.coverage.end}
+            {meta.coverage.timezone_note ? ` · ${meta.coverage.timezone_note}` : ""}.
           </p>
         </section>
 
@@ -375,8 +379,9 @@ export default function LolesportsPage() {
 
             <footer className="text-[10px] text-ink-dim space-y-1 pb-10">
               <p>
-                Source: Oracle&apos;s Elixir public CSVs · scoring {card.scoring_version} · window{" "}
-                {String(card.window.start)} → {String(card.window.end)}
+                Source: OE detailed + gol.gg thin match supplement · scoring {card.scoring_version} ·
+                match results {String(card.window.match_results_through || card.window.end)} · OE
+                detail {String(card.window.detailed_stats_through || "—")}
               </p>
               <p>
                 Strength is descriptive Elo; drafting is a labeled proxy. Missing fields are shown as

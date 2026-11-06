@@ -22,10 +22,15 @@ export interface LolesportsIndex {
     coverage: {
       start: string;
       end: string;
+      detailed_stats_through?: string;
+      detailed_stats_through_full?: string;
+      match_results_through?: string;
       season_year: number;
       season_start: string;
       honest_cutoff: boolean;
+      timezone_note?: string;
       refresh: string;
+      refresh_attempt?: Record<string, unknown>;
     };
     counts: Record<string, number>;
     min_samples: Record<string, number>;
