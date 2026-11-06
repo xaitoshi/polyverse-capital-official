@@ -1,0 +1,26 @@
+{
+  "scoring_version": "polyverse-lolesports-v1",
+  "coverage": {
+    "start": "2024-01-01",
+    "end": "2026-10-24",
+    "season_year": 2026,
+    "season_start": "2026-01-01",
+    "honest_cutoff": true,
+    "refresh": "Re-run scripts/lolesports/build_snapshots.py after OE CSV download via lol-model/download.py (public gdown folder). No automatic refresh in this PR."
+  },
+  "counts": {
+    "teams_indexed": 344,
+    "majors": 104,
+    "academy_erl": 240
+  },
+  "min_samples": {
+    "team_games": 8,
+    "player_games": 5,
+    "shrink_k": 8.0
+  },
+  "provenance": {
+    "source": "Oracle's Elixir public yearly CSVs",
+    "path_hint": "lol-model/data/raw/{year}.csv",
+    "license_note": "Redistributed aggregates only; not a dump of the raw warehouse."
+  }
+}

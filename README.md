@@ -36,3 +36,14 @@ Smoke / schema lock (network):
 ```bash
 node scripts/pm-explorer-smoke.mjs
 ```
+
+## LoL Esports team profiles (`/lolesports`)
+
+Searchable team cards built from Oracle's Elixir public yearly CSVs.
+
+- Snapshots: `public/lolesports/` (index + per-team JSON). Do **not** commit raw OE CSVs or `oe.db`.
+- Rebuild data: `npm run build:lolesports-data` (requires local OE raw at `/workspace/lol-model/data/raw` or `LOL_OE_RAW`).
+- Scoring: Polyverse `polyverse-lolesports-v1` — see `public/lolesports/methodology.json`. Drafting grade is an opponent-adjusted **proxy**, not causal draft quality.
+- Coverage is an honest cutoff of the ingested OE dump (currently through 2026-10-24 until CSVs are refreshed via `lol-model/download.py`).
+- Tests: `npm run test:lolesports`
+

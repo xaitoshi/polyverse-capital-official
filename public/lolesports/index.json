@@ -1,0 +1,6184 @@
+{
+  "meta": {
+    "scoring_version": "polyverse-lolesports-v1",
+    "coverage": {
+      "start": "2024-01-01",
+      "end": "2026-10-24",
+      "season_year": 2026,
+      "season_start": "2026-01-01",
+      "honest_cutoff": true,
+      "refresh": "Re-run scripts/lolesports/build_snapshots.py after OE CSV download via lol-model/download.py (public gdown folder). No automatic refresh in this PR."
+    },
+    "counts": {
+      "teams_indexed": 344,
+      "majors": 104,
+      "academy_erl": 240
+    },
+    "min_samples": {
+      "team_games": 8,
+      "player_games": 5,
+      "shrink_k": 8.0
+    },
+    "provenance": {
+      "source": "Oracle's Elixir public yearly CSVs",
+      "path_hint": "lol-model/data/raw/{year}.csv",
+      "license_note": "Redistributed aggregates only; not a dump of the raw warehouse."
+    }
+  },
+  "teams": [
+    {
+      "id": "l-s-cblol",
+      "name": "LØS",
+      "aliases": [
+        "LS",
+        "LØS"
+      ],
+      "home_league": "CBLOL",
+      "tier": "majors",
+      "wins": 74,
+      "losses": 43,
+      "win_rate": 0.6325,
+      "strength_grade": "S",
+      "drafting_grade": "S",
+      "power_rank": 1,
+      "power_of": 7,
+      "games": 117
+    },
+    {
+      "id": "furia-cblol",
+      "name": "FURIA",
+      "aliases": [
+        "FURIA"
+      ],
+      "home_league": "CBLOL",
+      "tier": "majors",
+      "wins": 68,
+      "losses": 45,
+      "win_rate": 0.6018,
+      "strength_grade": "B",
+      "drafting_grade": "B",
+      "power_rank": 3,
+      "power_of": 7,
+      "games": 113
+    },
+    {
+      "id": "loud-cblol",
+      "name": "LOUD",
+      "aliases": [
+        "LOUD"
+      ],
+      "home_league": "CBLOL",
+      "tier": "majors",
+      "wins": 50,
+      "losses": 41,
+      "win_rate": 0.5495,
+      "strength_grade": "A",
+      "drafting_grade": "B",
+      "power_rank": 2,
+      "power_of": 7,
+      "games": 91
+    },
+    {
+      "id": "red-canids-cblol",
+      "name": "RED Canids",
+      "aliases": [
+        "RED Canids",
+        "REDCanids"
+      ],
+      "home_league": "CBLOL",
+      "tier": "majors",
+      "wins": 50,
+      "losses": 50,
+      "win_rate": 0.5,
+      "strength_grade": "C",
+      "drafting_grade": "C",
+      "power_rank": 4,
+      "power_of": 7,
+      "games": 100
+    },
+    {
+      "id": "vivo-keyd-stars-cblol",
+      "name": "Vivo Keyd Stars",
+      "aliases": [
+        "Vivo Keyd Stars",
+        "VivoKeydStars"
+      ],
+      "home_league": "CBLOL",
+      "tier": "majors",
+      "wins": 32,
+      "losses": 42,
+      "win_rate": 0.4324,
+      "strength_grade": "C",
+      "drafting_grade": "D",
+      "power_rank": 5,
+      "power_of": 7,
+      "games": 74
+    },
+    {
+      "id": "fluxo-w7m-cblol",
+      "name": "Fluxo W7M",
+      "aliases": [
+        "Fluxo W7M",
+        "FluxoW7M"
+      ],
+      "home_league": "CBLOL",
+      "tier": "majors",
+      "wins": 23,
+      "losses": 39,
+      "win_rate": 0.371,
+      "strength_grade": "F",
+      "drafting_grade": "C",
+      "power_rank": 7,
+      "power_of": 7,
+      "games": 62
+    },
+    {
+      "id": "pain-gaming-cblol",
+      "name": "paiN Gaming",
+      "aliases": [
+        "paiN Gaming",
+        "paiNGaming"
+      ],
+      "home_league": "CBLOL",
+      "tier": "majors",
+      "wins": 22,
+      "losses": 43,
+      "win_rate": 0.3385,
+      "strength_grade": "D",
+      "drafting_grade": "D",
+      "power_rank": 6,
+      "power_of": 7,
+      "games": 65
+    },
+    {
+      "id": "gen-g-lck",
+      "name": "Gen.G",
+      "aliases": [
+        "GEN",
+        "Gen.G",
+        "GenG"
+      ],
+      "home_league": "LCK",
+      "tier": "majors",
+      "wins": 95,
+      "losses": 40,
+      "win_rate": 0.7037,
+      "strength_grade": "S",
+      "drafting_grade": "A",
+      "power_rank": 1,
+      "power_of": 10,
+      "games": 135
+    },
+    {
+      "id": "t1-lck",
+      "name": "T1",
+      "aliases": [
+        "SKT",
+        "T1"
+      ],
+      "home_league": "LCK",
+      "tier": "majors",
+      "wins": 103,
+      "losses": 64,
+      "win_rate": 0.6168,
+      "strength_grade": "B",
+      "drafting_grade": "C",
+      "power_rank": 4,
+      "power_of": 10,
+      "games": 167
+    },
+    {
+      "id": "hanwha-life-esports-lck",
+      "name": "Hanwha Life Esports",
+      "aliases": [
+        "Hanwha Life Esports",
+        "HanwhaLifeEsports"
+      ],
+      "home_league": "LCK",
+      "tier": "majors",
+      "wins": 94,
+      "losses": 59,
+      "win_rate": 0.6144,
+      "strength_grade": "A",
+      "drafting_grade": "B",
+      "power_rank": 2,
+      "power_of": 10,
+      "games": 153
+    },
+    {
+      "id": "dplus-kia-lck",
+      "name": "Dplus Kia",
+      "aliases": [
+        "DK",
+        "Dplus Kia",
+        "DplusKia"
+      ],
+      "home_league": "LCK",
+      "tier": "majors",
+      "wins": 83,
+      "losses": 70,
+      "win_rate": 0.5425,
+      "strength_grade": "A",
+      "drafting_grade": "B",
+      "power_rank": 3,
+      "power_of": 10,
+      "games": 153
+    },
+    {
+      "id": "bnk-fearx-lck",
+      "name": "BNK FEARX",
+      "aliases": [
+        "BNK FEARX",
+        "BNKFEARX"
+      ],
+      "home_league": "LCK",
+      "tier": "majors",
+      "wins": 74,
+      "losses": 77,
+      "win_rate": 0.4901,
+      "strength_grade": "C",
+      "drafting_grade": "C",
+      "power_rank": 6,
+      "power_of": 10,
+      "games": 151
+    },
+    {
+      "id": "kt-rolster-lck",
+      "name": "KT Rolster",
+      "aliases": [
+        "KT Rolster",
+        "KTRolster"
+      ],
+      "home_league": "LCK",
+      "tier": "majors",
+      "wins": 59,
+      "losses": 66,
+      "win_rate": 0.472,
+      "strength_grade": "C",
+      "drafting_grade": "C",
+      "power_rank": 7,
+      "power_of": 10,
+      "games": 125
+    },
+    {
+      "id": "hanjin-brion-lck",
+      "name": "HANJIN BRION",
+      "aliases": [
+        "HANJIN BRION",
+        "HANJINBRION"
+      ],
+      "home_league": "LCK",
+      "tier": "majors",
+      "wins": 53,
+      "losses": 73,
+      "win_rate": 0.4206,
+      "strength_grade": "D",
+      "drafting_grade": "C",
+      "power_rank": 8,
+      "power_of": 10,
+      "games": 126
+    },
+    {
+      "id": "nongshim-redforce-lck",
+      "name": "Nongshim RedForce",
+      "aliases": [
+        "Nongshim RedForce",
+        "NongshimRedForce"
+      ],
+      "home_league": "LCK",
+      "tier": "majors",
+      "wins": 44,
+      "losses": 62,
+      "win_rate": 0.4151,
+      "strength_grade": "D",
+      "drafting_grade": "C",
+      "power_rank": 9,
+      "power_of": 10,
+      "games": 106
+    },
+    {
+      "id": "kiwoom-drx-lck",
+      "name": "Kiwoom DRX",
+      "aliases": [
+        "Kiwoom DRX",
+        "KiwoomDRX"
+      ],
+      "home_league": "LCK",
+      "tier": "majors",
+      "wins": 45,
+      "losses": 67,
+      "win_rate": 0.4018,
+      "strength_grade": "F",
+      "drafting_grade": "C",
+      "power_rank": 10,
+      "power_of": 10,
+      "games": 112
+    },
+    {
+      "id": "dn-soopers-lck",
+      "name": "DN SOOPers",
+      "aliases": [
+        "DN SOOPers",
+        "DNSOOPers"
+      ],
+      "home_league": "LCK",
+      "tier": "majors",
+      "wins": 47,
+      "losses": 73,
+      "win_rate": 0.3917,
+      "strength_grade": "B",
+      "drafting_grade": "A",
+      "power_rank": 5,
+      "power_of": 10,
+      "games": 120
+    },
+    {
+      "id": "team-secret-whales-lcp",
+      "name": "Team Secret Whales",
+      "aliases": [
+        "Team Secret Whales",
+        "TeamSecretWhales"
+      ],
+      "home_league": "LCP",
+      "tier": "majors",
+      "wins": 72,
+      "losses": 32,
+      "win_rate": 0.6923,
+      "strength_grade": "S",
+      "drafting_grade": "S",
+      "power_rank": 1,
+      "power_of": 6,
+      "games": 104
+    },
+    {
+      "id": "gam-esports-lcp",
+      "name": "GAM Esports",
+      "aliases": [
+        "GAM Esports",
+        "GAMEsports"
+      ],
+      "home_league": "LCP",
+      "tier": "majors",
+      "wins": 51,
+      "losses": 51,
+      "win_rate": 0.5,
+      "strength_grade": "C",
+      "drafting_grade": "C",
+      "power_rank": 4,
+      "power_of": 6,
+      "games": 102
+    },
+    {
+      "id": "ctbc-flying-oyster-lcp",
+      "name": "CTBC Flying Oyster",
+      "aliases": [
+        "CTBC Flying Oyster",
+        "CTBCFlyingOyster"
+      ],
+      "home_league": "LCP",
+      "tier": "majors",
+      "wins": 41,
+      "losses": 48,
+      "win_rate": 0.4607,
+      "strength_grade": "A",
+      "drafting_grade": "D",
+      "power_rank": 2,
+      "power_of": 6,
+      "games": 89
+    },
+    {
+      "id": "mvk-esports-lcp",
+      "name": "MVK Esports",
+      "aliases": [
+        "MVK Esports",
+        "MVKEsports"
+      ],
+      "home_league": "LCP",
+      "tier": "majors",
+      "wins": 43,
+      "losses": 51,
+      "win_rate": 0.4574,
+      "strength_grade": "B",
+      "drafting_grade": "B",
+      "power_rank": 3,
+      "power_of": 6,
+      "games": 94
+    },
+    {
+      "id": "fukuoka-softbank-hawks-gaming-lcp",
+      "name": "Fukuoka SoftBank HAWKS gaming",
+      "aliases": [
+        "Fukuoka SoftBank HAWKS gaming",
+        "FukuokaSoftBankHAWKSgaming"
+      ],
+      "home_league": "LCP",
+      "tier": "majors",
+      "wins": 31,
+      "losses": 39,
+      "win_rate": 0.4429,
+      "strength_grade": "D",
+      "drafting_grade": "C",
+      "power_rank": 5,
+      "power_of": 6,
+      "games": 70
+    },
+    {
+      "id": "detonation-focusme-lcp",
+      "name": "DetonatioN FocusMe",
+      "aliases": [
+        "DetonatioN FocusMe",
+        "DetonatioNFocusMe"
+      ],
+      "home_league": "LCP",
+      "tier": "majors",
+      "wins": 7,
+      "losses": 43,
+      "win_rate": 0.14,
+      "strength_grade": "F",
+      "drafting_grade": "F",
+      "power_rank": 6,
+      "power_of": 6,
+      "games": 50
+    },
+    {
+      "id": "team-liquid-lcs",
+      "name": "Team Liquid",
+      "aliases": [
+        "Team Liquid",
+        "TeamLiquid"
+      ],
+      "home_league": "LCS",
+      "tier": "majors",
+      "wins": 65,
+      "losses": 37,
+      "win_rate": 0.6373,
+      "strength_grade": "A",
+      "drafting_grade": "S",
+      "power_rank": 2,
+      "power_of": 7,
+      "games": 102
+    },
+    {
+      "id": "lyon-lcs",
+      "name": "LYON",
+      "aliases": [
+        "LYON"
+      ],
+      "home_league": "LCS",
+      "tier": "majors",
+      "wins": 78,
+      "losses": 46,
+      "win_rate": 0.629,
+      "strength_grade": "S",
+      "drafting_grade": "S",
+      "power_rank": 1,
+      "power_of": 7,
+      "games": 124
+    },
+    {
+      "id": "cloud9-lcs",
+      "name": "Cloud9",
+      "aliases": [
+        "Cloud9"
+      ],
+      "home_league": "LCS",
+      "tier": "majors",
+      "wins": 59,
+      "losses": 48,
+      "win_rate": 0.5514,
+      "strength_grade": "C",
+      "drafting_grade": "C",
+      "power_rank": 4,
+      "power_of": 7,
+      "games": 107
+    },
+    {
+      "id": "flyquest-lcs",
+      "name": "FlyQuest",
+      "aliases": [
+        "FlyQuest"
+      ],
+      "home_league": "LCS",
+      "tier": "majors",
+      "wins": 49,
+      "losses": 51,
+      "win_rate": 0.49,
+      "strength_grade": "B",
+      "drafting_grade": "D",
+      "power_rank": 3,
+      "power_of": 7,
+      "games": 100
+    },
+    {
+      "id": "sentinels-lcs",
+      "name": "Sentinels",
+      "aliases": [
+        "Sentinels"
+      ],
+      "home_league": "LCS",
+      "tier": "majors",
+      "wins": 42,
+      "losses": 48,
+      "win_rate": 0.4667,
+      "strength_grade": "C",
+      "drafting_grade": "C",
+      "power_rank": 5,
+      "power_of": 7,
+      "games": 90
+    },
+    {
+      "id": "shopify-rebellion-lcs",
+      "name": "Shopify Rebellion",
+      "aliases": [
+        "Shopify Rebellion",
+        "ShopifyRebellion"
+      ],
+      "home_league": "LCS",
+      "tier": "majors",
+      "wins": 23,
+      "losses": 48,
+      "win_rate": 0.3239,
+      "strength_grade": "D",
+      "drafting_grade": "D",
+      "power_rank": 6,
+      "power_of": 7,
+      "games": 71
+    },
+    {
+      "id": "dignitas-lcs",
+      "name": "Dignitas",
+      "aliases": [
+        "Dignitas"
+      ],
+      "home_league": "LCS",
+      "tier": "majors",
+      "wins": 8,
+      "losses": 37,
+      "win_rate": 0.1778,
+      "strength_grade": "F",
+      "drafting_grade": "F",
+      "power_rank": 7,
+      "power_of": 7,
+      "games": 45
+    },
+    {
+      "id": "g2-esports-lec",
+      "name": "G2 Esports",
+      "aliases": [
+        "G2 Esports",
+        "G2Esports"
+      ],
+      "home_league": "LEC",
+      "tier": "majors",
+      "wins": 88,
+      "losses": 45,
+      "win_rate": 0.6617,
+      "strength_grade": "S",
+      "drafting_grade": "B",
+      "power_rank": 1,
+      "power_of": 10,
+      "games": 133
+    },
+    {
+      "id": "karmine-corp-lec",
+      "name": "Karmine Corp",
+      "aliases": [
+        "Karmine Corp",
+        "KarmineCorp"
+      ],
+      "home_league": "LEC",
+      "tier": "majors",
+      "wins": 97,
+      "losses": 54,
+      "win_rate": 0.6424,
+      "strength_grade": "A",
+      "drafting_grade": "A",
+      "power_rank": 2,
+      "power_of": 10,
+      "games": 151
+    },
+    {
+      "id": "team-vitality-lec",
+      "name": "Team Vitality",
+      "aliases": [
+        "Team Vitality",
+        "TeamVitality"
+      ],
+      "home_league": "LEC",
+      "tier": "majors",
+      "wins": 52,
+      "losses": 44,
+      "win_rate": 0.5417,
+      "strength_grade": "B",
+      "drafting_grade": "B",
+      "power_rank": 4,
+      "power_of": 10,
+      "games": 96
+    },
+    {
+      "id": "movistar-koi-lec",
+      "name": "Movistar KOI",
+      "aliases": [
+        "Movistar KOI",
+        "MovistarKOI"
+      ],
+      "home_league": "LEC",
+      "tier": "majors",
+      "wins": 61,
+      "losses": 52,
+      "win_rate": 0.5398,
+      "strength_grade": "A",
+      "drafting_grade": "B",
+      "power_rank": 3,
+      "power_of": 10,
+      "games": 113
+    },
+    {
+      "id": "natus-vincere-lec",
+      "name": "Natus Vincere",
+      "aliases": [
+        "Natus Vincere",
+        "NatusVincere"
+      ],
+      "home_league": "LEC",
+      "tier": "majors",
+      "wins": 48,
+      "losses": 47,
+      "win_rate": 0.5053,
+      "strength_grade": "C",
+      "drafting_grade": "A",
+      "power_rank": 6,
+      "power_of": 10,
+      "games": 95
+    },
+    {
+      "id": "giantx-lec",
+      "name": "GiantX",
+      "aliases": [
+        "GiantX"
+      ],
+      "home_league": "LEC",
+      "tier": "majors",
+      "wins": 44,
+      "losses": 47,
+      "win_rate": 0.4835,
+      "strength_grade": "B",
+      "drafting_grade": "B",
+      "power_rank": 5,
+      "power_of": 10,
+      "games": 91
+    },
+    {
+      "id": "fnatic-lec",
+      "name": "Fnatic",
+      "aliases": [
+        "Fnatic"
+      ],
+      "home_league": "LEC",
+      "tier": "majors",
+      "wins": 27,
+      "losses": 40,
+      "win_rate": 0.403,
+      "strength_grade": "C",
+      "drafting_grade": "D",
+      "power_rank": 7,
+      "power_of": 10,
+      "games": 67
+    },
+    {
+      "id": "sk-gaming-lec",
+      "name": "SK Gaming",
+      "aliases": [
+        "SK Gaming",
+        "SKGaming"
+      ],
+      "home_league": "LEC",
+      "tier": "majors",
+      "wins": 19,
+      "losses": 39,
+      "win_rate": 0.3276,
+      "strength_grade": "D",
+      "drafting_grade": "C",
+      "power_rank": 8,
+      "power_of": 10,
+      "games": 58
+    },
+    {
+      "id": "shifters-lec",
+      "name": "Shifters",
+      "aliases": [
+        "Shifters"
+      ],
+      "home_league": "LEC",
+      "tier": "majors",
+      "wins": 19,
+      "losses": 42,
+      "win_rate": 0.3115,
+      "strength_grade": "D",
+      "drafting_grade": "D",
+      "power_rank": 9,
+      "power_of": 10,
+      "games": 61
+    },
+    {
+      "id": "team-heretics-lec",
+      "name": "Team Heretics",
+      "aliases": [
+        "Team Heretics",
+        "TeamHeretics"
+      ],
+      "home_league": "LEC",
+      "tier": "majors",
+      "wins": 14,
+      "losses": 45,
+      "win_rate": 0.2373,
+      "strength_grade": "F",
+      "drafting_grade": "F",
+      "power_rank": 10,
+      "power_of": 10,
+      "games": 59
+    },
+    {
+      "id": "fennel-ljl",
+      "name": "FENNEL",
+      "aliases": [
+        "FENNEL"
+      ],
+      "home_league": "LJL",
+      "tier": "majors",
+      "wins": 42,
+      "losses": 17,
+      "win_rate": 0.7119,
+      "strength_grade": "S",
+      "drafting_grade": "S",
+      "power_rank": 2,
+      "power_of": 20,
+      "games": 59
+    },
+    {
+      "id": "inferno-drive-tokyo-ljl",
+      "name": "Inferno Drive Tokyo",
+      "aliases": [
+        "Inferno Drive Tokyo",
+        "InfernoDriveTokyo"
+      ],
+      "home_league": "LJL",
+      "tier": "majors",
+      "wins": 28,
+      "losses": 12,
+      "win_rate": 0.7,
+      "strength_grade": "A",
+      "drafting_grade": "A",
+      "power_rank": 4,
+      "power_of": 20,
+      "games": 40
+    },
+    {
+      "id": "rising-gaming-ljl",
+      "name": "Rising Gaming",
+      "aliases": [
+        "Rising Gaming",
+        "RisingGaming"
+      ],
+      "home_league": "LJL",
+      "tier": "majors",
+      "wins": 37,
+      "losses": 19,
+      "win_rate": 0.6607,
+      "strength_grade": "S",
+      "drafting_grade": "S",
+      "power_rank": 1,
+      "power_of": 20,
+      "games": 56
+    },
+    {
+      "id": "new-meta-ljl",
+      "name": "New Meta",
+      "aliases": [
+        "New Meta",
+        "NewMeta"
+      ],
+      "home_league": "LJL",
+      "tier": "majors",
+      "wins": 45,
+      "losses": 29,
+      "win_rate": 0.6081,
+      "strength_grade": "A",
+      "drafting_grade": "S",
+      "power_rank": 3,
+      "power_of": 20,
+      "games": 74
+    },
+    {
+      "id": "novex-ljl",
+      "name": "NOVEX",
+      "aliases": [
+        "NOVEX"
+      ],
+      "home_league": "LJL",
+      "tier": "majors",
+      "wins": 21,
+      "losses": 16,
+      "win_rate": 0.5676,
+      "strength_grade": "B",
+      "drafting_grade": "B",
+      "power_rank": 7,
+      "power_of": 20,
+      "games": 37
+    },
+    {
+      "id": "arneb-ljl",
+      "name": "Arneb",
+      "aliases": [
+        "Arneb"
+      ],
+      "home_league": "LJL",
+      "tier": "majors",
+      "wins": 35,
+      "losses": 27,
+      "win_rate": 0.5645,
+      "strength_grade": "B",
+      "drafting_grade": "A",
+      "power_rank": 6,
+      "power_of": 20,
+      "games": 62
+    },
+    {
+      "id": "varrel-youth-ljl",
+      "name": "VARREL YOUTH",
+      "aliases": [
+        "VARREL YOUTH",
+        "VARRELYOUTH"
+      ],
+      "home_league": "LJL",
+      "tier": "majors",
+      "wins": 13,
+      "losses": 12,
+      "win_rate": 0.52,
+      "strength_grade": "A",
+      "drafting_grade": "B",
+      "power_rank": 5,
+      "power_of": 20,
+      "games": 25
+    },
+    {
+      "id": "uwinks-ljl",
+      "name": "Uwinks",
+      "aliases": [
+        "Uwinks"
+      ],
+      "home_league": "LJL",
+      "tier": "majors",
+      "wins": 31,
+      "losses": 29,
+      "win_rate": 0.5167,
+      "strength_grade": "B",
+      "drafting_grade": "B",
+      "power_rank": 9,
+      "power_of": 20,
+      "games": 60
+    },
+    {
+      "id": "l-guide-gaming-ljl",
+      "name": "L Guide Gaming",
+      "aliases": [
+        "L Guide Gaming",
+        "LGuideGaming"
+      ],
+      "home_league": "LJL",
+      "tier": "majors",
+      "wins": 32,
+      "losses": 30,
+      "win_rate": 0.5161,
+      "strength_grade": "B",
+      "drafting_grade": "B",
+      "power_rank": 8,
+      "power_of": 20,
+      "games": 62
+    },
+    {
+      "id": "fast8-ljl",
+      "name": "Fast8",
+      "aliases": [
+        "Fast8"
+      ],
+      "home_league": "LJL",
+      "tier": "majors",
+      "wins": 14,
+      "losses": 17,
+      "win_rate": 0.4516,
+      "strength_grade": "C",
+      "drafting_grade": "D",
+      "power_rank": 10,
+      "power_of": 20,
+      "games": 31
+    },
+    {
+      "id": "rayn-clocks-ljl",
+      "name": "RAYN Clocks",
+      "aliases": [
+        "RAYN Clocks",
+        "RAYNClocks"
+      ],
+      "home_league": "LJL",
+      "tier": "majors",
+      "wins": 23,
+      "losses": 29,
+      "win_rate": 0.4423,
+      "strength_grade": "C",
+      "drafting_grade": "D",
+      "power_rank": 12,
+      "power_of": 20,
+      "games": 52
+    },
+    {
+      "id": "yang-yang-gaming-ljl",
+      "name": "Yang Yang Gaming",
+      "aliases": [
+        "Yang Yang Gaming",
+        "YangYangGaming"
+      ],
+      "home_league": "LJL",
+      "tier": "majors",
+      "wins": 6,
+      "losses": 11,
+      "win_rate": 0.3529,
+      "strength_grade": "C",
+      "drafting_grade": "D",
+      "power_rank": 11,
+      "power_of": 20,
+      "games": 17
+    },
+    {
+      "id": "bamboo-juice-ljl",
+      "name": "Bamboo Juice",
+      "aliases": [
+        "Bamboo Juice",
+        "BambooJuice"
+      ],
+      "home_league": "LJL",
+      "tier": "majors",
+      "wins": 9,
+      "losses": 17,
+      "win_rate": 0.3462,
+      "strength_grade": "D",
+      "drafting_grade": "F",
+      "power_rank": 14,
+      "power_of": 20,
+      "games": 26
+    },
+    {
+      "id": "velbelikaizokudan-ljl",
+      "name": "VelbeliKaizokudan",
+      "aliases": [
+        "VelbeliKaizokudan"
+      ],
+      "home_league": "LJL",
+      "tier": "majors",
+      "wins": 9,
+      "losses": 17,
+      "win_rate": 0.3462,
+      "strength_grade": "D",
+      "drafting_grade": "D",
+      "power_rank": 16,
+      "power_of": 20,
+      "games": 26
+    },
+    {
+      "id": "cag-osaka-ljl",
+      "name": "CAG OSAKA",
+      "aliases": [
+        "CAG OSAKA",
+        "CAGOSAKA"
+      ],
+      "home_league": "LJL",
+      "tier": "majors",
+      "wins": 8,
+      "losses": 18,
+      "win_rate": 0.3077,
+      "strength_grade": "D",
+      "drafting_grade": "D",
+      "power_rank": 15,
+      "power_of": 20,
+      "games": 26
+    },
+    {
+      "id": "detonation-focusme-academy-ljl",
+      "name": "DetonatioN FocusMe Academy",
+      "aliases": [
+        "DetonatioN FocusMe Academy",
+        "DetonatioNFocusMeAcademy"
+      ],
+      "home_league": "LJL",
+      "tier": "majors",
+      "wins": 5,
+      "losses": 17,
+      "win_rate": 0.2273,
+      "strength_grade": "C",
+      "drafting_grade": "F",
+      "power_rank": 13,
+      "power_of": 20,
+      "games": 22
+    },
+    {
+      "id": "v3-esports-ljl",
+      "name": "V3 Esports",
+      "aliases": [
+        "V3 Esports",
+        "V3Esports"
+      ],
+      "home_league": "LJL",
+      "tier": "majors",
+      "wins": 3,
+      "losses": 23,
+      "win_rate": 0.1154,
+      "strength_grade": "F",
+      "drafting_grade": "F",
+      "power_rank": 20,
+      "power_of": 20,
+      "games": 26
+    },
+    {
+      "id": "utesports-ljl",
+      "name": "UTeSports",
+      "aliases": [
+        "UTeSports"
+      ],
+      "home_league": "LJL",
+      "tier": "majors",
+      "wins": 1,
+      "losses": 11,
+      "win_rate": 0.0833,
+      "strength_grade": "D",
+      "drafting_grade": "F",
+      "power_rank": 17,
+      "power_of": 20,
+      "games": 12
+    },
+    {
+      "id": "revolution-victory-x-ljl",
+      "name": "Revolution Victory X",
+      "aliases": [
+        "Revolution Victory X",
+        "RevolutionVictoryX"
+      ],
+      "home_league": "LJL",
+      "tier": "majors",
+      "wins": 1,
+      "losses": 12,
+      "win_rate": 0.0769,
+      "strength_grade": "F",
+      "drafting_grade": "F",
+      "power_rank": 18,
+      "power_of": 20,
+      "games": 13
+    },
+    {
+      "id": "uec-esports-plusplus-ljl",
+      "name": "UEC eSports PlusPlus",
+      "aliases": [
+        "UEC eSports PlusPlus",
+        "UECeSportsPlusPlus"
+      ],
+      "home_league": "LJL",
+      "tier": "majors",
+      "wins": 1,
+      "losses": 13,
+      "win_rate": 0.0714,
+      "strength_grade": "F",
+      "drafting_grade": "F",
+      "power_rank": 19,
+      "power_of": 20,
+      "games": 14
+    },
+    {
+      "id": "estral-esports-lla",
+      "name": "Estral Esports",
+      "aliases": [
+        "Estral Esports",
+        "EstralEsports"
+      ],
+      "home_league": "LLA",
+      "tier": "majors",
+      "wins": 42,
+      "losses": 14,
+      "win_rate": 0.75,
+      "strength_grade": "A",
+      "drafting_grade": "S",
+      "power_rank": 1,
+      "power_of": 2,
+      "games": 56
+    },
+    {
+      "id": "leviatan-lla",
+      "name": "Leviatan",
+      "aliases": [
+        "Leviatan"
+      ],
+      "home_league": "LLA",
+      "tier": "majors",
+      "wins": 14,
+      "losses": 41,
+      "win_rate": 0.2545,
+      "strength_grade": "D",
+      "drafting_grade": "D",
+      "power_rank": 2,
+      "power_of": 2,
+      "games": 55
+    },
+    {
+      "id": "bilibili-gaming-lpl",
+      "name": "Bilibili Gaming",
+      "aliases": [
+        "Bilibili Gaming",
+        "BilibiliGaming"
+      ],
+      "home_league": "LPL",
+      "tier": "majors",
+      "wins": 125,
+      "losses": 53,
+      "win_rate": 0.7022,
+      "strength_grade": "S",
+      "drafting_grade": "A",
+      "power_rank": 1,
+      "power_of": 14,
+      "games": 178
+    },
+    {
+      "id": "ninjas-in-pyjamas-lpl",
+      "name": "Ninjas in Pyjamas",
+      "aliases": [
+        "Ninjas in Pyjamas",
+        "NinjasinPyjamas"
+      ],
+      "home_league": "LPL",
+      "tier": "majors",
+      "wins": 54,
+      "losses": 39,
+      "win_rate": 0.5806,
+      "strength_grade": "A",
+      "drafting_grade": "A",
+      "power_rank": 2,
+      "power_of": 14,
+      "games": 93
+    },
+    {
+      "id": "anyone-s-legend-lpl",
+      "name": "Anyone's Legend",
+      "aliases": [
+        "Anyone's Legend",
+        "Anyone'sLegend",
+        "AnyonesLegend"
+      ],
+      "home_league": "LPL",
+      "tier": "majors",
+      "wins": 83,
+      "losses": 61,
+      "win_rate": 0.5764,
+      "strength_grade": "A",
+      "drafting_grade": "B",
+      "power_rank": 3,
+      "power_of": 14,
+      "games": 144
+    },
+    {
+      "id": "top-esports-lpl",
+      "name": "Top Esports",
+      "aliases": [
+        "Top Esports",
+        "TopEsports"
+      ],
+      "home_league": "LPL",
+      "tier": "majors",
+      "wins": 77,
+      "losses": 65,
+      "win_rate": 0.5423,
+      "strength_grade": "B",
+      "drafting_grade": "C",
+      "power_rank": 5,
+      "power_of": 14,
+      "games": 142
+    },
+    {
+      "id": "lng-esports-lpl",
+      "name": "LNG Esports",
+      "aliases": [
+        "LNG Esports",
+        "LNGEsports"
+      ],
+      "home_league": "LPL",
+      "tier": "majors",
+      "wins": 29,
+      "losses": 25,
+      "win_rate": 0.537,
+      "strength_grade": "D",
+      "drafting_grade": "D",
+      "power_rank": 10,
+      "power_of": 14,
+      "games": 54
+    },
+    {
+      "id": "jd-gaming-lpl",
+      "name": "JD Gaming",
+      "aliases": [
+        "JD Gaming",
+        "JDGaming"
+      ],
+      "home_league": "LPL",
+      "tier": "majors",
+      "wins": 91,
+      "losses": 90,
+      "win_rate": 0.5028,
+      "strength_grade": "C",
+      "drafting_grade": "C",
+      "power_rank": 7,
+      "power_of": 14,
+      "games": 181
+    },
+    {
+      "id": "weibo-gaming-lpl",
+      "name": "Weibo Gaming",
+      "aliases": [
+        "Weibo Gaming",
+        "WeiboGaming"
+      ],
+      "home_league": "LPL",
+      "tier": "majors",
+      "wins": 47,
+      "losses": 53,
+      "win_rate": 0.47,
+      "strength_grade": "C",
+      "drafting_grade": "B",
+      "power_rank": 9,
+      "power_of": 14,
+      "games": 100
+    },
+    {
+      "id": "invictus-gaming-lpl",
+      "name": "Invictus Gaming",
+      "aliases": [
+        "Invictus Gaming",
+        "InvictusGaming"
+      ],
+      "home_league": "LPL",
+      "tier": "majors",
+      "wins": 60,
+      "losses": 68,
+      "win_rate": 0.4688,
+      "strength_grade": "A",
+      "drafting_grade": "C",
+      "power_rank": 4,
+      "power_of": 14,
+      "games": 128
+    },
+    {
+      "id": "lgd-gaming-lpl",
+      "name": "LGD Gaming",
+      "aliases": [
+        "LGD Gaming",
+        "LGDGaming"
+      ],
+      "home_league": "LPL",
+      "tier": "majors",
+      "wins": 49,
+      "losses": 59,
+      "win_rate": 0.4537,
+      "strength_grade": "C",
+      "drafting_grade": "C",
+      "power_rank": 8,
+      "power_of": 14,
+      "games": 108
+    },
+    {
+      "id": "team-we-lpl",
+      "name": "Team WE",
+      "aliases": [
+        "Team WE",
+        "TeamWE"
+      ],
+      "home_league": "LPL",
+      "tier": "majors",
+      "wins": 63,
+      "losses": 87,
+      "win_rate": 0.42,
+      "strength_grade": "B",
+      "drafting_grade": "B",
+      "power_rank": 6,
+      "power_of": 14,
+      "games": 150
+    },
+    {
+      "id": "ultra-prime-lpl",
+      "name": "Ultra Prime",
+      "aliases": [
+        "Ultra Prime",
+        "UltraPrime"
+      ],
+      "home_league": "LPL",
+      "tier": "majors",
+      "wins": 9,
+      "losses": 16,
+      "win_rate": 0.36,
+      "strength_grade": "D",
+      "drafting_grade": "C",
+      "power_rank": 11,
+      "power_of": 14,
+      "games": 25
+    },
+    {
+      "id": "oh-my-god-lpl",
+      "name": "Oh My God",
+      "aliases": [
+        "Oh My God",
+        "OhMyGod"
+      ],
+      "home_league": "LPL",
+      "tier": "majors",
+      "wins": 12,
+      "losses": 22,
+      "win_rate": 0.3529,
+      "strength_grade": "F",
+      "drafting_grade": "F",
+      "power_rank": 13,
+      "power_of": 14,
+      "games": 34
+    },
+    {
+      "id": "edward-gaming-lpl",
+      "name": "EDward Gaming",
+      "aliases": [
+        "EDward Gaming",
+        "EDwardGaming"
+      ],
+      "home_league": "LPL",
+      "tier": "majors",
+      "wins": 27,
+      "losses": 51,
+      "win_rate": 0.3462,
+      "strength_grade": "D",
+      "drafting_grade": "D",
+      "power_rank": 12,
+      "power_of": 14,
+      "games": 78
+    },
+    {
+      "id": "thundertalk-gaming-lpl",
+      "name": "ThunderTalk Gaming",
+      "aliases": [
+        "ThunderTalk Gaming",
+        "ThunderTalkGaming"
+      ],
+      "home_league": "LPL",
+      "tier": "majors",
+      "wins": 26,
+      "losses": 54,
+      "win_rate": 0.325,
+      "strength_grade": "F",
+      "drafting_grade": "C",
+      "power_rank": 14,
+      "power_of": 14,
+      "games": 80
+    },
+    {
+      "id": "sillysilly-gaming-pcs",
+      "name": "SillySilly Gaming",
+      "aliases": [
+        "SillySilly Gaming",
+        "SillySillyGaming"
+      ],
+      "home_league": "PCS",
+      "tier": "majors",
+      "wins": 23,
+      "losses": 13,
+      "win_rate": 0.6389,
+      "strength_grade": "A",
+      "drafting_grade": "A",
+      "power_rank": 2,
+      "power_of": 9,
+      "games": 36
+    },
+    {
+      "id": "frank-esports-pcs",
+      "name": "Frank Esports",
+      "aliases": [
+        "Frank Esports",
+        "FrankEsports"
+      ],
+      "home_league": "PCS",
+      "tier": "majors",
+      "wins": 22,
+      "losses": 13,
+      "win_rate": 0.6286,
+      "strength_grade": "S",
+      "drafting_grade": "A",
+      "power_rank": 1,
+      "power_of": 9,
+      "games": 35
+    },
+    {
+      "id": "shadow-keepers-esports-pcs",
+      "name": "Shadow Keepers Esports",
+      "aliases": [
+        "Shadow Keepers Esports",
+        "ShadowKeepersEsports"
+      ],
+      "home_league": "PCS",
+      "tier": "majors",
+      "wins": 6,
+      "losses": 5,
+      "win_rate": 0.5455,
+      "strength_grade": "B",
+      "drafting_grade": "A",
+      "power_rank": 3,
+      "power_of": 9,
+      "games": 11
+    },
+    {
+      "id": "ctbc-flying-oyster-academy-pcs",
+      "name": "CTBC Flying Oyster Academy",
+      "aliases": [
+        "CTBC Flying Oyster Academy",
+        "CTBCFlyingOysterAcademy"
+      ],
+      "home_league": "PCS",
+      "tier": "majors",
+      "wins": 21,
+      "losses": 19,
+      "win_rate": 0.525,
+      "strength_grade": "B",
+      "drafting_grade": "A",
+      "power_rank": 4,
+      "power_of": 9,
+      "games": 40
+    },
+    {
+      "id": "deep-cross-gaming-pcs",
+      "name": "Deep Cross Gaming",
+      "aliases": [
+        "Deep Cross Gaming",
+        "DeepCrossGaming"
+      ],
+      "home_league": "PCS",
+      "tier": "majors",
+      "wins": 54,
+      "losses": 53,
+      "win_rate": 0.5047,
+      "strength_grade": "C",
+      "drafting_grade": "C",
+      "power_rank": 6,
+      "power_of": 9,
+      "games": 107
+    },
+    {
+      "id": "wangting-pcs",
+      "name": "wangting",
+      "aliases": [
+        "wangting"
+      ],
+      "home_league": "PCS",
+      "tier": "majors",
+      "wins": 4,
+      "losses": 4,
+      "win_rate": 0.5,
+      "strength_grade": "C",
+      "drafting_grade": "A",
+      "power_rank": 5,
+      "power_of": 9,
+      "games": 8
+    },
+    {
+      "id": "ground-zero-gaming-pcs",
+      "name": "Ground Zero Gaming",
+      "aliases": [
+        "Ground Zero Gaming",
+        "GroundZeroGaming"
+      ],
+      "home_league": "PCS",
+      "tier": "majors",
+      "wins": 28,
+      "losses": 40,
+      "win_rate": 0.4118,
+      "strength_grade": "D",
+      "drafting_grade": "B",
+      "power_rank": 7,
+      "power_of": 9,
+      "games": 68
+    },
+    {
+      "id": "reignfall-pcs",
+      "name": "Reignfall",
+      "aliases": [
+        "Reignfall"
+      ],
+      "home_league": "PCS",
+      "tier": "majors",
+      "wins": 4,
+      "losses": 7,
+      "win_rate": 0.3636,
+      "strength_grade": "D",
+      "drafting_grade": "D",
+      "power_rank": 8,
+      "power_of": 9,
+      "games": 11
+    },
+    {
+      "id": "ground-zero-academy-pcs",
+      "name": "Ground Zero Academy",
+      "aliases": [
+        "Ground Zero Academy",
+        "GroundZeroAcademy"
+      ],
+      "home_league": "PCS",
+      "tier": "majors",
+      "wins": 0,
+      "losses": 8,
+      "win_rate": 0.0,
+      "strength_grade": "F",
+      "drafting_grade": "F",
+      "power_rank": 9,
+      "power_of": 9,
+      "games": 8
+    },
+    {
+      "id": "misa-esports-tcl",
+      "name": "Misa Esports",
+      "aliases": [
+        "Misa Esports",
+        "MisaEsports"
+      ],
+      "home_league": "TCL",
+      "tier": "majors",
+      "wins": 50,
+      "losses": 13,
+      "win_rate": 0.7937,
+      "strength_grade": "S",
+      "drafting_grade": "S",
+      "power_rank": 1,
+      "power_of": 11,
+      "games": 63
+    },
+    {
+      "id": "s2g-esports-tcl",
+      "name": "S2G Esports",
+      "aliases": [
+        "S2G Esports",
+        "S2GEsports"
+      ],
+      "home_league": "TCL",
+      "tier": "majors",
+      "wins": 17,
+      "losses": 12,
+      "win_rate": 0.5862,
+      "strength_grade": "A",
+      "drafting_grade": "A",
+      "power_rank": 2,
+      "power_of": 11,
+      "games": 29
+    },
+    {
+      "id": "bushido-wildcats-tcl",
+      "name": "Bushido Wildcats",
+      "aliases": [
+        "Bushido Wildcats",
+        "BushidoWildcats"
+      ],
+      "home_league": "TCL",
+      "tier": "majors",
+      "wins": 46,
+      "losses": 39,
+      "win_rate": 0.5412,
+      "strength_grade": "B",
+      "drafting_grade": "B",
+      "power_rank": 4,
+      "power_of": 11,
+      "games": 85
+    },
+    {
+      "id": "pcific-esports-tcl",
+      "name": "PCIFIC Esports",
+      "aliases": [
+        "PCIFIC Esports",
+        "PCIFICEsports"
+      ],
+      "home_league": "TCL",
+      "tier": "majors",
+      "wins": 42,
+      "losses": 39,
+      "win_rate": 0.5185,
+      "strength_grade": "B",
+      "drafting_grade": "B",
+      "power_rank": 5,
+      "power_of": 11,
+      "games": 81
+    },
+    {
+      "id": "su-esports-tcl",
+      "name": "SU Esports",
+      "aliases": [
+        "SU Esports",
+        "SUEsports"
+      ],
+      "home_league": "TCL",
+      "tier": "majors",
+      "wins": 41,
+      "losses": 39,
+      "win_rate": 0.5125,
+      "strength_grade": "C",
+      "drafting_grade": "B",
+      "power_rank": 6,
+      "power_of": 11,
+      "games": 80
+    },
+    {
+      "id": "ozarox-esports-tcl",
+      "name": "Ozarox Esports",
+      "aliases": [
+        "Ozarox Esports",
+        "OzaroxEsports"
+      ],
+      "home_league": "TCL",
+      "tier": "majors",
+      "wins": 10,
+      "losses": 10,
+      "win_rate": 0.5,
+      "strength_grade": "A",
+      "drafting_grade": "C",
+      "power_rank": 3,
+      "power_of": 11,
+      "games": 20
+    },
+    {
+      "id": "dia-ozarox-esports-tcl",
+      "name": "DIA Ozarox Esports",
+      "aliases": [
+        "DIA Ozarox Esports",
+        "DIAOzaroxEsports"
+      ],
+      "home_league": "TCL",
+      "tier": "majors",
+      "wins": 5,
+      "losses": 6,
+      "win_rate": 0.4545,
+      "strength_grade": "C",
+      "drafting_grade": "F",
+      "power_rank": 7,
+      "power_of": 11,
+      "games": 11
+    },
+    {
+      "id": "shark-attack-tcl",
+      "name": "Shark Attack",
+      "aliases": [
+        "Shark Attack",
+        "SharkAttack"
+      ],
+      "home_league": "TCL",
+      "tier": "majors",
+      "wins": 5,
+      "losses": 9,
+      "win_rate": 0.3571,
+      "strength_grade": "D",
+      "drafting_grade": "F",
+      "power_rank": 9,
+      "power_of": 11,
+      "games": 14
+    },
+    {
+      "id": "dark-passage-tcl",
+      "name": "Dark Passage",
+      "aliases": [
+        "Dark Passage",
+        "DarkPassage"
+      ],
+      "home_league": "TCL",
+      "tier": "majors",
+      "wins": 17,
+      "losses": 33,
+      "win_rate": 0.34,
+      "strength_grade": "D",
+      "drafting_grade": "D",
+      "power_rank": 8,
+      "power_of": 11,
+      "games": 50
+    },
+    {
+      "id": "boostgate-esports-tcl",
+      "name": "BoostGate Esports",
+      "aliases": [
+        "BoostGate Esports",
+        "BoostGateEsports"
+      ],
+      "home_league": "TCL",
+      "tier": "majors",
+      "wins": 10,
+      "losses": 31,
+      "win_rate": 0.2439,
+      "strength_grade": "F",
+      "drafting_grade": "F",
+      "power_rank": 11,
+      "power_of": 11,
+      "games": 41
+    },
+    {
+      "id": "team-phoenix-tcl",
+      "name": "Team Phoenix",
+      "aliases": [
+        "Team Phoenix",
+        "TeamPhoenix"
+      ],
+      "home_league": "TCL",
+      "tier": "majors",
+      "wins": 8,
+      "losses": 28,
+      "win_rate": 0.2222,
+      "strength_grade": "F",
+      "drafting_grade": "F",
+      "power_rank": 10,
+      "power_of": 11,
+      "games": 36
+    },
+    {
+      "id": "mvk-esports-academy-vcs",
+      "name": "MVK Esports Academy",
+      "aliases": [
+        "MVK Esports Academy",
+        "MVKEsportsAcademy"
+      ],
+      "home_league": "VCS",
+      "tier": "majors",
+      "wins": 35,
+      "losses": 19,
+      "win_rate": 0.6481,
+      "strength_grade": "A",
+      "drafting_grade": "A",
+      "power_rank": 2,
+      "power_of": 8,
+      "games": 54
+    },
+    {
+      "id": "saigon-warriors-vcs",
+      "name": "Saigon Warriors",
+      "aliases": [
+        "Saigon Warriors",
+        "SaigonWarriors"
+      ],
+      "home_league": "VCS",
+      "tier": "majors",
+      "wins": 48,
+      "losses": 30,
+      "win_rate": 0.6154,
+      "strength_grade": "S",
+      "drafting_grade": "A",
+      "power_rank": 1,
+      "power_of": 8,
+      "games": 78
+    },
+    {
+      "id": "team-secret-vcs",
+      "name": "Team Secret",
+      "aliases": [
+        "Team Secret",
+        "TeamSecret"
+      ],
+      "home_league": "VCS",
+      "tier": "majors",
+      "wins": 4,
+      "losses": 4,
+      "win_rate": 0.5,
+      "strength_grade": "B",
+      "drafting_grade": "S",
+      "power_rank": 3,
+      "power_of": 8,
+      "games": 8
+    },
+    {
+      "id": "1tap-dino-vcs",
+      "name": "1TAP Dino",
+      "aliases": [
+        "1TAP Dino",
+        "1TAPDino"
+      ],
+      "home_league": "VCS",
+      "tier": "majors",
+      "wins": 29,
+      "losses": 36,
+      "win_rate": 0.4462,
+      "strength_grade": "C",
+      "drafting_grade": "D",
+      "power_rank": 5,
+      "power_of": 8,
+      "games": 65
+    },
+    {
+      "id": "sn-cybercore-esports-vcs",
+      "name": "SN CyberCore Esports",
+      "aliases": [
+        "SN CyberCore Esports",
+        "SNCyberCoreEsports"
+      ],
+      "home_league": "VCS",
+      "tier": "majors",
+      "wins": 20,
+      "losses": 31,
+      "win_rate": 0.3922,
+      "strength_grade": "B",
+      "drafting_grade": "B",
+      "power_rank": 4,
+      "power_of": 8,
+      "games": 51
+    },
+    {
+      "id": "9gaming-esports-vcs",
+      "name": "9Gaming Esports",
+      "aliases": [
+        "9Gaming Esports",
+        "9GamingEsports"
+      ],
+      "home_league": "VCS",
+      "tier": "majors",
+      "wins": 17,
+      "losses": 28,
+      "win_rate": 0.3778,
+      "strength_grade": "D",
+      "drafting_grade": "D",
+      "power_rank": 6,
+      "power_of": 8,
+      "games": 45
+    },
+    {
+      "id": "zen-esports-vcs",
+      "name": "ZEN Esports",
+      "aliases": [
+        "ZEN Esports",
+        "ZENEsports"
+      ],
+      "home_league": "VCS",
+      "tier": "majors",
+      "wins": 15,
+      "losses": 26,
+      "win_rate": 0.3659,
+      "strength_grade": "F",
+      "drafting_grade": "D",
+      "power_rank": 8,
+      "power_of": 8,
+      "games": 41
+    },
+    {
+      "id": "ng-a-h-esports-vcs",
+      "name": "Ngựa Hí Esports",
+      "aliases": [
+        "NgaHEsports",
+        "Ngựa Hí Esports",
+        "NgựaHíEsports"
+      ],
+      "home_league": "VCS",
+      "tier": "majors",
+      "wins": 3,
+      "losses": 8,
+      "win_rate": 0.2727,
+      "strength_grade": "D",
+      "drafting_grade": "F",
+      "power_rank": 7,
+      "power_of": 8,
+      "games": 11
+    },
+    {
+      "id": "super-stars-al",
+      "name": "Super Stars",
+      "aliases": [
+        "Super Stars",
+        "SuperStars"
+      ],
+      "home_league": "AL",
+      "tier": "academy_erl",
+      "wins": 7,
+      "losses": 3,
+      "win_rate": 0.7,
+      "strength_grade": "C",
+      "drafting_grade": "A",
+      "power_rank": 6,
+      "power_of": 12,
+      "games": 10
+    },
+    {
+      "id": "anubis-gaming-al",
+      "name": "Anubis Gaming",
+      "aliases": [
+        "Anubis Gaming",
+        "AnubisGaming"
+      ],
+      "home_league": "AL",
+      "tier": "academy_erl",
+      "wins": 70,
+      "losses": 31,
+      "win_rate": 0.6931,
+      "strength_grade": "S",
+      "drafting_grade": "S",
+      "power_rank": 1,
+      "power_of": 12,
+      "games": 101
+    },
+    {
+      "id": "fn-esports-al",
+      "name": "FN Esports",
+      "aliases": [
+        "FN Esports",
+        "FNEsports"
+      ],
+      "home_league": "AL",
+      "tier": "academy_erl",
+      "wins": 46,
+      "losses": 24,
+      "win_rate": 0.6571,
+      "strength_grade": "A",
+      "drafting_grade": "B",
+      "power_rank": 3,
+      "power_of": 12,
+      "games": 70
+    },
+    {
+      "id": "dragons-esports-al",
+      "name": "Dragons Esports",
+      "aliases": [
+        "Dragons Esports",
+        "DragonsEsports"
+      ],
+      "home_league": "AL",
+      "tier": "academy_erl",
+      "wins": 32,
+      "losses": 17,
+      "win_rate": 0.6531,
+      "strength_grade": "B",
+      "drafting_grade": "B",
+      "power_rank": 4,
+      "power_of": 12,
+      "games": 49
+    },
+    {
+      "id": "baam-esports-al",
+      "name": "BAAM Esports",
+      "aliases": [
+        "BAAM Esports",
+        "BAAMEsports"
+      ],
+      "home_league": "AL",
+      "tier": "academy_erl",
+      "wins": 53,
+      "losses": 46,
+      "win_rate": 0.5354,
+      "strength_grade": "B",
+      "drafting_grade": "B",
+      "power_rank": 5,
+      "power_of": 12,
+      "games": 99
+    },
+    {
+      "id": "jsk-esports-al",
+      "name": "JSK Esports",
+      "aliases": [
+        "JSK Esports",
+        "JSKEsports"
+      ],
+      "home_league": "AL",
+      "tier": "academy_erl",
+      "wins": 36,
+      "losses": 41,
+      "win_rate": 0.4675,
+      "strength_grade": "A",
+      "drafting_grade": "B",
+      "power_rank": 2,
+      "power_of": 12,
+      "games": 77
+    },
+    {
+      "id": "pyramid-iv-esports-al",
+      "name": "Pyramid IV Esports",
+      "aliases": [
+        "Pyramid IV Esports",
+        "PyramidIVEsports"
+      ],
+      "home_league": "AL",
+      "tier": "academy_erl",
+      "wins": 21,
+      "losses": 30,
+      "win_rate": 0.4118,
+      "strength_grade": "C",
+      "drafting_grade": "C",
+      "power_rank": 7,
+      "power_of": 12,
+      "games": 51
+    },
+    {
+      "id": "disruptors-al",
+      "name": "Disruptors",
+      "aliases": [
+        "Disruptors"
+      ],
+      "home_league": "AL",
+      "tier": "academy_erl",
+      "wins": 10,
+      "losses": 15,
+      "win_rate": 0.4,
+      "strength_grade": "C",
+      "drafting_grade": "F",
+      "power_rank": 8,
+      "power_of": 12,
+      "games": 25
+    },
+    {
+      "id": "gng-amazigh-al",
+      "name": "GnG Amazigh",
+      "aliases": [
+        "GnG Amazigh",
+        "GnGAmazigh"
+      ],
+      "home_league": "AL",
+      "tier": "academy_erl",
+      "wins": 36,
+      "losses": 54,
+      "win_rate": 0.4,
+      "strength_grade": "D",
+      "drafting_grade": "D",
+      "power_rank": 9,
+      "power_of": 12,
+      "games": 90
+    },
+    {
+      "id": "3bl-esports-al",
+      "name": "3BL Esports",
+      "aliases": [
+        "3BL Esports",
+        "3BLEsports"
+      ],
+      "home_league": "AL",
+      "tier": "academy_erl",
+      "wins": 32,
+      "losses": 53,
+      "win_rate": 0.3765,
+      "strength_grade": "D",
+      "drafting_grade": "C",
+      "power_rank": 10,
+      "power_of": 12,
+      "games": 85
+    },
+    {
+      "id": "one-more-esports-al",
+      "name": "One More Esports",
+      "aliases": [
+        "One More Esports",
+        "OneMoreEsports"
+      ],
+      "home_league": "AL",
+      "tier": "academy_erl",
+      "wins": 21,
+      "losses": 47,
+      "win_rate": 0.3088,
+      "strength_grade": "F",
+      "drafting_grade": "D",
+      "power_rank": 11,
+      "power_of": 12,
+      "games": 68
+    },
+    {
+      "id": "nextgeneration-esports-al",
+      "name": "NextGeneration Esports",
+      "aliases": [
+        "GEN",
+        "NextGeneration Esports",
+        "NextGenerationEsports"
+      ],
+      "home_league": "AL",
+      "tier": "academy_erl",
+      "wins": 10,
+      "losses": 24,
+      "win_rate": 0.2941,
+      "strength_grade": "F",
+      "drafting_grade": "F",
+      "power_rank": 12,
+      "power_of": 12,
+      "games": 34
+    },
+    {
+      "id": "pain-gaming-academy-cblola",
+      "name": "paiN Gaming Academy",
+      "aliases": [
+        "paiN Gaming Academy",
+        "paiNGamingAcademy"
+      ],
+      "home_league": "CBLOLA",
+      "tier": "academy_erl",
+      "wins": 23,
+      "losses": 22,
+      "win_rate": 0.5111,
+      "strength_grade": "C",
+      "drafting_grade": "D",
+      "power_rank": 1,
+      "power_of": 1,
+      "games": 45
+    },
+    {
+      "id": "vasco-e-sports-cd",
+      "name": "Vasco E-Sports",
+      "aliases": [
+        "Vasco E-Sports",
+        "VascoE-Sports",
+        "VascoESports"
+      ],
+      "home_league": "CD",
+      "tier": "academy_erl",
+      "wins": 8,
+      "losses": 4,
+      "win_rate": 0.6667,
+      "strength_grade": "B",
+      "drafting_grade": "S",
+      "power_rank": 5,
+      "power_of": 14,
+      "games": 12
+    },
+    {
+      "id": "invokers-cd",
+      "name": "Invokers",
+      "aliases": [
+        "Invokers"
+      ],
+      "home_league": "CD",
+      "tier": "academy_erl",
+      "wins": 19,
+      "losses": 11,
+      "win_rate": 0.6333,
+      "strength_grade": "A",
+      "drafting_grade": "A",
+      "power_rank": 2,
+      "power_of": 14,
+      "games": 30
+    },
+    {
+      "id": "kabum-ilha-das-lendas-cd",
+      "name": "KaBuM! Ilha das Lendas",
+      "aliases": [
+        "KaBuM! Ilha das Lendas",
+        "KaBuM!IlhadasLendas",
+        "KaBuMIlhadasLendas"
+      ],
+      "home_league": "CD",
+      "tier": "academy_erl",
+      "wins": 45,
+      "losses": 28,
+      "win_rate": 0.6164,
+      "strength_grade": "S",
+      "drafting_grade": "S",
+      "power_rank": 1,
+      "power_of": 14,
+      "games": 73
+    },
+    {
+      "id": "nerd-s-gangster-s-carecas-cd",
+      "name": "Nerd's Gangster's Carecas",
+      "aliases": [
+        "Nerd's Gangster's Carecas",
+        "Nerd'sGangster'sCarecas",
+        "NerdsGangstersCarecas"
+      ],
+      "home_league": "CD",
+      "tier": "academy_erl",
+      "wins": 7,
+      "losses": 5,
+      "win_rate": 0.5833,
+      "strength_grade": "A",
+      "drafting_grade": "A",
+      "power_rank": 4,
+      "power_of": 14,
+      "games": 12
+    },
+    {
+      "id": "intz-cd",
+      "name": "INTZ",
+      "aliases": [
+        "INTZ"
+      ],
+      "home_league": "CD",
+      "tier": "academy_erl",
+      "wins": 23,
+      "losses": 19,
+      "win_rate": 0.5476,
+      "strength_grade": "C",
+      "drafting_grade": "A",
+      "power_rank": 7,
+      "power_of": 14,
+      "games": 42
+    },
+    {
+      "id": "barulhinhos-cd",
+      "name": "Barulhinhos",
+      "aliases": [
+        "Barulhinhos"
+      ],
+      "home_league": "CD",
+      "tier": "academy_erl",
+      "wins": 10,
+      "losses": 9,
+      "win_rate": 0.5263,
+      "strength_grade": "A",
+      "drafting_grade": "C",
+      "power_rank": 3,
+      "power_of": 14,
+      "games": 19
+    },
+    {
+      "id": "vivo-keyd-stars-academy-cd",
+      "name": "Vivo Keyd Stars Academy",
+      "aliases": [
+        "Vivo Keyd Stars Academy",
+        "VivoKeydStarsAcademy"
+      ],
+      "home_league": "CD",
+      "tier": "academy_erl",
+      "wins": 25,
+      "losses": 25,
+      "win_rate": 0.5,
+      "strength_grade": "B",
+      "drafting_grade": "B",
+      "power_rank": 6,
+      "power_of": 14,
+      "games": 50
+    },
+    {
+      "id": "7rex-cd",
+      "name": "7REX",
+      "aliases": [
+        "7REX"
+      ],
+      "home_league": "CD",
+      "tier": "academy_erl",
+      "wins": 12,
+      "losses": 18,
+      "win_rate": 0.4,
+      "strength_grade": "C",
+      "drafting_grade": "C",
+      "power_rank": 9,
+      "power_of": 14,
+      "games": 30
+    },
+    {
+      "id": "rmd-gaming-cd",
+      "name": "RMD Gaming",
+      "aliases": [
+        "RMD Gaming",
+        "RMDGaming"
+      ],
+      "home_league": "CD",
+      "tier": "academy_erl",
+      "wins": 16,
+      "losses": 24,
+      "win_rate": 0.4,
+      "strength_grade": "C",
+      "drafting_grade": "B",
+      "power_rank": 8,
+      "power_of": 14,
+      "games": 40
+    },
+    {
+      "id": "rampage-cd",
+      "name": "RAMPAGE",
+      "aliases": [
+        "RAMPAGE"
+      ],
+      "home_league": "CD",
+      "tier": "academy_erl",
+      "wins": 3,
+      "losses": 5,
+      "win_rate": 0.375,
+      "strength_grade": "D",
+      "drafting_grade": "D",
+      "power_rank": 11,
+      "power_of": 14,
+      "games": 8
+    },
+    {
+      "id": "team-solid-cd",
+      "name": "Team Solid",
+      "aliases": [
+        "Team Solid",
+        "TeamSolid"
+      ],
+      "home_league": "CD",
+      "tier": "academy_erl",
+      "wins": 13,
+      "losses": 22,
+      "win_rate": 0.3714,
+      "strength_grade": "D",
+      "drafting_grade": "C",
+      "power_rank": 12,
+      "power_of": 14,
+      "games": 35
+    },
+    {
+      "id": "ei-nerd-esports-cd",
+      "name": "Ei Nerd Esports",
+      "aliases": [
+        "Ei Nerd Esports",
+        "EiNerdEsports"
+      ],
+      "home_league": "CD",
+      "tier": "academy_erl",
+      "wins": 11,
+      "losses": 19,
+      "win_rate": 0.3667,
+      "strength_grade": "D",
+      "drafting_grade": "C",
+      "power_rank": 10,
+      "power_of": 14,
+      "games": 30
+    },
+    {
+      "id": "red-academy-cd",
+      "name": "RED Academy",
+      "aliases": [
+        "RED Academy",
+        "REDAcademy"
+      ],
+      "home_league": "CD",
+      "tier": "academy_erl",
+      "wins": 7,
+      "losses": 18,
+      "win_rate": 0.28,
+      "strength_grade": "F",
+      "drafting_grade": "F",
+      "power_rank": 13,
+      "power_of": 14,
+      "games": 25
+    },
+    {
+      "id": "kuma-e-sports-cd",
+      "name": "Kuma e-Sports",
+      "aliases": [
+        "Kuma e-Sports",
+        "Kumae-Sports",
+        "KumaeSports"
+      ],
+      "home_league": "CD",
+      "tier": "academy_erl",
+      "wins": 3,
+      "losses": 11,
+      "win_rate": 0.2143,
+      "strength_grade": "F",
+      "drafting_grade": "F",
+      "power_rank": 14,
+      "power_of": 14,
+      "games": 14
+    },
+    {
+      "id": "partizan-sangal-ebl",
+      "name": "Partizan Sangal",
+      "aliases": [
+        "Partizan Sangal",
+        "PartizanSangal"
+      ],
+      "home_league": "EBL",
+      "tier": "academy_erl",
+      "wins": 43,
+      "losses": 8,
+      "win_rate": 0.8431,
+      "strength_grade": "S",
+      "drafting_grade": "S",
+      "power_rank": 1,
+      "power_of": 13,
+      "games": 51
+    },
+    {
+      "id": "magaza-esports-ebl",
+      "name": "Magaza Esports",
+      "aliases": [
+        "Magaza Esports",
+        "MagazaEsports"
+      ],
+      "home_league": "EBL",
+      "tier": "academy_erl",
+      "wins": 36,
+      "losses": 27,
+      "win_rate": 0.5714,
+      "strength_grade": "A",
+      "drafting_grade": "S",
+      "power_rank": 3,
+      "power_of": 13,
+      "games": 63
+    },
+    {
+      "id": "the-secret-club-ebl",
+      "name": "The Secret Club",
+      "aliases": [
+        "The Secret Club",
+        "TheSecretClub"
+      ],
+      "home_league": "EBL",
+      "tier": "academy_erl",
+      "wins": 47,
+      "losses": 37,
+      "win_rate": 0.5595,
+      "strength_grade": "A",
+      "drafting_grade": "A",
+      "power_rank": 2,
+      "power_of": 13,
+      "games": 84
+    },
+    {
+      "id": "befive-ebl",
+      "name": "BeFive",
+      "aliases": [
+        "BeFive"
+      ],
+      "home_league": "EBL",
+      "tier": "academy_erl",
+      "wins": 10,
+      "losses": 9,
+      "win_rate": 0.5263,
+      "strength_grade": "B",
+      "drafting_grade": "A",
+      "power_rank": 5,
+      "power_of": 13,
+      "games": 19
+    },
+    {
+      "id": "lenovo-legion-honv-d-ebl",
+      "name": "Lenovo Legion Honvéd",
+      "aliases": [
+        "Lenovo Legion Honvéd",
+        "LenovoLegionHonvd",
+        "LenovoLegionHonvéd"
+      ],
+      "home_league": "EBL",
+      "tier": "academy_erl",
+      "wins": 19,
+      "losses": 22,
+      "win_rate": 0.4634,
+      "strength_grade": "C",
+      "drafting_grade": "B",
+      "power_rank": 7,
+      "power_of": 13,
+      "games": 41
+    },
+    {
+      "id": "croatian-flair-ebl",
+      "name": "Croatian Flair",
+      "aliases": [
+        "Croatian Flair",
+        "CroatianFlair"
+      ],
+      "home_league": "EBL",
+      "tier": "academy_erl",
+      "wins": 9,
+      "losses": 12,
+      "win_rate": 0.4286,
+      "strength_grade": "C",
+      "drafting_grade": "D",
+      "power_rank": 8,
+      "power_of": 13,
+      "games": 21
+    },
+    {
+      "id": "lupus-esports-ebl",
+      "name": "Lupus Esports",
+      "aliases": [
+        "Lupus Esports",
+        "LupusEsports"
+      ],
+      "home_league": "EBL",
+      "tier": "academy_erl",
+      "wins": 23,
+      "losses": 32,
+      "win_rate": 0.4182,
+      "strength_grade": "F",
+      "drafting_grade": "C",
+      "power_rank": 12,
+      "power_of": 13,
+      "games": 55
+    },
+    {
+      "id": "only-the-family-ebl",
+      "name": "Only The Family",
+      "aliases": [
+        "Only The Family",
+        "OnlyTheFamily"
+      ],
+      "home_league": "EBL",
+      "tier": "academy_erl",
+      "wins": 10,
+      "losses": 14,
+      "win_rate": 0.4167,
+      "strength_grade": "B",
+      "drafting_grade": "C",
+      "power_rank": 6,
+      "power_of": 13,
+      "games": 24
+    },
+    {
+      "id": "spike-syndicate-ebl",
+      "name": "SPIKE Syndicate",
+      "aliases": [
+        "SPIKE Syndicate",
+        "SPIKESyndicate"
+      ],
+      "home_league": "EBL",
+      "tier": "academy_erl",
+      "wins": 17,
+      "losses": 27,
+      "win_rate": 0.3864,
+      "strength_grade": "D",
+      "drafting_grade": "D",
+      "power_rank": 9,
+      "power_of": 13,
+      "games": 44
+    },
+    {
+      "id": "rlx-esports-ebl",
+      "name": "RLX Esports",
+      "aliases": [
+        "RLX Esports",
+        "RLXEsports"
+      ],
+      "home_league": "EBL",
+      "tier": "academy_erl",
+      "wins": 7,
+      "losses": 13,
+      "win_rate": 0.35,
+      "strength_grade": "D",
+      "drafting_grade": "F",
+      "power_rank": 11,
+      "power_of": 13,
+      "games": 20
+    },
+    {
+      "id": "hooligans-ebl",
+      "name": "Hooligans",
+      "aliases": [
+        "Hooligans"
+      ],
+      "home_league": "EBL",
+      "tier": "academy_erl",
+      "wins": 5,
+      "losses": 10,
+      "win_rate": 0.3333,
+      "strength_grade": "F",
+      "drafting_grade": "D",
+      "power_rank": 13,
+      "power_of": 13,
+      "games": 15
+    },
+    {
+      "id": "tq-durpa-kashlq-ebl",
+      "name": "TQ DURPA KASHLQ",
+      "aliases": [
+        "TQ DURPA KASHLQ",
+        "TQDURPAKASHLQ"
+      ],
+      "home_league": "EBL",
+      "tier": "academy_erl",
+      "wins": 2,
+      "losses": 9,
+      "win_rate": 0.1818,
+      "strength_grade": "D",
+      "drafting_grade": "F",
+      "power_rank": 10,
+      "power_of": 13,
+      "games": 11
+    },
+    {
+      "id": "crvena-zvezda-esports-ebl",
+      "name": "Crvena zvezda Esports",
+      "aliases": [
+        "Crvena zvezda Esports",
+        "CrvenazvezdaEsports"
+      ],
+      "home_league": "EBL",
+      "tier": "academy_erl",
+      "wins": 1,
+      "losses": 8,
+      "win_rate": 0.1111,
+      "strength_grade": "B",
+      "drafting_grade": "F",
+      "power_rank": 4,
+      "power_of": 13,
+      "games": 9
+    },
+    {
+      "id": "ethereal-enigmas-hc",
+      "name": "Ethereal Enigmas",
+      "aliases": [
+        "Ethereal Enigmas",
+        "EtherealEnigmas"
+      ],
+      "home_league": "HC",
+      "tier": "academy_erl",
+      "wins": 26,
+      "losses": 10,
+      "win_rate": 0.7222,
+      "strength_grade": "S",
+      "drafting_grade": "S",
+      "power_rank": 1,
+      "power_of": 12,
+      "games": 36
+    },
+    {
+      "id": "exile-esports-academy-hc",
+      "name": "EXILE esports Academy",
+      "aliases": [
+        "EXILE esports Academy",
+        "EXILEesportsAcademy"
+      ],
+      "home_league": "HC",
+      "tier": "academy_erl",
+      "wins": 32,
+      "losses": 27,
+      "win_rate": 0.5424,
+      "strength_grade": "B",
+      "drafting_grade": "B",
+      "power_rank": 5,
+      "power_of": 12,
+      "games": 59
+    },
+    {
+      "id": "priority-hc",
+      "name": "Priority",
+      "aliases": [
+        "Priority"
+      ],
+      "home_league": "HC",
+      "tier": "academy_erl",
+      "wins": 40,
+      "losses": 34,
+      "win_rate": 0.5405,
+      "strength_grade": "B",
+      "drafting_grade": "A",
+      "power_rank": 4,
+      "power_of": 12,
+      "games": 74
+    },
+    {
+      "id": "kia-esuba-academy-hc",
+      "name": "KIA.eSuba Academy",
+      "aliases": [
+        "KIA.eSuba Academy",
+        "KIA.eSubaAcademy",
+        "KIAeSubaAcademy"
+      ],
+      "home_league": "HC",
+      "tier": "academy_erl",
+      "wins": 25,
+      "losses": 24,
+      "win_rate": 0.5102,
+      "strength_grade": "A",
+      "drafting_grade": "D",
+      "power_rank": 2,
+      "power_of": 12,
+      "games": 49
+    },
+    {
+      "id": "meavedron-hc",
+      "name": "Meavedron",
+      "aliases": [
+        "Meavedron"
+      ],
+      "home_league": "HC",
+      "tier": "academy_erl",
+      "wins": 33,
+      "losses": 34,
+      "win_rate": 0.4925,
+      "strength_grade": "A",
+      "drafting_grade": "B",
+      "power_rank": 3,
+      "power_of": 12,
+      "games": 67
+    },
+    {
+      "id": "mighty-eagles-hc",
+      "name": "Mighty Eagles",
+      "aliases": [
+        "Mighty Eagles",
+        "MightyEagles"
+      ],
+      "home_league": "HC",
+      "tier": "academy_erl",
+      "wins": 14,
+      "losses": 15,
+      "win_rate": 0.4828,
+      "strength_grade": "C",
+      "drafting_grade": "C",
+      "power_rank": 7,
+      "power_of": 12,
+      "games": 29
+    },
+    {
+      "id": "cita-kaizen-academy-hc",
+      "name": "CITA Kaizen Academy",
+      "aliases": [
+        "CITA Kaizen Academy",
+        "CITAKaizenAcademy"
+      ],
+      "home_league": "HC",
+      "tier": "academy_erl",
+      "wins": 21,
+      "losses": 26,
+      "win_rate": 0.4468,
+      "strength_grade": "F",
+      "drafting_grade": "D",
+      "power_rank": 11,
+      "power_of": 12,
+      "games": 47
+    },
+    {
+      "id": "andromeda-gaming-hc",
+      "name": "Andromeda Gaming",
+      "aliases": [
+        "Andromeda Gaming",
+        "AndromedaGaming"
+      ],
+      "home_league": "HC",
+      "tier": "academy_erl",
+      "wins": 26,
+      "losses": 35,
+      "win_rate": 0.4262,
+      "strength_grade": "D",
+      "drafting_grade": "C",
+      "power_rank": 10,
+      "power_of": 12,
+      "games": 61
+    },
+    {
+      "id": "magyar-gamer-sz-vets-g-hc",
+      "name": "Magyar Gamer Szövetsèg",
+      "aliases": [
+        "Magyar Gamer Szövetsèg",
+        "MagyarGamerSzvetsg",
+        "MagyarGamerSzövetsèg"
+      ],
+      "home_league": "HC",
+      "tier": "academy_erl",
+      "wins": 8,
+      "losses": 11,
+      "win_rate": 0.4211,
+      "strength_grade": "D",
+      "drafting_grade": "D",
+      "power_rank": 9,
+      "power_of": 12,
+      "games": 19
+    },
+    {
+      "id": "rugby-club-hav-ov-hc",
+      "name": "Rugby Club Havířov",
+      "aliases": [
+        "Rugby Club Havířov",
+        "RugbyClubHavov",
+        "RugbyClubHavířov"
+      ],
+      "home_league": "HC",
+      "tier": "academy_erl",
+      "wins": 19,
+      "losses": 28,
+      "win_rate": 0.4043,
+      "strength_grade": "C",
+      "drafting_grade": "C",
+      "power_rank": 8,
+      "power_of": 12,
+      "games": 47
+    },
+    {
+      "id": "exile-esports-hc",
+      "name": "EXILE esports",
+      "aliases": [
+        "EXILE esports",
+        "EXILEesports"
+      ],
+      "home_league": "HC",
+      "tier": "academy_erl",
+      "wins": 23,
+      "losses": 34,
+      "win_rate": 0.4035,
+      "strength_grade": "C",
+      "drafting_grade": "B",
+      "power_rank": 6,
+      "power_of": 12,
+      "games": 57
+    },
+    {
+      "id": "diversion-gaming-hc",
+      "name": "Diversion Gaming",
+      "aliases": [
+        "Diversion Gaming",
+        "DiversionGaming"
+      ],
+      "home_league": "HC",
+      "tier": "academy_erl",
+      "wins": 8,
+      "losses": 18,
+      "win_rate": 0.3077,
+      "strength_grade": "F",
+      "drafting_grade": "F",
+      "power_rank": 12,
+      "power_of": 12,
+      "games": 26
+    },
+    {
+      "id": "valerion-hll",
+      "name": "Valerion",
+      "aliases": [
+        "Valerion"
+      ],
+      "home_league": "HLL",
+      "tier": "academy_erl",
+      "wins": 28,
+      "losses": 10,
+      "win_rate": 0.7368,
+      "strength_grade": "S",
+      "drafting_grade": "S",
+      "power_rank": 1,
+      "power_of": 11,
+      "games": 38
+    },
+    {
+      "id": "wlgaming-esports-hll",
+      "name": "WLGaming Esports",
+      "aliases": [
+        "WLGaming Esports",
+        "WLGamingEsports"
+      ],
+      "home_league": "HLL",
+      "tier": "academy_erl",
+      "wins": 54,
+      "losses": 31,
+      "win_rate": 0.6353,
+      "strength_grade": "A",
+      "drafting_grade": "A",
+      "power_rank": 2,
+      "power_of": 11,
+      "games": 85
+    },
+    {
+      "id": "team-phantasma-hll",
+      "name": "Team Phantasma",
+      "aliases": [
+        "Team Phantasma",
+        "TeamPhantasma"
+      ],
+      "home_league": "HLL",
+      "tier": "academy_erl",
+      "wins": 53,
+      "losses": 37,
+      "win_rate": 0.5889,
+      "strength_grade": "B",
+      "drafting_grade": "C",
+      "power_rank": 4,
+      "power_of": 11,
+      "games": 90
+    },
+    {
+      "id": "team-insidious-hll",
+      "name": "Team Insidious",
+      "aliases": [
+        "Team Insidious",
+        "TeamInsidious"
+      ],
+      "home_league": "HLL",
+      "tier": "academy_erl",
+      "wins": 21,
+      "losses": 15,
+      "win_rate": 0.5833,
+      "strength_grade": "B",
+      "drafting_grade": "A",
+      "power_rank": 5,
+      "power_of": 11,
+      "games": 36
+    },
+    {
+      "id": "goal-hll",
+      "name": "GOAL",
+      "aliases": [
+        "GOAL"
+      ],
+      "home_league": "HLL",
+      "tier": "academy_erl",
+      "wins": 27,
+      "losses": 21,
+      "win_rate": 0.5625,
+      "strength_grade": "A",
+      "drafting_grade": "A",
+      "power_rank": 3,
+      "power_of": 11,
+      "games": 48
+    },
+    {
+      "id": "gamespace-mediterranean-college-esports-hll",
+      "name": "Gamespace Mediterranean College Esports",
+      "aliases": [
+        "Gamespace Mediterranean College Esports",
+        "GamespaceMediterraneanCollegeEsports"
+      ],
+      "home_league": "HLL",
+      "tier": "academy_erl",
+      "wins": 32,
+      "losses": 40,
+      "win_rate": 0.4444,
+      "strength_grade": "C",
+      "drafting_grade": "C",
+      "power_rank": 6,
+      "power_of": 11,
+      "games": 72
+    },
+    {
+      "id": "spartans-eu-hll",
+      "name": "Spartans EU",
+      "aliases": [
+        "Spartans EU",
+        "SpartansEU"
+      ],
+      "home_league": "HLL",
+      "tier": "academy_erl",
+      "wins": 12,
+      "losses": 19,
+      "win_rate": 0.3871,
+      "strength_grade": "C",
+      "drafting_grade": "C",
+      "power_rank": 7,
+      "power_of": 11,
+      "games": 31
+    },
+    {
+      "id": "almo-players-hll",
+      "name": "ALMO Players",
+      "aliases": [
+        "ALMO Players",
+        "ALMOPlayers"
+      ],
+      "home_league": "HLL",
+      "tier": "academy_erl",
+      "wins": 15,
+      "losses": 34,
+      "win_rate": 0.3061,
+      "strength_grade": "F",
+      "drafting_grade": "D",
+      "power_rank": 10,
+      "power_of": 11,
+      "games": 49
+    },
+    {
+      "id": "howl-esports-hll",
+      "name": "Howl Esports",
+      "aliases": [
+        "Howl Esports",
+        "HowlEsports"
+      ],
+      "home_league": "HLL",
+      "tier": "academy_erl",
+      "wins": 4,
+      "losses": 10,
+      "win_rate": 0.2857,
+      "strength_grade": "D",
+      "drafting_grade": "F",
+      "power_rank": 9,
+      "power_of": 11,
+      "games": 14
+    },
+    {
+      "id": "the-paradox-invaders-hll",
+      "name": "The ParadOx Invaders",
+      "aliases": [
+        "The ParadOx Invaders",
+        "TheParadOxInvaders"
+      ],
+      "home_league": "HLL",
+      "tier": "academy_erl",
+      "wins": 14,
+      "losses": 35,
+      "win_rate": 0.2857,
+      "strength_grade": "D",
+      "drafting_grade": "D",
+      "power_rank": 8,
+      "power_of": 11,
+      "games": 49
+    },
+    {
+      "id": "zerolag-esports-hll",
+      "name": "Zerolag Esports",
+      "aliases": [
+        "Zerolag Esports",
+        "ZerolagEsports"
+      ],
+      "home_league": "HLL",
+      "tier": "academy_erl",
+      "wins": 2,
+      "losses": 18,
+      "win_rate": 0.1,
+      "strength_grade": "F",
+      "drafting_grade": "F",
+      "power_rank": 11,
+      "power_of": 11,
+      "games": 20
+    },
+    {
+      "id": "nightbirds-hw",
+      "name": "Nightbirds",
+      "aliases": [
+        "Nightbirds"
+      ],
+      "home_league": "HW",
+      "tier": "academy_erl",
+      "wins": 67,
+      "losses": 22,
+      "win_rate": 0.7528,
+      "strength_grade": "S",
+      "drafting_grade": "S",
+      "power_rank": 1,
+      "power_of": 7,
+      "games": 89
+    },
+    {
+      "id": "cita-kaizen-hw",
+      "name": "CITA Kaizen",
+      "aliases": [
+        "CITA Kaizen",
+        "CITAKaizen"
+      ],
+      "home_league": "HW",
+      "tier": "academy_erl",
+      "wins": 58,
+      "losses": 35,
+      "win_rate": 0.6237,
+      "strength_grade": "A",
+      "drafting_grade": "A",
+      "power_rank": 2,
+      "power_of": 7,
+      "games": 93
+    },
+    {
+      "id": "esuba-hw",
+      "name": "eSuba",
+      "aliases": [
+        "eSuba"
+      ],
+      "home_league": "HW",
+      "tier": "academy_erl",
+      "wins": 48,
+      "losses": 39,
+      "win_rate": 0.5517,
+      "strength_grade": "B",
+      "drafting_grade": "C",
+      "power_rank": 3,
+      "power_of": 7,
+      "games": 87
+    },
+    {
+      "id": "divernex-hw",
+      "name": "Divernex",
+      "aliases": [
+        "Divernex"
+      ],
+      "home_league": "HW",
+      "tier": "academy_erl",
+      "wins": 3,
+      "losses": 5,
+      "win_rate": 0.375,
+      "strength_grade": "C",
+      "drafting_grade": "C",
+      "power_rank": 4,
+      "power_of": 7,
+      "games": 8
+    },
+    {
+      "id": "brute-hw",
+      "name": "BRUTE",
+      "aliases": [
+        "BRUTE"
+      ],
+      "home_league": "HW",
+      "tier": "academy_erl",
+      "wins": 23,
+      "losses": 41,
+      "win_rate": 0.3594,
+      "strength_grade": "F",
+      "drafting_grade": "D",
+      "power_rank": 7,
+      "power_of": 7,
+      "games": 64
+    },
+    {
+      "id": "spaxfamily-hw",
+      "name": "SPAXFAMILY",
+      "aliases": [
+        "SPAXFAMILY"
+      ],
+      "home_league": "HW",
+      "tier": "academy_erl",
+      "wins": 5,
+      "losses": 9,
+      "win_rate": 0.3571,
+      "strength_grade": "C",
+      "drafting_grade": "F",
+      "power_rank": 5,
+      "power_of": 7,
+      "games": 14
+    },
+    {
+      "id": "glore-hw",
+      "name": "GLORE",
+      "aliases": [
+        "GLORE"
+      ],
+      "home_league": "HW",
+      "tier": "academy_erl",
+      "wins": 0,
+      "losses": 14,
+      "win_rate": 0.0,
+      "strength_grade": "D",
+      "drafting_grade": "F",
+      "power_rank": 6,
+      "power_of": 7,
+      "games": 14
+    },
+    {
+      "id": "t1-esports-academy-rookies-las",
+      "name": "T1 Esports Academy Rookies",
+      "aliases": [
+        "T1 Esports Academy Rookies",
+        "T1EsportsAcademyRookies"
+      ],
+      "home_league": "LAS",
+      "tier": "academy_erl",
+      "wins": 101,
+      "losses": 24,
+      "win_rate": 0.808,
+      "strength_grade": "S",
+      "drafting_grade": "A",
+      "power_rank": 1,
+      "power_of": 10,
+      "games": 125
+    },
+    {
+      "id": "dplus-kia-academy-las",
+      "name": "Dplus Kia Academy",
+      "aliases": [
+        "Dplus Kia Academy",
+        "DplusKiaAcademy"
+      ],
+      "home_league": "LAS",
+      "tier": "academy_erl",
+      "wins": 91,
+      "losses": 35,
+      "win_rate": 0.7222,
+      "strength_grade": "A",
+      "drafting_grade": "A",
+      "power_rank": 2,
+      "power_of": 10,
+      "games": 126
+    },
+    {
+      "id": "hanwha-life-esports-academy-las",
+      "name": "Hanwha Life Esports Academy",
+      "aliases": [
+        "Hanwha Life Esports Academy",
+        "HanwhaLifeEsportsAcademy"
+      ],
+      "home_league": "LAS",
+      "tier": "academy_erl",
+      "wins": 70,
+      "losses": 47,
+      "win_rate": 0.5983,
+      "strength_grade": "B",
+      "drafting_grade": "B",
+      "power_rank": 5,
+      "power_of": 10,
+      "games": 117
+    },
+    {
+      "id": "dn-soopers-academy-las",
+      "name": "DN SOOPers Academy",
+      "aliases": [
+        "DN SOOPers Academy",
+        "DNSOOPersAcademy"
+      ],
+      "home_league": "LAS",
+      "tier": "academy_erl",
+      "wins": 69,
+      "losses": 51,
+      "win_rate": 0.575,
+      "strength_grade": "A",
+      "drafting_grade": "B",
+      "power_rank": 3,
+      "power_of": 10,
+      "games": 120
+    },
+    {
+      "id": "kt-rolster-academy-las",
+      "name": "KT Rolster Academy",
+      "aliases": [
+        "KT Rolster Academy",
+        "KTRolsterAcademy"
+      ],
+      "home_league": "LAS",
+      "tier": "academy_erl",
+      "wins": 53,
+      "losses": 58,
+      "win_rate": 0.4775,
+      "strength_grade": "B",
+      "drafting_grade": "C",
+      "power_rank": 4,
+      "power_of": 10,
+      "games": 111
+    },
+    {
+      "id": "gen-g-scholars-las",
+      "name": "Gen.G Scholars",
+      "aliases": [
+        "GEN",
+        "Gen.G Scholars",
+        "Gen.GScholars",
+        "GenGScholars"
+      ],
+      "home_league": "LAS",
+      "tier": "academy_erl",
+      "wins": 49,
+      "losses": 79,
+      "win_rate": 0.3828,
+      "strength_grade": "D",
+      "drafting_grade": "C",
+      "power_rank": 8,
+      "power_of": 10,
+      "games": 128
+    },
+    {
+      "id": "nongshim-redforce-academy-las",
+      "name": "Nongshim RedForce Academy",
+      "aliases": [
+        "Nongshim RedForce Academy",
+        "NongshimRedForceAcademy"
+      ],
+      "home_league": "LAS",
+      "tier": "academy_erl",
+      "wins": 41,
+      "losses": 69,
+      "win_rate": 0.3727,
+      "strength_grade": "C",
+      "drafting_grade": "C",
+      "power_rank": 7,
+      "power_of": 10,
+      "games": 110
+    },
+    {
+      "id": "hanjin-brion-academy-las",
+      "name": "HANJIN BRION Academy",
+      "aliases": [
+        "HANJIN BRION Academy",
+        "HANJINBRIONAcademy"
+      ],
+      "home_league": "LAS",
+      "tier": "academy_erl",
+      "wins": 40,
+      "losses": 68,
+      "win_rate": 0.3704,
+      "strength_grade": "C",
+      "drafting_grade": "C",
+      "power_rank": 6,
+      "power_of": 10,
+      "games": 108
+    },
+    {
+      "id": "eunpyeong-meditech-high-school-las",
+      "name": "Eunpyeong Meditech High School",
+      "aliases": [
+        "Eunpyeong Meditech High School",
+        "EunpyeongMeditechHighSchool"
+      ],
+      "home_league": "LAS",
+      "tier": "academy_erl",
+      "wins": 8,
+      "losses": 49,
+      "win_rate": 0.1404,
+      "strength_grade": "D",
+      "drafting_grade": "F",
+      "power_rank": 9,
+      "power_of": 10,
+      "games": 57
+    },
+    {
+      "id": "kiwoom-drx-academy-las",
+      "name": "Kiwoom DRX Academy",
+      "aliases": [
+        "Kiwoom DRX Academy",
+        "KiwoomDRXAcademy"
+      ],
+      "home_league": "LAS",
+      "tier": "academy_erl",
+      "wins": 8,
+      "losses": 50,
+      "win_rate": 0.1379,
+      "strength_grade": "F",
+      "drafting_grade": "D",
+      "power_rank": 10,
+      "power_of": 10,
+      "games": 58
+    },
+    {
+      "id": "t1-esports-academy-lckc",
+      "name": "T1 Esports Academy",
+      "aliases": [
+        "T1 Esports Academy",
+        "T1EsportsAcademy"
+      ],
+      "home_league": "LCKC",
+      "tier": "academy_erl",
+      "wins": 98,
+      "losses": 55,
+      "win_rate": 0.6405,
+      "strength_grade": "S",
+      "drafting_grade": "B",
+      "power_rank": 1,
+      "power_of": 10,
+      "games": 153
+    },
+    {
+      "id": "dplus-kia-challengers-lckc",
+      "name": "Dplus Kia Challengers",
+      "aliases": [
+        "Dplus Kia Challengers",
+        "DplusKiaChallengers"
+      ],
+      "home_league": "LCKC",
+      "tier": "academy_erl",
+      "wins": 71,
+      "losses": 47,
+      "win_rate": 0.6017,
+      "strength_grade": "A",
+      "drafting_grade": "B",
+      "power_rank": 2,
+      "power_of": 10,
+      "games": 118
+    },
+    {
+      "id": "kt-rolster-challengers-lckc",
+      "name": "KT Rolster Challengers",
+      "aliases": [
+        "KT Rolster Challengers",
+        "KTRolsterChallengers"
+      ],
+      "home_league": "LCKC",
+      "tier": "academy_erl",
+      "wins": 81,
+      "losses": 59,
+      "win_rate": 0.5786,
+      "strength_grade": "A",
+      "drafting_grade": "B",
+      "power_rank": 3,
+      "power_of": 10,
+      "games": 140
+    },
+    {
+      "id": "nongshim-esports-academy-lckc",
+      "name": "Nongshim Esports Academy",
+      "aliases": [
+        "Nongshim Esports Academy",
+        "NongshimEsportsAcademy"
+      ],
+      "home_league": "LCKC",
+      "tier": "academy_erl",
+      "wins": 69,
+      "losses": 55,
+      "win_rate": 0.5565,
+      "strength_grade": "B",
+      "drafting_grade": "B",
+      "power_rank": 4,
+      "power_of": 10,
+      "games": 124
+    },
+    {
+      "id": "kiwoom-drx-challengers-lckc",
+      "name": "Kiwoom DRX Challengers",
+      "aliases": [
+        "Kiwoom DRX Challengers",
+        "KiwoomDRXChallengers"
+      ],
+      "home_league": "LCKC",
+      "tier": "academy_erl",
+      "wins": 60,
+      "losses": 53,
+      "win_rate": 0.531,
+      "strength_grade": "C",
+      "drafting_grade": "C",
+      "power_rank": 6,
+      "power_of": 10,
+      "games": 113
+    },
+    {
+      "id": "dn-soopers-challengers-lckc",
+      "name": "DN SOOPers Challengers",
+      "aliases": [
+        "DN SOOPers Challengers",
+        "DNSOOPersChallengers"
+      ],
+      "home_league": "LCKC",
+      "tier": "academy_erl",
+      "wins": 65,
+      "losses": 58,
+      "win_rate": 0.5285,
+      "strength_grade": "B",
+      "drafting_grade": "B",
+      "power_rank": 5,
+      "power_of": 10,
+      "games": 123
+    },
+    {
+      "id": "bnk-fearx-youth-lckc",
+      "name": "BNK FEARX Youth",
+      "aliases": [
+        "BNK FEARX Youth",
+        "BNKFEARXYouth"
+      ],
+      "home_league": "LCKC",
+      "tier": "academy_erl",
+      "wins": 43,
+      "losses": 48,
+      "win_rate": 0.4725,
+      "strength_grade": "C",
+      "drafting_grade": "C",
+      "power_rank": 7,
+      "power_of": 10,
+      "games": 91
+    },
+    {
+      "id": "hanjin-brion-challengers-lckc",
+      "name": "HANJIN BRION Challengers",
+      "aliases": [
+        "HANJIN BRION Challengers",
+        "HANJINBRIONChallengers"
+      ],
+      "home_league": "LCKC",
+      "tier": "academy_erl",
+      "wins": 31,
+      "losses": 50,
+      "win_rate": 0.3827,
+      "strength_grade": "D",
+      "drafting_grade": "B",
+      "power_rank": 8,
+      "power_of": 10,
+      "games": 81
+    },
+    {
+      "id": "hanwha-life-esports-challengers-lckc",
+      "name": "Hanwha Life Esports Challengers",
+      "aliases": [
+        "Hanwha Life Esports Challengers",
+        "HanwhaLifeEsportsChallengers"
+      ],
+      "home_league": "LCKC",
+      "tier": "academy_erl",
+      "wins": 33,
+      "losses": 57,
+      "win_rate": 0.3667,
+      "strength_grade": "D",
+      "drafting_grade": "D",
+      "power_rank": 9,
+      "power_of": 10,
+      "games": 90
+    },
+    {
+      "id": "gen-g-global-academy-lckc",
+      "name": "Gen.G Global Academy",
+      "aliases": [
+        "GEN",
+        "Gen.G Global Academy",
+        "Gen.GGlobalAcademy",
+        "GenGGlobalAcademy"
+      ],
+      "home_league": "LCKC",
+      "tier": "academy_erl",
+      "wins": 16,
+      "losses": 58,
+      "win_rate": 0.2162,
+      "strength_grade": "F",
+      "drafting_grade": "D",
+      "power_rank": 10,
+      "power_of": 10,
+      "games": 74
+    },
+    {
+      "id": "edg-youth-team-ldl",
+      "name": "EDG Youth Team",
+      "aliases": [
+        "EDG Youth Team",
+        "EDGYouthTeam"
+      ],
+      "home_league": "LDL",
+      "tier": "academy_erl",
+      "wins": 5,
+      "losses": 6,
+      "win_rate": 0.4545,
+      "strength_grade": "A",
+      "drafting_grade": "S",
+      "power_rank": 1,
+      "power_of": 3,
+      "games": 11
+    },
+    {
+      "id": "top-esports-challenger-ldl",
+      "name": "Top Esports Challenger",
+      "aliases": [
+        "Top Esports Challenger",
+        "TopEsportsChallenger"
+      ],
+      "home_league": "LDL",
+      "tier": "academy_erl",
+      "wins": 5,
+      "losses": 6,
+      "win_rate": 0.4545,
+      "strength_grade": "D",
+      "drafting_grade": "S",
+      "power_rank": 3,
+      "power_of": 3,
+      "games": 11
+    },
+    {
+      "id": "bilibili-gaming-junior-ldl",
+      "name": "Bilibili Gaming Junior",
+      "aliases": [
+        "Bilibili Gaming Junior",
+        "BilibiliGamingJunior"
+      ],
+      "home_league": "LDL",
+      "tier": "academy_erl",
+      "wins": 4,
+      "losses": 8,
+      "win_rate": 0.3333,
+      "strength_grade": "C",
+      "drafting_grade": "A",
+      "power_rank": 2,
+      "power_of": 3,
+      "games": 12
+    },
+    {
+      "id": "movistar-koi-f-nix-les",
+      "name": "Movistar KOI Fénix",
+      "aliases": [
+        "Movistar KOI Fénix",
+        "MovistarKOIFnix",
+        "MovistarKOIFénix"
+      ],
+      "home_league": "LES",
+      "tier": "academy_erl",
+      "wins": 72,
+      "losses": 36,
+      "win_rate": 0.6667,
+      "strength_grade": "A",
+      "drafting_grade": "S",
+      "power_rank": 1,
+      "power_of": 3,
+      "games": 108
+    },
+    {
+      "id": "falke-esports-les",
+      "name": "Falke Esports",
+      "aliases": [
+        "Falke Esports",
+        "FalkeEsports"
+      ],
+      "home_league": "LES",
+      "tier": "academy_erl",
+      "wins": 6,
+      "losses": 32,
+      "win_rate": 0.1579,
+      "strength_grade": "D",
+      "drafting_grade": "F",
+      "power_rank": 3,
+      "power_of": 3,
+      "games": 38
+    },
+    {
+      "id": "ub-alma-mater-les",
+      "name": "UB Alma Mater",
+      "aliases": [
+        "UB Alma Mater",
+        "UBAlmaMater"
+      ],
+      "home_league": "LES",
+      "tier": "academy_erl",
+      "wins": 5,
+      "losses": 29,
+      "win_rate": 0.1471,
+      "strength_grade": "C",
+      "drafting_grade": "D",
+      "power_rank": 2,
+      "power_of": 3,
+      "games": 34
+    },
+    {
+      "id": "solary-lfl",
+      "name": "Solary",
+      "aliases": [
+        "Solary"
+      ],
+      "home_league": "LFL",
+      "tier": "academy_erl",
+      "wins": 95,
+      "losses": 37,
+      "win_rate": 0.7197,
+      "strength_grade": "A",
+      "drafting_grade": "A",
+      "power_rank": 2,
+      "power_of": 10,
+      "games": 132
+    },
+    {
+      "id": "galions-lfl",
+      "name": "Galions",
+      "aliases": [
+        "Galions"
+      ],
+      "home_league": "LFL",
+      "tier": "academy_erl",
+      "wins": 102,
+      "losses": 42,
+      "win_rate": 0.7083,
+      "strength_grade": "S",
+      "drafting_grade": "A",
+      "power_rank": 1,
+      "power_of": 10,
+      "games": 144
+    },
+    {
+      "id": "french-flair-lfl",
+      "name": "French Flair",
+      "aliases": [
+        "French Flair",
+        "FrenchFlair"
+      ],
+      "home_league": "LFL",
+      "tier": "academy_erl",
+      "wins": 28,
+      "losses": 12,
+      "win_rate": 0.7,
+      "strength_grade": "A",
+      "drafting_grade": "A",
+      "power_rank": 3,
+      "power_of": 10,
+      "games": 40
+    },
+    {
+      "id": "tln-pirates-lfl",
+      "name": "TLN Pirates",
+      "aliases": [
+        "TLN Pirates",
+        "TLNPirates"
+      ],
+      "home_league": "LFL",
+      "tier": "academy_erl",
+      "wins": 46,
+      "losses": 34,
+      "win_rate": 0.575,
+      "strength_grade": "B",
+      "drafting_grade": "B",
+      "power_rank": 4,
+      "power_of": 10,
+      "games": 80
+    },
+    {
+      "id": "karmine-corp-blue-lfl",
+      "name": "Karmine Corp Blue",
+      "aliases": [
+        "Karmine Corp Blue",
+        "KarmineCorpBlue"
+      ],
+      "home_league": "LFL",
+      "tier": "academy_erl",
+      "wins": 51,
+      "losses": 42,
+      "win_rate": 0.5484,
+      "strength_grade": "B",
+      "drafting_grade": "D",
+      "power_rank": 5,
+      "power_of": 10,
+      "games": 93
+    },
+    {
+      "id": "bk-rog-esports-lfl",
+      "name": "BK ROG Esports",
+      "aliases": [
+        "BK ROG Esports",
+        "BKROGEsports"
+      ],
+      "home_league": "LFL",
+      "tier": "academy_erl",
+      "wins": 6,
+      "losses": 6,
+      "win_rate": 0.5,
+      "strength_grade": "D",
+      "drafting_grade": "D",
+      "power_rank": 9,
+      "power_of": 10,
+      "games": 12
+    },
+    {
+      "id": "vitality-bee-lfl",
+      "name": "Vitality.Bee",
+      "aliases": [
+        "Vitality.Bee",
+        "VitalityBee"
+      ],
+      "home_league": "LFL",
+      "tier": "academy_erl",
+      "wins": 18,
+      "losses": 25,
+      "win_rate": 0.4186,
+      "strength_grade": "C",
+      "drafting_grade": "D",
+      "power_rank": 6,
+      "power_of": 10,
+      "games": 43
+    },
+    {
+      "id": "joblife-lfl",
+      "name": "Joblife",
+      "aliases": [
+        "Joblife"
+      ],
+      "home_league": "LFL",
+      "tier": "academy_erl",
+      "wins": 17,
+      "losses": 24,
+      "win_rate": 0.4146,
+      "strength_grade": "D",
+      "drafting_grade": "D",
+      "power_rank": 8,
+      "power_of": 10,
+      "games": 41
+    },
+    {
+      "id": "ici-japon-corp-esport-lfl",
+      "name": "Ici Japon Corp. Esport",
+      "aliases": [
+        "Ici Japon Corp. Esport",
+        "IciJaponCorp.Esport",
+        "IciJaponCorpEsport"
+      ],
+      "home_league": "LFL",
+      "tier": "academy_erl",
+      "wins": 12,
+      "losses": 19,
+      "win_rate": 0.3871,
+      "strength_grade": "C",
+      "drafting_grade": "D",
+      "power_rank": 7,
+      "power_of": 10,
+      "games": 31
+    },
+    {
+      "id": "zyb-esport-lfl",
+      "name": "ZYB Esport",
+      "aliases": [
+        "ZYB Esport",
+        "ZYBEsport"
+      ],
+      "home_league": "LFL",
+      "tier": "academy_erl",
+      "wins": 13,
+      "losses": 27,
+      "win_rate": 0.325,
+      "strength_grade": "F",
+      "drafting_grade": "F",
+      "power_rank": 10,
+      "power_of": 10,
+      "games": 40
+    },
+    {
+      "id": "karmine-corp-blue-stars-lfl2",
+      "name": "Karmine Corp Blue Stars",
+      "aliases": [
+        "Karmine Corp Blue Stars",
+        "KarmineCorpBlueStars"
+      ],
+      "home_league": "LFL2",
+      "tier": "academy_erl",
+      "wins": 35,
+      "losses": 8,
+      "win_rate": 0.814,
+      "strength_grade": "S",
+      "drafting_grade": "S",
+      "power_rank": 1,
+      "power_of": 5,
+      "games": 43
+    },
+    {
+      "id": "project-conquerors-lfl2",
+      "name": "Project Conquerors",
+      "aliases": [
+        "Project Conquerors",
+        "ProjectConquerors"
+      ],
+      "home_league": "LFL2",
+      "tier": "academy_erl",
+      "wins": 33,
+      "losses": 24,
+      "win_rate": 0.5789,
+      "strength_grade": "D",
+      "drafting_grade": "C",
+      "power_rank": 4,
+      "power_of": 5,
+      "games": 57
+    },
+    {
+      "id": "skillcamp-lfl2",
+      "name": "Skillcamp",
+      "aliases": [
+        "Skillcamp"
+      ],
+      "home_league": "LFL2",
+      "tier": "academy_erl",
+      "wins": 37,
+      "losses": 33,
+      "win_rate": 0.5286,
+      "strength_grade": "B",
+      "drafting_grade": "A",
+      "power_rank": 2,
+      "power_of": 5,
+      "games": 70
+    },
+    {
+      "id": "lille-esport-lfl2",
+      "name": "Lille Esport",
+      "aliases": [
+        "Lille Esport",
+        "LilleEsport"
+      ],
+      "home_league": "LFL2",
+      "tier": "academy_erl",
+      "wins": 16,
+      "losses": 22,
+      "win_rate": 0.4211,
+      "strength_grade": "F",
+      "drafting_grade": "F",
+      "power_rank": 5,
+      "power_of": 5,
+      "games": 38
+    },
+    {
+      "id": "esprit-sh-nen-lfl2",
+      "name": "Esprit Shōnen",
+      "aliases": [
+        "Esprit Shōnen",
+        "EspritShnen",
+        "EspritShōnen"
+      ],
+      "home_league": "LFL2",
+      "tier": "academy_erl",
+      "wins": 6,
+      "losses": 24,
+      "win_rate": 0.2,
+      "strength_grade": "C",
+      "drafting_grade": "D",
+      "power_rank": 3,
+      "power_of": 5,
+      "games": 30
+    },
+    {
+      "id": "hmble-lit",
+      "name": "HMBLE",
+      "aliases": [
+        "HMBLE"
+      ],
+      "home_league": "LIT",
+      "tier": "academy_erl",
+      "wins": 52,
+      "losses": 16,
+      "win_rate": 0.7647,
+      "strength_grade": "S",
+      "drafting_grade": "S",
+      "power_rank": 1,
+      "power_of": 18,
+      "games": 68
+    },
+    {
+      "id": "4-employed-e-1-budino-lit",
+      "name": "4 Employed e 1 Budino",
+      "aliases": [
+        "4 Employed e 1 Budino",
+        "4Employede1Budino"
+      ],
+      "home_league": "LIT",
+      "tier": "academy_erl",
+      "wins": 9,
+      "losses": 3,
+      "win_rate": 0.75,
+      "strength_grade": "S",
+      "drafting_grade": "S",
+      "power_rank": 2,
+      "power_of": 18,
+      "games": 12
+    },
+    {
+      "id": "decoy-21-lit",
+      "name": "DECOY 21",
+      "aliases": [
+        "DECOY 21",
+        "DECOY21"
+      ],
+      "home_league": "LIT",
+      "tier": "academy_erl",
+      "wins": 7,
+      "losses": 3,
+      "win_rate": 0.7,
+      "strength_grade": "A",
+      "drafting_grade": "A",
+      "power_rank": 4,
+      "power_of": 18,
+      "games": 10
+    },
+    {
+      "id": "hangmen-lit",
+      "name": "HANGMEN",
+      "aliases": [
+        "HANGMEN"
+      ],
+      "home_league": "LIT",
+      "tier": "academy_erl",
+      "wins": 8,
+      "losses": 5,
+      "win_rate": 0.6154,
+      "strength_grade": "A",
+      "drafting_grade": "A",
+      "power_rank": 3,
+      "power_of": 18,
+      "games": 13
+    },
+    {
+      "id": "epitomy-esports-lit",
+      "name": "Epitomy Esports",
+      "aliases": [
+        "Epitomy Esports",
+        "EpitomyEsports"
+      ],
+      "home_league": "LIT",
+      "tier": "academy_erl",
+      "wins": 16,
+      "losses": 13,
+      "win_rate": 0.5517,
+      "strength_grade": "C",
+      "drafting_grade": "B",
+      "power_rank": 10,
+      "power_of": 18,
+      "games": 29
+    },
+    {
+      "id": "huskies-esports-lit",
+      "name": "Huskies Esports",
+      "aliases": [
+        "Huskies Esports",
+        "HuskiesEsports"
+      ],
+      "home_league": "LIT",
+      "tier": "academy_erl",
+      "wins": 8,
+      "losses": 7,
+      "win_rate": 0.5333,
+      "strength_grade": "B",
+      "drafting_grade": "D",
+      "power_rank": 8,
+      "power_of": 18,
+      "games": 15
+    },
+    {
+      "id": "colossal-gaming-lit",
+      "name": "Colossal Gaming",
+      "aliases": [
+        "Colossal Gaming",
+        "ColossalGaming"
+      ],
+      "home_league": "LIT",
+      "tier": "academy_erl",
+      "wins": 36,
+      "losses": 36,
+      "win_rate": 0.5,
+      "strength_grade": "A",
+      "drafting_grade": "B",
+      "power_rank": 5,
+      "power_of": 18,
+      "games": 72
+    },
+    {
+      "id": "epitomy-masters-lit",
+      "name": "Epitomy Masters",
+      "aliases": [
+        "Epitomy Masters",
+        "EpitomyMasters"
+      ],
+      "home_league": "LIT",
+      "tier": "academy_erl",
+      "wins": 5,
+      "losses": 5,
+      "win_rate": 0.5,
+      "strength_grade": "B",
+      "drafting_grade": "C",
+      "power_rank": 6,
+      "power_of": 18,
+      "games": 10
+    },
+    {
+      "id": "zena-esports-lit",
+      "name": "Zena Esports",
+      "aliases": [
+        "Zena Esports",
+        "ZenaEsports"
+      ],
+      "home_league": "LIT",
+      "tier": "academy_erl",
+      "wins": 22,
+      "losses": 22,
+      "win_rate": 0.5,
+      "strength_grade": "B",
+      "drafting_grade": "C",
+      "power_rank": 7,
+      "power_of": 18,
+      "games": 44
+    },
+    {
+      "id": "aeterna-esports-lit",
+      "name": "Aeterna Esports",
+      "aliases": [
+        "Aeterna Esports",
+        "AeternaEsports"
+      ],
+      "home_league": "LIT",
+      "tier": "academy_erl",
+      "wins": 13,
+      "losses": 14,
+      "win_rate": 0.4815,
+      "strength_grade": "D",
+      "drafting_grade": "C",
+      "power_rank": 13,
+      "power_of": 18,
+      "games": 27
+    },
+    {
+      "id": "gmblers-esports-lit",
+      "name": "GMBLERS Esports",
+      "aliases": [
+        "GMBLERS Esports",
+        "GMBLERSEsports"
+      ],
+      "home_league": "LIT",
+      "tier": "academy_erl",
+      "wins": 34,
+      "losses": 37,
+      "win_rate": 0.4789,
+      "strength_grade": "C",
+      "drafting_grade": "B",
+      "power_rank": 12,
+      "power_of": 18,
+      "games": 71
+    },
+    {
+      "id": "p11-esports-lit",
+      "name": "P11 Esports",
+      "aliases": [
+        "P11 Esports",
+        "P11Esports"
+      ],
+      "home_league": "LIT",
+      "tier": "academy_erl",
+      "wins": 26,
+      "losses": 29,
+      "win_rate": 0.4727,
+      "strength_grade": "C",
+      "drafting_grade": "B",
+      "power_rank": 11,
+      "power_of": 18,
+      "games": 55
+    },
+    {
+      "id": "deacoy-lit",
+      "name": "Deacoy",
+      "aliases": [
+        "Deacoy"
+      ],
+      "home_league": "LIT",
+      "tier": "academy_erl",
+      "wins": 6,
+      "losses": 9,
+      "win_rate": 0.4,
+      "strength_grade": "C",
+      "drafting_grade": "D",
+      "power_rank": 9,
+      "power_of": 18,
+      "games": 15
+    },
+    {
+      "id": "titans-lit",
+      "name": "TITANS",
+      "aliases": [
+        "TITANS"
+      ],
+      "home_league": "LIT",
+      "tier": "academy_erl",
+      "wins": 10,
+      "losses": 16,
+      "win_rate": 0.3846,
+      "strength_grade": "D",
+      "drafting_grade": "D",
+      "power_rank": 15,
+      "power_of": 18,
+      "games": 26
+    },
+    {
+      "id": "eko-esports-lit",
+      "name": "EKO Esports",
+      "aliases": [
+        "EKO Esports",
+        "EKOEsports"
+      ],
+      "home_league": "LIT",
+      "tier": "academy_erl",
+      "wins": 13,
+      "losses": 24,
+      "win_rate": 0.3514,
+      "strength_grade": "F",
+      "drafting_grade": "C",
+      "power_rank": 17,
+      "power_of": 18,
+      "games": 37
+    },
+    {
+      "id": "axolotl-lit",
+      "name": "Axolotl",
+      "aliases": [
+        "Axolotl"
+      ],
+      "home_league": "LIT",
+      "tier": "academy_erl",
+      "wins": 7,
+      "losses": 14,
+      "win_rate": 0.3333,
+      "strength_grade": "D",
+      "drafting_grade": "D",
+      "power_rank": 14,
+      "power_of": 18,
+      "games": 21
+    },
+    {
+      "id": "stonehenge-esports-lit",
+      "name": "StoneHenge Esports",
+      "aliases": [
+        "StoneHenge Esports",
+        "StoneHengeEsports"
+      ],
+      "home_league": "LIT",
+      "tier": "academy_erl",
+      "wins": 4,
+      "losses": 14,
+      "win_rate": 0.2222,
+      "strength_grade": "F",
+      "drafting_grade": "F",
+      "power_rank": 18,
+      "power_of": 18,
+      "games": 18
+    },
+    {
+      "id": "team-aqua-asd-lit",
+      "name": "Team Aqua ASD",
+      "aliases": [
+        "Team Aqua ASD",
+        "TeamAquaASD"
+      ],
+      "home_league": "LIT",
+      "tier": "academy_erl",
+      "wins": 1,
+      "losses": 7,
+      "win_rate": 0.125,
+      "strength_grade": "F",
+      "drafting_grade": "F",
+      "power_rank": 16,
+      "power_of": 18,
+      "games": 8
+    },
+    {
+      "id": "white-dragons-lplol",
+      "name": "White Dragons",
+      "aliases": [
+        "White Dragons",
+        "WhiteDragons"
+      ],
+      "home_league": "LPLOL",
+      "tier": "academy_erl",
+      "wins": 13,
+      "losses": 4,
+      "win_rate": 0.7647,
+      "strength_grade": "A",
+      "drafting_grade": "S",
+      "power_rank": 3,
+      "power_of": 16,
+      "games": 17
+    },
+    {
+      "id": "otter-side-lplol",
+      "name": "Otter Side",
+      "aliases": [
+        "Otter Side",
+        "OtterSide"
+      ],
+      "home_league": "LPLOL",
+      "tier": "academy_erl",
+      "wins": 39,
+      "losses": 24,
+      "win_rate": 0.619,
+      "strength_grade": "S",
+      "drafting_grade": "A",
+      "power_rank": 2,
+      "power_of": 16,
+      "games": 63
+    },
+    {
+      "id": "hyperion-portuguese-team-lplol",
+      "name": "Hyperion (Portuguese Team)",
+      "aliases": [
+        "Hyperion (Portuguese Team)",
+        "Hyperion(PortugueseTeam)",
+        "HyperionPortugueseTeam"
+      ],
+      "home_league": "LPLOL",
+      "tier": "academy_erl",
+      "wins": 5,
+      "losses": 4,
+      "win_rate": 0.5556,
+      "strength_grade": "C",
+      "drafting_grade": "B",
+      "power_rank": 10,
+      "power_of": 16,
+      "games": 9
+    },
+    {
+      "id": "dominion-goblins-lplol",
+      "name": "Dominion Goblins",
+      "aliases": [
+        "Dominion Goblins",
+        "DominionGoblins"
+      ],
+      "home_league": "LPLOL",
+      "tier": "academy_erl",
+      "wins": 9,
+      "losses": 9,
+      "win_rate": 0.5,
+      "strength_grade": "B",
+      "drafting_grade": "C",
+      "power_rank": 5,
+      "power_of": 16,
+      "games": 18
+    },
+    {
+      "id": "francesinhas-lplol",
+      "name": "Francesinhas",
+      "aliases": [
+        "Francesinhas"
+      ],
+      "home_league": "LPLOL",
+      "tier": "academy_erl",
+      "wins": 12,
+      "losses": 12,
+      "win_rate": 0.5,
+      "strength_grade": "D",
+      "drafting_grade": "B",
+      "power_rank": 11,
+      "power_of": 16,
+      "games": 24
+    },
+    {
+      "id": "vantex-esports-lplol",
+      "name": "Vantex Esports",
+      "aliases": [
+        "Vantex Esports",
+        "VantexEsports"
+      ],
+      "home_league": "LPLOL",
+      "tier": "academy_erl",
+      "wins": 8,
+      "losses": 8,
+      "win_rate": 0.5,
+      "strength_grade": "S",
+      "drafting_grade": "A",
+      "power_rank": 1,
+      "power_of": 16,
+      "games": 16
+    },
+    {
+      "id": "bubliki-lplol",
+      "name": "Bubliki",
+      "aliases": [
+        "Bubliki"
+      ],
+      "home_league": "LPLOL",
+      "tier": "academy_erl",
+      "wins": 22,
+      "losses": 24,
+      "win_rate": 0.4783,
+      "strength_grade": "B",
+      "drafting_grade": "B",
+      "power_rank": 6,
+      "power_of": 16,
+      "games": 46
+    },
+    {
+      "id": "crusaders-lplol",
+      "name": "Crusaders",
+      "aliases": [
+        "Crusaders"
+      ],
+      "home_league": "LPLOL",
+      "tier": "academy_erl",
+      "wins": 10,
+      "losses": 11,
+      "win_rate": 0.4762,
+      "strength_grade": "A",
+      "drafting_grade": "B",
+      "power_rank": 4,
+      "power_of": 16,
+      "games": 21
+    },
+    {
+      "id": "dream-esports-lplol",
+      "name": "Dream Esports",
+      "aliases": [
+        "Dream Esports",
+        "DreamEsports"
+      ],
+      "home_league": "LPLOL",
+      "tier": "academy_erl",
+      "wins": 8,
+      "losses": 9,
+      "win_rate": 0.4706,
+      "strength_grade": "C",
+      "drafting_grade": "B",
+      "power_rank": 8,
+      "power_of": 16,
+      "games": 17
+    },
+    {
+      "id": "tung-tung-bogi-lplol",
+      "name": "Tung Tung Bogi",
+      "aliases": [
+        "Tung Tung Bogi",
+        "TungTungBogi"
+      ],
+      "home_league": "LPLOL",
+      "tier": "academy_erl",
+      "wins": 6,
+      "losses": 7,
+      "win_rate": 0.4615,
+      "strength_grade": "C",
+      "drafting_grade": "C",
+      "power_rank": 9,
+      "power_of": 16,
+      "games": 13
+    },
+    {
+      "id": "ronaldo-team-lplol",
+      "name": "Ronaldo Team",
+      "aliases": [
+        "Ronaldo Team",
+        "RonaldoTeam"
+      ],
+      "home_league": "LPLOL",
+      "tier": "academy_erl",
+      "wins": 5,
+      "losses": 6,
+      "win_rate": 0.4545,
+      "strength_grade": "B",
+      "drafting_grade": "C",
+      "power_rank": 7,
+      "power_of": 16,
+      "games": 11
+    },
+    {
+      "id": "capybara-esports-lplol",
+      "name": "Capybara Esports",
+      "aliases": [
+        "Capybara Esports",
+        "CapybaraEsports"
+      ],
+      "home_league": "LPLOL",
+      "tier": "academy_erl",
+      "wins": 4,
+      "losses": 5,
+      "win_rate": 0.4444,
+      "strength_grade": "D",
+      "drafting_grade": "D",
+      "power_rank": 14,
+      "power_of": 16,
+      "games": 9
+    },
+    {
+      "id": "northerngrade-esports-lplol",
+      "name": "NORTHERNGRADE ESPORTS",
+      "aliases": [
+        "NORTHERNGRADE ESPORTS",
+        "NORTHERNGRADEESPORTS"
+      ],
+      "home_league": "LPLOL",
+      "tier": "academy_erl",
+      "wins": 4,
+      "losses": 6,
+      "win_rate": 0.4,
+      "strength_grade": "D",
+      "drafting_grade": "D",
+      "power_rank": 13,
+      "power_of": 16,
+      "games": 10
+    },
+    {
+      "id": "zerozone-gaming-lplol",
+      "name": "ZeroZone Gaming",
+      "aliases": [
+        "ZeroZone Gaming",
+        "ZeroZoneGaming"
+      ],
+      "home_league": "LPLOL",
+      "tier": "academy_erl",
+      "wins": 8,
+      "losses": 15,
+      "win_rate": 0.3478,
+      "strength_grade": "F",
+      "drafting_grade": "C",
+      "power_rank": 15,
+      "power_of": 16,
+      "games": 23
+    },
+    {
+      "id": "gd-esports-lplol",
+      "name": "GD Esports",
+      "aliases": [
+        "GD Esports",
+        "GDEsports"
+      ],
+      "home_league": "LPLOL",
+      "tier": "academy_erl",
+      "wins": 2,
+      "losses": 6,
+      "win_rate": 0.25,
+      "strength_grade": "F",
+      "drafting_grade": "F",
+      "power_rank": 16,
+      "power_of": 16,
+      "games": 8
+    },
+    {
+      "id": "gtz-esports-lplol",
+      "name": "GTZ Esports",
+      "aliases": [
+        "GTZ Esports",
+        "GTZEsports"
+      ],
+      "home_league": "LPLOL",
+      "tier": "academy_erl",
+      "wins": 2,
+      "losses": 7,
+      "win_rate": 0.2222,
+      "strength_grade": "D",
+      "drafting_grade": "F",
+      "power_rank": 12,
+      "power_of": 16,
+      "games": 9
+    },
+    {
+      "id": "fuego-lrn",
+      "name": "Fuego",
+      "aliases": [
+        "Fuego"
+      ],
+      "home_league": "LRN",
+      "tier": "academy_erl",
+      "wins": 47,
+      "losses": 19,
+      "win_rate": 0.7121,
+      "strength_grade": "S",
+      "drafting_grade": "S",
+      "power_rank": 1,
+      "power_of": 10,
+      "games": 66
+    },
+    {
+      "id": "sdm-tigres-lrn",
+      "name": "SDM Tigres",
+      "aliases": [
+        "SDM Tigres",
+        "SDMTigres"
+      ],
+      "home_league": "LRN",
+      "tier": "academy_erl",
+      "wins": 29,
+      "losses": 22,
+      "win_rate": 0.5686,
+      "strength_grade": "C",
+      "drafting_grade": "C",
+      "power_rank": 7,
+      "power_of": 10,
+      "games": 51
+    },
+    {
+      "id": "3v-team-lrn",
+      "name": "3v Team",
+      "aliases": [
+        "3v Team",
+        "3vTeam"
+      ],
+      "home_league": "LRN",
+      "tier": "academy_erl",
+      "wins": 15,
+      "losses": 13,
+      "win_rate": 0.5357,
+      "strength_grade": "B",
+      "drafting_grade": "C",
+      "power_rank": 4,
+      "power_of": 10,
+      "games": 28
+    },
+    {
+      "id": "zeu5-esports-lrn",
+      "name": "Zeu5 Esports",
+      "aliases": [
+        "Zeu5 Esports",
+        "Zeu5Esports"
+      ],
+      "home_league": "LRN",
+      "tier": "academy_erl",
+      "wins": 32,
+      "losses": 29,
+      "win_rate": 0.5246,
+      "strength_grade": "A",
+      "drafting_grade": "B",
+      "power_rank": 2,
+      "power_of": 10,
+      "games": 61
+    },
+    {
+      "id": "g3v-e-sports-lrn",
+      "name": "G3V E-sports",
+      "aliases": [
+        "G3V E-sports",
+        "G3VE-sports",
+        "G3VEsports"
+      ],
+      "home_league": "LRN",
+      "tier": "academy_erl",
+      "wins": 15,
+      "losses": 16,
+      "win_rate": 0.4839,
+      "strength_grade": "A",
+      "drafting_grade": "B",
+      "power_rank": 3,
+      "power_of": 10,
+      "games": 31
+    },
+    {
+      "id": "kits-esports-lrn",
+      "name": "Kits Esports",
+      "aliases": [
+        "Kits Esports",
+        "KitsEsports"
+      ],
+      "home_league": "LRN",
+      "tier": "academy_erl",
+      "wins": 13,
+      "losses": 16,
+      "win_rate": 0.4483,
+      "strength_grade": "B",
+      "drafting_grade": "A",
+      "power_rank": 5,
+      "power_of": 10,
+      "games": 29
+    },
+    {
+      "id": "ncg-esports-lrn",
+      "name": "NCG Esports",
+      "aliases": [
+        "NCG Esports",
+        "NCGEsports"
+      ],
+      "home_league": "LRN",
+      "tier": "academy_erl",
+      "wins": 12,
+      "losses": 15,
+      "win_rate": 0.4444,
+      "strength_grade": "C",
+      "drafting_grade": "B",
+      "power_rank": 6,
+      "power_of": 10,
+      "games": 27
+    },
+    {
+      "id": "lyon-academy-lrn",
+      "name": "LYON Academy",
+      "aliases": [
+        "LYON Academy",
+        "LYONAcademy"
+      ],
+      "home_league": "LRN",
+      "tier": "academy_erl",
+      "wins": 9,
+      "losses": 24,
+      "win_rate": 0.2727,
+      "strength_grade": "D",
+      "drafting_grade": "D",
+      "power_rank": 9,
+      "power_of": 10,
+      "games": 33
+    },
+    {
+      "id": "polar-squad-esports-lrn",
+      "name": "Polar Squad Esports",
+      "aliases": [
+        "Polar Squad Esports",
+        "PolarSquadEsports"
+      ],
+      "home_league": "LRN",
+      "tier": "academy_erl",
+      "wins": 7,
+      "losses": 26,
+      "win_rate": 0.2121,
+      "strength_grade": "F",
+      "drafting_grade": "F",
+      "power_rank": 10,
+      "power_of": 10,
+      "games": 33
+    },
+    {
+      "id": "icon-esports-lrn",
+      "name": "Icon Esports",
+      "aliases": [
+        "Icon Esports",
+        "IconEsports"
+      ],
+      "home_league": "LRN",
+      "tier": "academy_erl",
+      "wins": 2,
+      "losses": 10,
+      "win_rate": 0.1667,
+      "strength_grade": "D",
+      "drafting_grade": "F",
+      "power_rank": 8,
+      "power_of": 10,
+      "games": 12
+    },
+    {
+      "id": "golden-lions-lrs",
+      "name": "Golden Lions",
+      "aliases": [
+        "Golden Lions",
+        "GoldenLions"
+      ],
+      "home_league": "LRS",
+      "tier": "academy_erl",
+      "wins": 36,
+      "losses": 23,
+      "win_rate": 0.6102,
+      "strength_grade": "B",
+      "drafting_grade": "A",
+      "power_rank": 4,
+      "power_of": 9,
+      "games": 59
+    },
+    {
+      "id": "volticons-lrs",
+      "name": "Volticons",
+      "aliases": [
+        "Volticons"
+      ],
+      "home_league": "LRS",
+      "tier": "academy_erl",
+      "wins": 35,
+      "losses": 24,
+      "win_rate": 0.5932,
+      "strength_grade": "S",
+      "drafting_grade": "B",
+      "power_rank": 1,
+      "power_of": 9,
+      "games": 59
+    },
+    {
+      "id": "9z-globant-lrs",
+      "name": "9z Globant",
+      "aliases": [
+        "9z Globant",
+        "9zGlobant"
+      ],
+      "home_league": "LRS",
+      "tier": "academy_erl",
+      "wins": 37,
+      "losses": 27,
+      "win_rate": 0.5781,
+      "strength_grade": "B",
+      "drafting_grade": "A",
+      "power_rank": 3,
+      "power_of": 9,
+      "games": 64
+    },
+    {
+      "id": "malvinas-gaming-lrs",
+      "name": "Malvinas Gaming",
+      "aliases": [
+        "Malvinas Gaming",
+        "MalvinasGaming"
+      ],
+      "home_league": "LRS",
+      "tier": "academy_erl",
+      "wins": 23,
+      "losses": 23,
+      "win_rate": 0.5,
+      "strength_grade": "C",
+      "drafting_grade": "C",
+      "power_rank": 6,
+      "power_of": 9,
+      "games": 46
+    },
+    {
+      "id": "maze-gaming-lrs",
+      "name": "Maze Gaming",
+      "aliases": [
+        "Maze Gaming",
+        "MazeGaming"
+      ],
+      "home_league": "LRS",
+      "tier": "academy_erl",
+      "wins": 23,
+      "losses": 23,
+      "win_rate": 0.5,
+      "strength_grade": "A",
+      "drafting_grade": "C",
+      "power_rank": 2,
+      "power_of": 9,
+      "games": 46
+    },
+    {
+      "id": "docta-esports-lrs",
+      "name": "Docta Esports",
+      "aliases": [
+        "Docta Esports",
+        "DoctaEsports"
+      ],
+      "home_league": "LRS",
+      "tier": "academy_erl",
+      "wins": 11,
+      "losses": 13,
+      "win_rate": 0.4583,
+      "strength_grade": "C",
+      "drafting_grade": "C",
+      "power_rank": 5,
+      "power_of": 9,
+      "games": 24
+    },
+    {
+      "id": "the-new-kings-lrs",
+      "name": "The New Kings",
+      "aliases": [
+        "The New Kings",
+        "TheNewKings"
+      ],
+      "home_league": "LRS",
+      "tier": "academy_erl",
+      "wins": 7,
+      "losses": 14,
+      "win_rate": 0.3333,
+      "strength_grade": "D",
+      "drafting_grade": "F",
+      "power_rank": 8,
+      "power_of": 9,
+      "games": 21
+    },
+    {
+      "id": "seven-dark-lrs",
+      "name": "Seven Dark",
+      "aliases": [
+        "Seven Dark",
+        "SevenDark"
+      ],
+      "home_league": "LRS",
+      "tier": "academy_erl",
+      "wins": 11,
+      "losses": 26,
+      "win_rate": 0.2973,
+      "strength_grade": "D",
+      "drafting_grade": "D",
+      "power_rank": 7,
+      "power_of": 9,
+      "games": 37
+    },
+    {
+      "id": "tu-pap-esports-lrs",
+      "name": "Tu Papá Esports",
+      "aliases": [
+        "Tu Papá Esports",
+        "TuPapEsports",
+        "TuPapáEsports"
+      ],
+      "home_league": "LRS",
+      "tier": "academy_erl",
+      "wins": 1,
+      "losses": 12,
+      "win_rate": 0.0769,
+      "strength_grade": "F",
+      "drafting_grade": "F",
+      "power_rank": 9,
+      "power_of": 9,
+      "games": 13
+    },
+    {
+      "id": "team-heretics-academy-lvp-sl",
+      "name": "Team Heretics Academy",
+      "aliases": [
+        "Team Heretics Academy",
+        "TeamHereticsAcademy"
+      ],
+      "home_league": "LVP SL",
+      "tier": "academy_erl",
+      "wins": 62,
+      "losses": 30,
+      "win_rate": 0.6739,
+      "strength_grade": "S",
+      "drafting_grade": "A",
+      "power_rank": 1,
+      "power_of": 5,
+      "games": 92
+    },
+    {
+      "id": "ucam-esports-lvp-sl",
+      "name": "UCAM Esports",
+      "aliases": [
+        "UCAM Esports",
+        "UCAMEsports"
+      ],
+      "home_league": "LVP SL",
+      "tier": "academy_erl",
+      "wins": 62,
+      "losses": 41,
+      "win_rate": 0.6019,
+      "strength_grade": "B",
+      "drafting_grade": "B",
+      "power_rank": 2,
+      "power_of": 5,
+      "games": 103
+    },
+    {
+      "id": "bar-a-esports-lvp-sl",
+      "name": "Barça eSports",
+      "aliases": [
+        "BaraeSports",
+        "Barça eSports",
+        "BarçaeSports"
+      ],
+      "home_league": "LVP SL",
+      "tier": "academy_erl",
+      "wins": 44,
+      "losses": 42,
+      "win_rate": 0.5116,
+      "strength_grade": "D",
+      "drafting_grade": "C",
+      "power_rank": 4,
+      "power_of": 5,
+      "games": 86
+    },
+    {
+      "id": "giantx-itero-lvp-sl",
+      "name": "GIANTX iTero",
+      "aliases": [
+        "GIANTX iTero",
+        "GIANTXiTero"
+      ],
+      "home_league": "LVP SL",
+      "tier": "academy_erl",
+      "wins": 17,
+      "losses": 20,
+      "win_rate": 0.4595,
+      "strength_grade": "C",
+      "drafting_grade": "F",
+      "power_rank": 3,
+      "power_of": 5,
+      "games": 37
+    },
+    {
+      "id": "lua-gaming-lvp-sl",
+      "name": "LUA Gaming",
+      "aliases": [
+        "LUA Gaming",
+        "LUAGaming"
+      ],
+      "home_league": "LVP SL",
+      "tier": "academy_erl",
+      "wins": 10,
+      "losses": 25,
+      "win_rate": 0.2857,
+      "strength_grade": "F",
+      "drafting_grade": "F",
+      "power_rank": 5,
+      "power_of": 5,
+      "games": 35
+    },
+    {
+      "id": "nrg-nacl",
+      "name": "NRG",
+      "aliases": [
+        "NRG"
+      ],
+      "home_league": "NACL",
+      "tier": "academy_erl",
+      "wins": 35,
+      "losses": 19,
+      "win_rate": 0.6481,
+      "strength_grade": "A",
+      "drafting_grade": "A",
+      "power_rank": 4,
+      "power_of": 16,
+      "games": 54
+    },
+    {
+      "id": "cupid-esports-nacl",
+      "name": "Cupid Esports",
+      "aliases": [
+        "Cupid Esports",
+        "CupidEsports"
+      ],
+      "home_league": "NACL",
+      "tier": "academy_erl",
+      "wins": 27,
+      "losses": 15,
+      "win_rate": 0.6429,
+      "strength_grade": "S",
+      "drafting_grade": "S",
+      "power_rank": 2,
+      "power_of": 16,
+      "games": 42
+    },
+    {
+      "id": "maryville-university-nacl",
+      "name": "Maryville University",
+      "aliases": [
+        "Maryville University",
+        "MaryvilleUniversity"
+      ],
+      "home_league": "NACL",
+      "tier": "academy_erl",
+      "wins": 46,
+      "losses": 32,
+      "win_rate": 0.5897,
+      "strength_grade": "A",
+      "drafting_grade": "B",
+      "power_rank": 3,
+      "power_of": 16,
+      "games": 78
+    },
+    {
+      "id": "supernova-nacl",
+      "name": "Supernova",
+      "aliases": [
+        "Supernova"
+      ],
+      "home_league": "NACL",
+      "tier": "academy_erl",
+      "wins": 17,
+      "losses": 13,
+      "win_rate": 0.5667,
+      "strength_grade": "B",
+      "drafting_grade": "B",
+      "power_rank": 6,
+      "power_of": 16,
+      "games": 30
+    },
+    {
+      "id": "conviction-nacl",
+      "name": "Conviction",
+      "aliases": [
+        "Conviction"
+      ],
+      "home_league": "NACL",
+      "tier": "academy_erl",
+      "wins": 31,
+      "losses": 25,
+      "win_rate": 0.5536,
+      "strength_grade": "B",
+      "drafting_grade": "C",
+      "power_rank": 7,
+      "power_of": 16,
+      "games": 56
+    },
+    {
+      "id": "ccg-esports-nacl",
+      "name": "CCG Esports",
+      "aliases": [
+        "CCG Esports",
+        "CCGEsports"
+      ],
+      "home_league": "NACL",
+      "tier": "academy_erl",
+      "wins": 27,
+      "losses": 24,
+      "win_rate": 0.5294,
+      "strength_grade": "C",
+      "drafting_grade": "C",
+      "power_rank": 8,
+      "power_of": 16,
+      "games": 51
+    },
+    {
+      "id": "winthrop-university-nacl",
+      "name": "Winthrop University",
+      "aliases": [
+        "Winthrop University",
+        "WinthropUniversity"
+      ],
+      "home_league": "NACL",
+      "tier": "academy_erl",
+      "wins": 36,
+      "losses": 32,
+      "win_rate": 0.5294,
+      "strength_grade": "B",
+      "drafting_grade": "A",
+      "power_rank": 5,
+      "power_of": 16,
+      "games": 68
+    },
+    {
+      "id": "contingent-esports-nacl",
+      "name": "Contingent Esports",
+      "aliases": [
+        "Contingent Esports",
+        "ContingentEsports"
+      ],
+      "home_league": "NACL",
+      "tier": "academy_erl",
+      "wins": 18,
+      "losses": 17,
+      "win_rate": 0.5143,
+      "strength_grade": "C",
+      "drafting_grade": "B",
+      "power_rank": 10,
+      "power_of": 16,
+      "games": 35
+    },
+    {
+      "id": "deathmark-e-sports-nacl",
+      "name": "DeathMark E-Sports",
+      "aliases": [
+        "DeathMark E-Sports",
+        "DeathMarkE-Sports",
+        "DeathMarkESports"
+      ],
+      "home_league": "NACL",
+      "tier": "academy_erl",
+      "wins": 6,
+      "losses": 7,
+      "win_rate": 0.4615,
+      "strength_grade": "D",
+      "drafting_grade": "D",
+      "power_rank": 12,
+      "power_of": 16,
+      "games": 13
+    },
+    {
+      "id": "lotus-nacl",
+      "name": "Lotus",
+      "aliases": [
+        "Lotus"
+      ],
+      "home_league": "NACL",
+      "tier": "academy_erl",
+      "wins": 4,
+      "losses": 5,
+      "win_rate": 0.4444,
+      "strength_grade": "D",
+      "drafting_grade": "F",
+      "power_rank": 11,
+      "power_of": 16,
+      "games": 9
+    },
+    {
+      "id": "citadel-gaming-nacl",
+      "name": "Citadel Gaming",
+      "aliases": [
+        "Citadel Gaming",
+        "CitadelGaming"
+      ],
+      "home_league": "NACL",
+      "tier": "academy_erl",
+      "wins": 8,
+      "losses": 12,
+      "win_rate": 0.4,
+      "strength_grade": "C",
+      "drafting_grade": "D",
+      "power_rank": 9,
+      "power_of": 16,
+      "games": 20
+    },
+    {
+      "id": "disguised-nacl",
+      "name": "Disguised",
+      "aliases": [
+        "Disguised"
+      ],
+      "home_league": "NACL",
+      "tier": "academy_erl",
+      "wins": 26,
+      "losses": 40,
+      "win_rate": 0.3939,
+      "strength_grade": "S",
+      "drafting_grade": "B",
+      "power_rank": 1,
+      "power_of": 16,
+      "games": 66
+    },
+    {
+      "id": "dorado-gaming-nacl",
+      "name": "Dorado Gaming",
+      "aliases": [
+        "Dorado Gaming",
+        "DoradoGaming"
+      ],
+      "home_league": "NACL",
+      "tier": "academy_erl",
+      "wins": 15,
+      "losses": 25,
+      "win_rate": 0.375,
+      "strength_grade": "D",
+      "drafting_grade": "D",
+      "power_rank": 13,
+      "power_of": 16,
+      "games": 40
+    },
+    {
+      "id": "university-of-mississippi-nacl",
+      "name": "University of Mississippi",
+      "aliases": [
+        "University of Mississippi",
+        "UniversityofMississippi"
+      ],
+      "home_league": "NACL",
+      "tier": "academy_erl",
+      "wins": 7,
+      "losses": 12,
+      "win_rate": 0.3684,
+      "strength_grade": "D",
+      "drafting_grade": "D",
+      "power_rank": 14,
+      "power_of": 16,
+      "games": 19
+    },
+    {
+      "id": "blue-otter-nacl",
+      "name": "Blue Otter",
+      "aliases": [
+        "Blue Otter",
+        "BlueOtter"
+      ],
+      "home_league": "NACL",
+      "tier": "academy_erl",
+      "wins": 17,
+      "losses": 34,
+      "win_rate": 0.3333,
+      "strength_grade": "F",
+      "drafting_grade": "D",
+      "power_rank": 15,
+      "power_of": 16,
+      "games": 51
+    },
+    {
+      "id": "apex-mission-impossible-nacl",
+      "name": "Apex Mission Impossible",
+      "aliases": [
+        "Apex Mission Impossible",
+        "ApexMissionImpossible"
+      ],
+      "home_league": "NACL",
+      "tier": "academy_erl",
+      "wins": 4,
+      "losses": 20,
+      "win_rate": 0.1667,
+      "strength_grade": "F",
+      "drafting_grade": "F",
+      "power_rank": 16,
+      "power_of": 16,
+      "games": 24
+    },
+    {
+      "id": "kawaii-kiwis-nexo",
+      "name": "Kawaii Kiwis",
+      "aliases": [
+        "Kawaii Kiwis",
+        "KawaiiKiwis"
+      ],
+      "home_league": "NEXO",
+      "tier": "academy_erl",
+      "wins": 9,
+      "losses": 6,
+      "win_rate": 0.6,
+      "strength_grade": "C",
+      "drafting_grade": "S",
+      "power_rank": 1,
+      "power_of": 1,
+      "games": 15
+    },
+    {
+      "id": "ancient-ones-nl",
+      "name": "Ancient Ones",
+      "aliases": [
+        "Ancient Ones",
+        "AncientOnes"
+      ],
+      "home_league": "NL",
+      "tier": "academy_erl",
+      "wins": 13,
+      "losses": 7,
+      "win_rate": 0.65,
+      "strength_grade": "S",
+      "drafting_grade": "S",
+      "power_rank": 1,
+      "power_of": 7,
+      "games": 20
+    },
+    {
+      "id": "galions-sharks-nl",
+      "name": "Galions Sharks",
+      "aliases": [
+        "Galions Sharks",
+        "GalionsSharks"
+      ],
+      "home_league": "NL",
+      "tier": "academy_erl",
+      "wins": 18,
+      "losses": 17,
+      "win_rate": 0.5143,
+      "strength_grade": "A",
+      "drafting_grade": "S",
+      "power_rank": 2,
+      "power_of": 7,
+      "games": 35
+    },
+    {
+      "id": "team-high-ground-nl",
+      "name": "Team High Ground",
+      "aliases": [
+        "Team High Ground",
+        "TeamHighGround"
+      ],
+      "home_league": "NL",
+      "tier": "academy_erl",
+      "wins": 10,
+      "losses": 10,
+      "win_rate": 0.5,
+      "strength_grade": "B",
+      "drafting_grade": "A",
+      "power_rank": 3,
+      "power_of": 7,
+      "games": 20
+    },
+    {
+      "id": "caldya-esport-nl",
+      "name": "Caldya Esport",
+      "aliases": [
+        "Caldya Esport",
+        "CaldyaEsport"
+      ],
+      "home_league": "NL",
+      "tier": "academy_erl",
+      "wins": 14,
+      "losses": 24,
+      "win_rate": 0.3684,
+      "strength_grade": "C",
+      "drafting_grade": "C",
+      "power_rank": 4,
+      "power_of": 7,
+      "games": 38
+    },
+    {
+      "id": "lausanne-sport-esports-nl",
+      "name": "Lausanne-Sport Esports",
+      "aliases": [
+        "Lausanne-Sport Esports",
+        "Lausanne-SportEsports",
+        "LausanneSportEsports"
+      ],
+      "home_league": "NL",
+      "tier": "academy_erl",
+      "wins": 8,
+      "losses": 18,
+      "win_rate": 0.3077,
+      "strength_grade": "C",
+      "drafting_grade": "D",
+      "power_rank": 5,
+      "power_of": 7,
+      "games": 26
+    },
+    {
+      "id": "zephyr-esport-nl",
+      "name": "Zephyr Esport",
+      "aliases": [
+        "Zephyr Esport",
+        "ZephyrEsport"
+      ],
+      "home_league": "NL",
+      "tier": "academy_erl",
+      "wins": 5,
+      "losses": 20,
+      "win_rate": 0.2,
+      "strength_grade": "D",
+      "drafting_grade": "F",
+      "power_rank": 6,
+      "power_of": 7,
+      "games": 25
+    },
+    {
+      "id": "crystal-rose-nl",
+      "name": "Crystal Rose",
+      "aliases": [
+        "Crystal Rose",
+        "CrystalRose"
+      ],
+      "home_league": "NL",
+      "tier": "academy_erl",
+      "wins": 3,
+      "losses": 20,
+      "win_rate": 0.1304,
+      "strength_grade": "F",
+      "drafting_grade": "F",
+      "power_rank": 7,
+      "power_of": 7,
+      "games": 23
+    },
+    {
+      "id": "verdant-nlc",
+      "name": "Verdant",
+      "aliases": [
+        "Verdant"
+      ],
+      "home_league": "NLC",
+      "tier": "academy_erl",
+      "wins": 51,
+      "losses": 22,
+      "win_rate": 0.6986,
+      "strength_grade": "A",
+      "drafting_grade": "A",
+      "power_rank": 3,
+      "power_of": 14,
+      "games": 73
+    },
+    {
+      "id": "arctic-pandas-nlc",
+      "name": "Arctic Pandas",
+      "aliases": [
+        "Arctic Pandas",
+        "ArcticPandas"
+      ],
+      "home_league": "NLC",
+      "tier": "academy_erl",
+      "wins": 33,
+      "losses": 27,
+      "win_rate": 0.55,
+      "strength_grade": "C",
+      "drafting_grade": "C",
+      "power_rank": 7,
+      "power_of": 14,
+      "games": 60
+    },
+    {
+      "id": "deer-gaming-nlc",
+      "name": "Deer Gaming",
+      "aliases": [
+        "Deer Gaming",
+        "DeerGaming"
+      ],
+      "home_league": "NLC",
+      "tier": "academy_erl",
+      "wins": 24,
+      "losses": 20,
+      "win_rate": 0.5455,
+      "strength_grade": "A",
+      "drafting_grade": "A",
+      "power_rank": 4,
+      "power_of": 14,
+      "games": 44
+    },
+    {
+      "id": "ruddy-corporation-nlc",
+      "name": "Ruddy Corporation",
+      "aliases": [
+        "Ruddy Corporation",
+        "RuddyCorporation"
+      ],
+      "home_league": "NLC",
+      "tier": "academy_erl",
+      "wins": 36,
+      "losses": 31,
+      "win_rate": 0.5373,
+      "strength_grade": "A",
+      "drafting_grade": "S",
+      "power_rank": 2,
+      "power_of": 14,
+      "games": 67
+    },
+    {
+      "id": "b2u-nlc",
+      "name": "B2U",
+      "aliases": [
+        "B2U"
+      ],
+      "home_league": "NLC",
+      "tier": "academy_erl",
+      "wins": 7,
+      "losses": 7,
+      "win_rate": 0.5,
+      "strength_grade": "D",
+      "drafting_grade": "B",
+      "power_rank": 10,
+      "power_of": 14,
+      "games": 14
+    },
+    {
+      "id": "brod-n-friends-nlc",
+      "name": "Brod n Friends",
+      "aliases": [
+        "Brod n Friends",
+        "BrodnFriends"
+      ],
+      "home_league": "NLC",
+      "tier": "academy_erl",
+      "wins": 6,
+      "losses": 6,
+      "win_rate": 0.5,
+      "strength_grade": "C",
+      "drafting_grade": "B",
+      "power_rank": 9,
+      "power_of": 14,
+      "games": 12
+    },
+    {
+      "id": "bulldog-esports-nlc",
+      "name": "Bulldog Esports",
+      "aliases": [
+        "Bulldog Esports",
+        "BulldogEsports"
+      ],
+      "home_league": "NLC",
+      "tier": "academy_erl",
+      "wins": 20,
+      "losses": 22,
+      "win_rate": 0.4762,
+      "strength_grade": "B",
+      "drafting_grade": "B",
+      "power_rank": 6,
+      "power_of": 14,
+      "games": 42
+    },
+    {
+      "id": "dmg-esports-nlc",
+      "name": "DMG Esports",
+      "aliases": [
+        "DMG Esports",
+        "DMGEsports"
+      ],
+      "home_league": "NLC",
+      "tier": "academy_erl",
+      "wins": 22,
+      "losses": 25,
+      "win_rate": 0.4681,
+      "strength_grade": "B",
+      "drafting_grade": "B",
+      "power_rank": 5,
+      "power_of": 14,
+      "games": 47
+    },
+    {
+      "id": "lund-esports-organization-nlc",
+      "name": "Lund Esports Organization",
+      "aliases": [
+        "Lund Esports Organization",
+        "LundEsportsOrganization"
+      ],
+      "home_league": "NLC",
+      "tier": "academy_erl",
+      "wins": 13,
+      "losses": 15,
+      "win_rate": 0.4643,
+      "strength_grade": "C",
+      "drafting_grade": "D",
+      "power_rank": 8,
+      "power_of": 14,
+      "games": 28
+    },
+    {
+      "id": "los-ratones-nlc",
+      "name": "Los Ratones",
+      "aliases": [
+        "Los Ratones",
+        "LosRatones"
+      ],
+      "home_league": "NLC",
+      "tier": "academy_erl",
+      "wins": 5,
+      "losses": 6,
+      "win_rate": 0.4545,
+      "strength_grade": "S",
+      "drafting_grade": "D",
+      "power_rank": 1,
+      "power_of": 14,
+      "games": 11
+    },
+    {
+      "id": "volda-e-sport-nlc",
+      "name": "Volda E-Sport",
+      "aliases": [
+        "Volda E-Sport",
+        "VoldaE-Sport",
+        "VoldaESport"
+      ],
+      "home_league": "NLC",
+      "tier": "academy_erl",
+      "wins": 7,
+      "losses": 10,
+      "win_rate": 0.4118,
+      "strength_grade": "D",
+      "drafting_grade": "D",
+      "power_rank": 11,
+      "power_of": 14,
+      "games": 17
+    },
+    {
+      "id": "absolved-nlc",
+      "name": "Absolved",
+      "aliases": [
+        "Absolved"
+      ],
+      "home_league": "NLC",
+      "tier": "academy_erl",
+      "wins": 4,
+      "losses": 6,
+      "win_rate": 0.4,
+      "strength_grade": "F",
+      "drafting_grade": "D",
+      "power_rank": 13,
+      "power_of": 14,
+      "games": 10
+    },
+    {
+      "id": "lundqvist-lightside-nlc",
+      "name": "Lundqvist Lightside",
+      "aliases": [
+        "Lundqvist Lightside",
+        "LundqvistLightside"
+      ],
+      "home_league": "NLC",
+      "tier": "academy_erl",
+      "wins": 10,
+      "losses": 17,
+      "win_rate": 0.3704,
+      "strength_grade": "D",
+      "drafting_grade": "D",
+      "power_rank": 12,
+      "power_of": 14,
+      "games": 27
+    },
+    {
+      "id": "la-bombas-nlc",
+      "name": "La BOMBAS",
+      "aliases": [
+        "La BOMBAS",
+        "LaBOMBAS"
+      ],
+      "home_league": "NLC",
+      "tier": "academy_erl",
+      "wins": 2,
+      "losses": 7,
+      "win_rate": 0.2222,
+      "strength_grade": "F",
+      "drafting_grade": "F",
+      "power_rank": 14,
+      "power_of": 14,
+      "games": 9
+    },
+    {
+      "id": "cgn-esports-prm",
+      "name": "CGN Esports",
+      "aliases": [
+        "CGN Esports",
+        "CGNEsports"
+      ],
+      "home_league": "PRM",
+      "tier": "academy_erl",
+      "wins": 6,
+      "losses": 2,
+      "win_rate": 0.75,
+      "strength_grade": "B",
+      "drafting_grade": "A",
+      "power_rank": 5,
+      "power_of": 13,
+      "games": 8
+    },
+    {
+      "id": "berlin-international-gaming-prm",
+      "name": "Berlin International Gaming",
+      "aliases": [
+        "Berlin International Gaming",
+        "BerlinInternationalGaming"
+      ],
+      "home_league": "PRM",
+      "tier": "academy_erl",
+      "wins": 87,
+      "losses": 48,
+      "win_rate": 0.6444,
+      "strength_grade": "A",
+      "drafting_grade": "B",
+      "power_rank": 2,
+      "power_of": 13,
+      "games": 135
+    },
+    {
+      "id": "g2-nord-prm",
+      "name": "G2 NORD",
+      "aliases": [
+        "G2 NORD",
+        "G2NORD"
+      ],
+      "home_league": "PRM",
+      "tier": "academy_erl",
+      "wins": 86,
+      "losses": 48,
+      "win_rate": 0.6418,
+      "strength_grade": "S",
+      "drafting_grade": "A",
+      "power_rank": 1,
+      "power_of": 13,
+      "games": 134
+    },
+    {
+      "id": "unicorns-of-love-sexy-edition-prm",
+      "name": "Unicorns of Love Sexy Edition",
+      "aliases": [
+        "Unicorns of Love Sexy Edition",
+        "UnicornsofLoveSexyEdition"
+      ],
+      "home_league": "PRM",
+      "tier": "academy_erl",
+      "wins": 65,
+      "losses": 47,
+      "win_rate": 0.5804,
+      "strength_grade": "B",
+      "drafting_grade": "B",
+      "power_rank": 4,
+      "power_of": 13,
+      "games": 112
+    },
+    {
+      "id": "eintracht-spandau-prm",
+      "name": "Eintracht Spandau",
+      "aliases": [
+        "Eintracht Spandau",
+        "EintrachtSpandau"
+      ],
+      "home_league": "PRM",
+      "tier": "academy_erl",
+      "wins": 58,
+      "losses": 43,
+      "win_rate": 0.5743,
+      "strength_grade": "B",
+      "drafting_grade": "A",
+      "power_rank": 6,
+      "power_of": 13,
+      "games": 101
+    },
+    {
+      "id": "e-wie-einfach-e-sports-prm",
+      "name": "E WIE EINFACH E-SPORTS",
+      "aliases": [
+        "E WIE EINFACH E-SPORTS",
+        "EWIEEINFACHE-SPORTS",
+        "EWIEEINFACHESPORTS"
+      ],
+      "home_league": "PRM",
+      "tier": "academy_erl",
+      "wins": 43,
+      "losses": 40,
+      "win_rate": 0.5181,
+      "strength_grade": "C",
+      "drafting_grade": "B",
+      "power_rank": 7,
+      "power_of": 13,
+      "games": 83
+    },
+    {
+      "id": "all-for-one-gaming-prm",
+      "name": "All for One Gaming",
+      "aliases": [
+        "All for One Gaming",
+        "AllforOneGaming"
+      ],
+      "home_league": "PRM",
+      "tier": "academy_erl",
+      "wins": 7,
+      "losses": 7,
+      "win_rate": 0.5,
+      "strength_grade": "D",
+      "drafting_grade": "F",
+      "power_rank": 10,
+      "power_of": 13,
+      "games": 14
+    },
+    {
+      "id": "teamorangegaming-prm",
+      "name": "TeamOrangeGaming",
+      "aliases": [
+        "TeamOrangeGaming"
+      ],
+      "home_league": "PRM",
+      "tier": "academy_erl",
+      "wins": 25,
+      "losses": 29,
+      "win_rate": 0.463,
+      "strength_grade": "C",
+      "drafting_grade": "C",
+      "power_rank": 8,
+      "power_of": 13,
+      "games": 54
+    },
+    {
+      "id": "kaufland-hangry-knights-prm",
+      "name": "Kaufland Hangry Knights",
+      "aliases": [
+        "Kaufland Hangry Knights",
+        "KauflandHangryKnights"
+      ],
+      "home_league": "PRM",
+      "tier": "academy_erl",
+      "wins": 33,
+      "losses": 42,
+      "win_rate": 0.44,
+      "strength_grade": "A",
+      "drafting_grade": "B",
+      "power_rank": 3,
+      "power_of": 13,
+      "games": 75
+    },
+    {
+      "id": "eintracht-frankfurt-prm",
+      "name": "Eintracht Frankfurt",
+      "aliases": [
+        "Eintracht Frankfurt",
+        "EintrachtFrankfurt"
+      ],
+      "home_league": "PRM",
+      "tier": "academy_erl",
+      "wins": 21,
+      "losses": 47,
+      "win_rate": 0.3088,
+      "strength_grade": "D",
+      "drafting_grade": "D",
+      "power_rank": 11,
+      "power_of": 13,
+      "games": 68
+    },
+    {
+      "id": "a-one-man-army-prime-prm",
+      "name": "A One Man Army Prime",
+      "aliases": [
+        "A One Man Army Prime",
+        "AOneManArmyPrime"
+      ],
+      "home_league": "PRM",
+      "tier": "academy_erl",
+      "wins": 3,
+      "losses": 7,
+      "win_rate": 0.3,
+      "strength_grade": "F",
+      "drafting_grade": "F",
+      "power_rank": 12,
+      "power_of": 13,
+      "games": 10
+    },
+    {
+      "id": "rossmann-centaurs-prm",
+      "name": "ROSSMANN Centaurs",
+      "aliases": [
+        "ROSSMANN Centaurs",
+        "ROSSMANNCentaurs"
+      ],
+      "home_league": "PRM",
+      "tier": "academy_erl",
+      "wins": 14,
+      "losses": 37,
+      "win_rate": 0.2745,
+      "strength_grade": "D",
+      "drafting_grade": "D",
+      "power_rank": 9,
+      "power_of": 13,
+      "games": 51
+    },
+    {
+      "id": "vfb-esports-prm",
+      "name": "VfB eSports",
+      "aliases": [
+        "VfB eSports",
+        "VfBeSports"
+      ],
+      "home_league": "PRM",
+      "tier": "academy_erl",
+      "wins": 10,
+      "losses": 34,
+      "win_rate": 0.2273,
+      "strength_grade": "F",
+      "drafting_grade": "D",
+      "power_rank": 13,
+      "power_of": 13,
+      "games": 44
+    },
+    {
+      "id": "bomba-team-rl",
+      "name": "Bomba Team",
+      "aliases": [
+        "Bomba Team",
+        "BombaTeam"
+      ],
+      "home_league": "RL",
+      "tier": "academy_erl",
+      "wins": 58,
+      "losses": 38,
+      "win_rate": 0.6042,
+      "strength_grade": "S",
+      "drafting_grade": "A",
+      "power_rank": 1,
+      "power_of": 9,
+      "games": 96
+    },
+    {
+      "id": "forsaken-rl",
+      "name": "Forsaken",
+      "aliases": [
+        "Forsaken"
+      ],
+      "home_league": "RL",
+      "tier": "academy_erl",
+      "wins": 43,
+      "losses": 37,
+      "win_rate": 0.5375,
+      "strength_grade": "B",
+      "drafting_grade": "C",
+      "power_rank": 3,
+      "power_of": 9,
+      "games": 80
+    },
+    {
+      "id": "barcz-ca-esports-by-yumisu-rl",
+      "name": "Barcząca Esports by Yumisu",
+      "aliases": [
+        "BarczcaEsportsbyYumisu",
+        "Barcząca Esports by Yumisu",
+        "BarczącaEsportsbyYumisu"
+      ],
+      "home_league": "RL",
+      "tier": "academy_erl",
+      "wins": 38,
+      "losses": 34,
+      "win_rate": 0.5278,
+      "strength_grade": "C",
+      "drafting_grade": "C",
+      "power_rank": 5,
+      "power_of": 9,
+      "games": 72
+    },
+    {
+      "id": "lodis-rl",
+      "name": "LODIS",
+      "aliases": [
+        "LODIS"
+      ],
+      "home_league": "RL",
+      "tier": "academy_erl",
+      "wins": 32,
+      "losses": 31,
+      "win_rate": 0.5079,
+      "strength_grade": "A",
+      "drafting_grade": "A",
+      "power_rank": 2,
+      "power_of": 9,
+      "games": 63
+    },
+    {
+      "id": "docisk-rl",
+      "name": "DOCISK",
+      "aliases": [
+        "DOCISK"
+      ],
+      "home_league": "RL",
+      "tier": "academy_erl",
+      "wins": 19,
+      "losses": 24,
+      "win_rate": 0.4419,
+      "strength_grade": "C",
+      "drafting_grade": "C",
+      "power_rank": 6,
+      "power_of": 9,
+      "games": 43
+    },
+    {
+      "id": "anonymo-esports-rl",
+      "name": "Anonymo Esports",
+      "aliases": [
+        "Anonymo Esports",
+        "AnonymoEsports"
+      ],
+      "home_league": "RL",
+      "tier": "academy_erl",
+      "wins": 21,
+      "losses": 27,
+      "win_rate": 0.4375,
+      "strength_grade": "D",
+      "drafting_grade": "C",
+      "power_rank": 7,
+      "power_of": 9,
+      "games": 48
+    },
+    {
+      "id": "devils-one-instreamly-rl",
+      "name": "devils.one inStreamly",
+      "aliases": [
+        "devils.one inStreamly",
+        "devils.oneinStreamly",
+        "devilsoneinStreamly"
+      ],
+      "home_league": "RL",
+      "tier": "academy_erl",
+      "wins": 19,
+      "losses": 25,
+      "win_rate": 0.4318,
+      "strength_grade": "B",
+      "drafting_grade": "B",
+      "power_rank": 4,
+      "power_of": 9,
+      "games": 44
+    },
+    {
+      "id": "onion-team-rl",
+      "name": "Onion Team",
+      "aliases": [
+        "Onion Team",
+        "OnionTeam"
+      ],
+      "home_league": "RL",
+      "tier": "academy_erl",
+      "wins": 10,
+      "losses": 31,
+      "win_rate": 0.2439,
+      "strength_grade": "F",
+      "drafting_grade": "F",
+      "power_rank": 9,
+      "power_of": 9,
+      "games": 41
+    },
+    {
+      "id": "up2umedia-cebulaki-rl",
+      "name": "UP2UMEDIA Cebulaki",
+      "aliases": [
+        "UP2UMEDIA Cebulaki",
+        "UP2UMEDIACebulaki"
+      ],
+      "home_league": "RL",
+      "tier": "academy_erl",
+      "wins": 2,
+      "losses": 11,
+      "win_rate": 0.1538,
+      "strength_grade": "D",
+      "drafting_grade": "F",
+      "power_rank": 8,
+      "power_of": 9,
+      "games": 13
+    },
+    {
+      "id": "frites-esports-club-rol",
+      "name": "Frites Esports Club",
+      "aliases": [
+        "Frites Esports Club",
+        "FritesEsportsClub"
+      ],
+      "home_league": "ROL",
+      "tier": "academy_erl",
+      "wins": 72,
+      "losses": 17,
+      "win_rate": 0.809,
+      "strength_grade": "S",
+      "drafting_grade": "S",
+      "power_rank": 1,
+      "power_of": 8,
+      "games": 89
+    },
+    {
+      "id": "the-bandits-rol",
+      "name": "The Bandits",
+      "aliases": [
+        "The Bandits",
+        "TheBandits"
+      ],
+      "home_league": "ROL",
+      "tier": "academy_erl",
+      "wins": 46,
+      "losses": 37,
+      "win_rate": 0.5542,
+      "strength_grade": "B",
+      "drafting_grade": "B",
+      "power_rank": 3,
+      "power_of": 8,
+      "games": 83
+    },
+    {
+      "id": "senshi-esports-rol",
+      "name": "Senshi eSports",
+      "aliases": [
+        "Senshi eSports",
+        "SenshieSports"
+      ],
+      "home_league": "ROL",
+      "tier": "academy_erl",
+      "wins": 38,
+      "losses": 38,
+      "win_rate": 0.5,
+      "strength_grade": "A",
+      "drafting_grade": "B",
+      "power_rank": 2,
+      "power_of": 8,
+      "games": 76
+    },
+    {
+      "id": "dynasty-rol",
+      "name": "Dynasty",
+      "aliases": [
+        "Dynasty"
+      ],
+      "home_league": "ROL",
+      "tier": "academy_erl",
+      "wins": 22,
+      "losses": 33,
+      "win_rate": 0.4,
+      "strength_grade": "B",
+      "drafting_grade": "C",
+      "power_rank": 4,
+      "power_of": 8,
+      "games": 55
+    },
+    {
+      "id": "mcon-esports-rol",
+      "name": "mCon esports",
+      "aliases": [
+        "mCon esports",
+        "mConesports"
+      ],
+      "home_league": "ROL",
+      "tier": "academy_erl",
+      "wins": 33,
+      "losses": 52,
+      "win_rate": 0.3882,
+      "strength_grade": "C",
+      "drafting_grade": "C",
+      "power_rank": 5,
+      "power_of": 8,
+      "games": 85
+    },
+    {
+      "id": "zennit-rol",
+      "name": "ZennIT",
+      "aliases": [
+        "ZennIT"
+      ],
+      "home_league": "ROL",
+      "tier": "academy_erl",
+      "wins": 24,
+      "losses": 39,
+      "win_rate": 0.381,
+      "strength_grade": "D",
+      "drafting_grade": "D",
+      "power_rank": 6,
+      "power_of": 8,
+      "games": 63
+    },
+    {
+      "id": "once-upon-a-team-rol",
+      "name": "Once Upon A Team",
+      "aliases": [
+        "Once Upon A Team",
+        "OnceUponATeam"
+      ],
+      "home_league": "ROL",
+      "tier": "academy_erl",
+      "wins": 22,
+      "losses": 36,
+      "win_rate": 0.3793,
+      "strength_grade": "F",
+      "drafting_grade": "D",
+      "power_rank": 8,
+      "power_of": 8,
+      "games": 58
+    },
+    {
+      "id": "myth-esports-rol",
+      "name": "Myth Esports",
+      "aliases": [
+        "Myth Esports",
+        "MythEsports"
+      ],
+      "home_league": "ROL",
+      "tier": "academy_erl",
+      "wins": 19,
+      "losses": 34,
+      "win_rate": 0.3585,
+      "strength_grade": "D",
+      "drafting_grade": "D",
+      "power_rank": 7,
+      "power_of": 8,
+      "games": 53
+    },
+    {
+      "id": "witchcraft-unk",
+      "name": "Witchcraft",
+      "aliases": [
+        "Witchcraft"
+      ],
+      "home_league": "UNK",
+      "tier": "academy_erl",
+      "wins": 6,
+      "losses": 4,
+      "win_rate": 0.6,
+      "strength_grade": "A",
+      "drafting_grade": "S",
+      "power_rank": 1,
+      "power_of": 2,
+      "games": 10
+    },
+    {
+      "id": "bohemian-guardians-unk",
+      "name": "Bohemian Guardians",
+      "aliases": [
+        "Bohemian Guardians",
+        "BohemianGuardians"
+      ],
+      "home_league": "UNK",
+      "tier": "academy_erl",
+      "wins": 7,
+      "losses": 26,
+      "win_rate": 0.2121,
+      "strength_grade": "D",
+      "drafting_grade": "F",
+      "power_rank": 2,
+      "power_of": 2,
+      "games": 33
+    },
+    {
+      "id": "zsk-wlrq",
+      "name": "ZSK",
+      "aliases": [
+        "ZSK"
+      ],
+      "home_league": "WLRQ",
+      "tier": "academy_erl",
+      "wins": 3,
+      "losses": 5,
+      "win_rate": 0.375,
+      "strength_grade": "C",
+      "drafting_grade": "S",
+      "power_rank": 1,
+      "power_of": 1,
+      "games": 8
+    }
+  ]
+}
