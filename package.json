@@ -11,8 +11,10 @@
     "lint": "tsc --noEmit",
     "test:pm-explorer": "node scripts/pm-explorer-smoke.mjs",
     "test:pm-explorer-regression": "node scripts/pm-explorer-regression.mjs",
-    "test:visualise": "npm run test:pm-explorer && npm run test:pm-explorer-regression",
-    "preview:qa": "vite preview --host 0.0.0.0 --port 4173"
+    "test:visualise": "npm run test:pm-explorer && npm run test:pm-explorer-regression && npm run test:pm-explorer-significant-moves && npm run test:pm-explorer-trade-selection",
+    "preview:qa": "vite preview --host 0.0.0.0 --port 4173",
+    "test:pm-explorer-significant-moves": "node scripts/pm-explorer-significant-moves.mjs",
+    "test:pm-explorer-trade-selection": "node scripts/pm-explorer-trade-selection.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.49.4",

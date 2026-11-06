@@ -14,7 +14,12 @@ import {
   ReferenceLine,
 } from "recharts";
 import type { OutcomeRef, PricePoint, TradePoint, WatchWallet } from "../../lib/pm-explorer/types";
-import { bubbleRadius, formatCents, formatSgt, formatSgtShort, formatUsd, shortAddr } from "../../lib/pm-explorer/format";
+import { formatCents, formatSgt, formatSgtShort, formatUsd, shortAddr } from "../../lib/pm-explorer/format";
+import {
+  type ChartTradeDatum,
+  tradePointToChartDatum,
+} from "../../lib/pm-explorer/tradeSelection";
+import type { SignificantMove } from "../../lib/pm-explorer/significantMoves";
 
 const LINE_COLORS = ["#5ef1ff", "#ffb947", "#ff5ecc", "#7dff9b", "#c56eff"];
 
@@ -31,6 +36,13 @@ type Props = {
   playheadTs: string | null;
   brushRange: [number, number] | null;
   onBrushRange: (range: [number, number] | null) => void;
+  /** Default false: mute ordinary bubbles; significant moves carry context. */
+  showAllTrades: boolean;
+  selectedTradeId: string | null;
+  selectedMoveId: string | null;
+  moves: SignificantMove[];
+  isolateWallet: boolean;
+  onTradeClick: (datum: ChartTradeDatum, allVisible: ChartTradeDatum[]) => void;
 };
 
 type ChartRow = {
@@ -52,6 +64,12 @@ export default function PriceBubbleChart({
   playheadTs,
   brushRange,
   onBrushRange,
+  showAllTrades,
+  selectedTradeId,
+  selectedMoveId,
+  moves,
+  isolateWallet,
+  onTradeClick,
 }: Props) {
   const watchAddrs = useMemo(() => {
     const s = new Set<string>();
@@ -83,35 +101,25 @@ export default function PriceBubbleChart({
     });
   }, [prices, visibleOutcomes, selectedTokenIds]);
 
-  const scatterByOutcome = useMemo(() => {
+  const allVisibleDatums = useMemo(() => {
     const playhead = playheadTs ? Date.parse(playheadTs) : null;
-    return visibleOutcomes.map((o, i) => {
-      const points = trades
-        .filter((tr) => tr.tokenId === o.tokenId)
-        .filter((tr) => (sideFilter === "ALL" ? true : tr.side === sideFilter))
-        .filter((tr) => tr.notionalUsdc >= minNotional)
-        .filter((tr) => (watchedOnly ? watchAddrs.has(tr.wallet) : true))
-        .filter((tr) => (focusedWallet ? tr.wallet === focusedWallet : true))
-        .filter((tr) => (playhead == null ? true : Date.parse(tr.ts) <= playhead))
-        .map((tr) => {
-          const watched = watchAddrs.has(tr.wallet);
-          return {
-            t: Date.parse(tr.ts),
-            price: tr.price,
-            z: bubbleRadius(tr.notionalUsdc),
-            side: tr.side,
-            notional: tr.notionalUsdc,
-            wallet: tr.wallet,
-            name: tr.walletName,
-            watched,
-            outcome: o.label,
-            tx: tr.txHash,
-            color: tr.side === "BUY" ? "#5ef1ff" : "#ff5ecc",
-            opacity: watched || !watch.length ? 0.9 : 0.35,
-          };
-        });
-      return { outcome: o, color: LINE_COLORS[i % LINE_COLORS.length], points };
-    });
+    const out: ChartTradeDatum[] = [];
+    for (const o of visibleOutcomes) {
+      for (const tr of trades) {
+        if (tr.tokenId !== o.tokenId) continue;
+        if (sideFilter !== "ALL" && tr.side !== sideFilter) continue;
+        if (tr.notionalUsdc < minNotional) continue;
+        const watched = watchAddrs.has(tr.wallet.toLowerCase());
+        if (watchedOnly && !watched) continue;
+        if (focusedWallet && tr.wallet.toLowerCase() !== focusedWallet.toLowerCase()) continue;
+        if (isolateWallet && focusedWallet && tr.wallet.toLowerCase() !== focusedWallet.toLowerCase()) {
+          continue;
+        }
+        if (playhead != null && Date.parse(tr.ts) > playhead) continue;
+        out.push(tradePointToChartDatum(tr, o.label, watched, watch.length > 0));
+      }
+    }
+    return out;
   }, [
     trades,
     visibleOutcomes,
@@ -122,9 +130,40 @@ export default function PriceBubbleChart({
     playheadTs,
     watchAddrs,
     watch.length,
+    isolateWallet,
   ]);
 
+  /** Highlight set: selected trade, move-associated trades, or all when showAllTrades. */
+  const highlightIds = useMemo(() => {
+    const s = new Set<string>();
+    if (selectedTradeId) s.add(selectedTradeId);
+    const move = moves.find((m) => m.id === selectedMoveId);
+    if (move) for (const a of move.associatedTrades) s.add(a.trade.id);
+    return s;
+  }, [selectedTradeId, selectedMoveId, moves]);
+
+  const scatterByOutcome = useMemo(() => {
+    return visibleOutcomes.map((o, i) => {
+      let points = allVisibleDatums.filter((d) => d.tokenId === o.tokenId);
+      if (!showAllTrades) {
+        // Mute: keep large notionals + anything highlighted; others dropped from scatter
+        points = points.filter((d) => highlightIds.has(d.tradeId) || d.notional >= 250);
+      }
+      points = points.map((d) => {
+        const selected = d.tradeId === selectedTradeId;
+        const inMove = highlightIds.has(d.tradeId);
+        return {
+          ...d,
+          opacity: selected ? 1 : inMove ? 0.95 : showAllTrades ? d.opacity : 0.25,
+          color: selected ? "#ffb947" : d.color,
+        };
+      });
+      return { outcome: o, color: LINE_COLORS[i % LINE_COLORS.length], points };
+    });
+  }, [visibleOutcomes, allVisibleDatums, showAllTrades, highlightIds, selectedTradeId]);
+
   const playheadMs = playheadTs ? Date.parse(playheadTs) : null;
+  const activeMove = moves.find((m) => m.id === selectedMoveId) || null;
 
   if (!lineData.length && scatterByOutcome.every((s) => !s.points.length)) {
     return (
@@ -134,17 +173,12 @@ export default function PriceBubbleChart({
     );
   }
 
-  // Explicit pixel height — percentage height on ResponsiveContainer collapses to 0x0
-  // when the flex parent only has min-height (confirmed in production browser QA).
   const chartHeight = 420;
 
   return (
     <div className="w-full" style={{ width: "100%", height: chartHeight, minHeight: chartHeight }}>
       <ResponsiveContainer width="100%" height={chartHeight}>
-        <ComposedChart
-          data={lineData}
-          margin={{ top: 12, right: 16, bottom: 8, left: 0 }}
-        >
+        <ComposedChart data={lineData} margin={{ top: 12, right: 16, bottom: 8, left: 0 }}>
           <CartesianGrid stroke="rgba(94,241,255,0.12)" strokeDasharray="2 3" />
           <XAxis
             dataKey="t"
@@ -161,12 +195,7 @@ export default function PriceBubbleChart({
             tick={{ fill: "#7fa990", fontSize: 9 }}
             stroke="rgba(94,241,255,0.25)"
             width={32}
-            label={{
-              value: "¢",
-              position: "insideTopLeft",
-              fill: "#7fa990",
-              fontSize: 10,
-            }}
+            label={{ value: "¢", position: "insideTopLeft", fill: "#7fa990", fontSize: 10 }}
           />
           <ZAxis dataKey="z" range={[20, 400]} />
           <Tooltip
@@ -174,28 +203,23 @@ export default function PriceBubbleChart({
               if (!active || !payload?.length) return null;
               const p = payload[0]?.payload as Record<string, unknown>;
               if (!p) return null;
-              // Scatter tooltip
               if (p.side) {
                 return (
                   <div className="ascii-panel rounded-sm px-3 py-2 text-[10px] max-w-xs">
                     <div className="phosphor">{String(p.outcome)}</div>
                     <div className="text-ink-dim">{formatSgt(Number(p.t))}</div>
                     <div className={p.side === "BUY" ? "text-cyan" : "text-magenta"}>
-                      {p.side === "BUY" ? "▲" : "▼"} {String(p.side)} of this outcome token ·{" "}
-                      {formatCents(Number(p.price))}
+                      {p.side === "BUY" ? "▲" : "▼"} {String(p.side)} · {formatCents(Number(p.price))}
                     </div>
                     <div>Notional {formatUsd(Number(p.notional))}</div>
                     <div>
                       {String(p.name || shortAddr(String(p.wallet)))}
                       {p.watched ? " · watched" : ""}
                     </div>
-                    {p.tx ? (
-                      <div className="truncate text-ink-dim/70">{String(p.tx)}</div>
-                    ) : null}
+                    <div className="mt-1 text-amber">Click / tap to inspect (hover ≠ select)</div>
                   </div>
                 );
               }
-              // Line tooltip
               return (
                 <div className="ascii-panel rounded-sm px-3 py-2 text-[10px]">
                   <div className="text-ink-dim">{formatSgt(Number(p.t))}</div>
@@ -216,6 +240,17 @@ export default function PriceBubbleChart({
             wrapperStyle={{ fontSize: 10, color: "#7fa990" }}
             formatter={(value) => <span className="text-ink-dim">{value}</span>}
           />
+          {activeMove && (
+            <>
+              <ReferenceLine
+                x={activeMove.startMs}
+                stroke="#ffb947"
+                strokeDasharray="2 2"
+                label={{ value: "move↓", fill: "#ffb947", fontSize: 9 }}
+              />
+              <ReferenceLine x={activeMove.endMs} stroke="#ffb947" strokeDasharray="2 2" />
+            </>
+          )}
           {visibleOutcomes.map((o, i) => (
             <Line
               key={`line-${o.tokenId}`}
@@ -236,43 +271,78 @@ export default function PriceBubbleChart({
               data={series.points}
               dataKey="price"
               fill={LINE_COLORS[i % LINE_COLORS.length]}
+              isAnimationActive={false}
+              onClick={(data) => {
+                // Recharts passes the datum payload on click
+                const raw = (data as { payload?: ChartTradeDatum } | ChartTradeDatum) || null;
+                const datum =
+                  raw && "payload" in (raw as object) && (raw as { payload?: ChartTradeDatum }).payload
+                    ? (raw as { payload: ChartTradeDatum }).payload
+                    : (raw as ChartTradeDatum | null);
+                if (!datum || !datum.tradeId) return;
+                onTradeClick(datum, allVisibleDatums);
+              }}
               shape={(props: {
                 cx?: number;
                 cy?: number;
-                payload?: { z?: number; color?: string; opacity?: number; side?: string };
+                payload?: ChartTradeDatum;
               }) => {
                 const cx = props.cx ?? 0;
                 const cy = props.cy ?? 0;
-                const r = Math.max(3, (props.payload?.z ?? 6) / 2.2);
-                const color = props.payload?.color || "#5ef1ff";
-                const opacity = props.payload?.opacity ?? 0.8;
-                const side = props.payload?.side;
-                if (side === "SELL") {
-                  // diamond
-                  const d = r * 1.2;
-                  return (
-                    <polygon
-                      points={`${cx},${cy - d} ${cx + d},${cy} ${cx},${cy + d} ${cx - d},${cy}`}
-                      fill={color}
-                      fillOpacity={opacity}
-                      stroke={color}
-                      strokeOpacity={Math.min(1, opacity + 0.15)}
-                    />
-                  );
-                }
-                return (
-                  <circle
-                    cx={cx}
-                    cy={cy}
-                    r={r}
-                    fill={color}
-                    fillOpacity={opacity}
-                    stroke={color}
-                    strokeOpacity={Math.min(1, opacity + 0.15)}
-                  />
+                const payload = props.payload;
+                const r = Math.max(4, (payload?.z ?? 6) / 2.2);
+                const color = payload?.color || "#5ef1ff";
+                const opacity = payload?.opacity ?? 0.8;
+                const side = payload?.side;
+                const selected = payload?.tradeId === selectedTradeId;
+                const hit = (
+                  <g
+                    style={{ cursor: "pointer" }}
+                    role="button"
+                    tabIndex={-1}
+                    aria-label={
+                      payload
+                        ? `${payload.side} ${payload.outcome} ${formatUsd(payload.notional)}`
+                        : "trade"
+                    }
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (payload) onTradeClick(payload, allVisibleDatums);
+                    }}
+                    onKeyDown={(e) => {
+                      if ((e.key === "Enter" || e.key === " ") && payload) {
+                        e.preventDefault();
+                        onTradeClick(payload, allVisibleDatums);
+                      }
+                    }}
+                  >
+                    {side === "SELL" ? (
+                      <polygon
+                        points={`${cx},${cy - r * 1.2} ${cx + r * 1.2},${cy} ${cx},${cy + r * 1.2} ${cx - r * 1.2},${cy}`}
+                        fill={color}
+                        fillOpacity={opacity}
+                        stroke={selected ? "#ffb947" : color}
+                        strokeWidth={selected ? 2 : 1}
+                        strokeOpacity={1}
+                      />
+                    ) : (
+                      <circle
+                        cx={cx}
+                        cy={cy}
+                        r={r}
+                        fill={color}
+                        fillOpacity={opacity}
+                        stroke={selected ? "#ffb947" : color}
+                        strokeWidth={selected ? 2 : 1}
+                        strokeOpacity={1}
+                      />
+                    )}
+                    {/* Invisible larger hit target for mobile tap */}
+                    <circle cx={cx} cy={cy} r={Math.max(r + 6, 12)} fill="transparent" />
+                  </g>
                 );
+                return hit;
               }}
-              isAnimationActive={false}
             />
           ))}
           {playheadMs != null && Number.isFinite(playheadMs) && (
