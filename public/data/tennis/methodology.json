@@ -1,0 +1,51 @@
+{
+  "version": "polyverse-tennis-v1",
+  "sections": [
+    {
+      "heading": "What this book is",
+      "body": [
+        "Polyverse publishes a pre-match pick for every open Polymarket tennis singles match-winner market (ATP, WTA, Challenger, ITF). Doubles are excluded.",
+        "Polyverse does not place orders, connect wallets, or hold an account for you. Every trade control on this site is a link to Share.",
+        "A pick is written once, before the scheduled start, and is never edited or backfilled. If a match is already live when this book first sees it, the pick cell stays empty."
+      ]
+    },
+    {
+      "heading": "Win probability",
+      "body": [
+        "When both players have a Tennis Abstract rating, P(A) = 1 / (1 + 10^((R_B − R_A) / 400)).",
+        "If the match surface is known from a Tennis Abstract recent-result row for that tournament, the surface rating is used (hElo, cElo, or gElo). Those figures are already Tennis Abstract's blend of overall Elo and a surface-only rating. If the surface is unknown, overall Elo is used and confidence is capped at medium.",
+        "If Elo is missing, a rank prior is used: 2200 − 105·ln(rank). It is labelled rank-prior, not Elo.",
+        "When both Elo and rank exist, the rating is pulled 8% of the way from Elo toward the rank prior, capped at ±25 points.",
+        "Recent form, when at least 5 completed matches exist in the last 10 Tennis Abstract rows, adds (wins − losses) × 3 points, capped at ±18.",
+        "First-serve in and first-serve points won add a small gap between the two players (×0.35 and ×0.25 per percentage point, each capped at ±12) only when both samples have at least 5 matches. Hold% and return% are not invented from other columns.",
+        "If either player has neither Elo nor a rank, the match falls back to the Polymarket mid as the model probability. Confidence is low. The side above 50% is still picked. Edge is then about zero, so it is not marked VALUE.",
+        "A tie at exactly 50% breaks to the better (lower) rank, then to the higher market price, then to side A. The tie-break is recorded as low confidence."
+      ]
+    },
+    {
+      "heading": "VALUE flag",
+      "body": [
+        "VALUE means the locked model probability on the picked side exceeds the Polymarket mid by at least 5 percentage points.",
+        "Favourites priced at or above 93¢ are never flagged VALUE, even if the model is higher."
+      ]
+    },
+    {
+      "heading": "Grading",
+      "body": [
+        "A pick is graded only after Polymarket resolves the match-winner market, or the event is void.",
+        "Winner: the outcome priced at about 100¢ when the market is closed. Flat stake is 1 unit risked at the pick-time price p. Win pnl = (1 − p) / p. Loss pnl = −1. ROI is total pnl divided by the number of non-void settled picks.",
+        "Void: a closed market resolved at 50–50 (cancelled, or not played). Voids are listed and excluded from W–L, ROI, Brier, and log loss.",
+        "Retirement after the match has started follows the Polymarket resolution and counts. Retirement or cancellation before the start, when the market voids at 50–50, does not count.",
+        "Brier score is the mean of (p − y)² on the picked-side probability, y = 1 if that side won. Log loss clips p into [0.001, 0.999] before −(y·ln p + (1−y)·ln(1−p))."
+      ]
+    },
+    {
+      "heading": "What is not in v1",
+      "body": [
+        "No in-play updating of the locked number. The scoreboard is live; the pick is pre-match.",
+        "No doubles. No api-tennis.com feed unless API_TENNIS_KEY is configured later. The provider interface is in the repo; the free path is ESPN rankings, Tennis Abstract Elo and recent rows, Wikimedia photos, and Polymarket.",
+        "Missing numbers are shown as an em dash. They are not filled with zeros or league averages."
+      ]
+    }
+  ]
+}

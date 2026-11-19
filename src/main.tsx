@@ -19,6 +19,7 @@ const queryClient = new QueryClient();
 const path = window.location.pathname;
 const VisualisePage = lazy(() => import('./components/visualise/VisualisePage.tsx'));
 const LolesportsPage = lazy(() => import('./components/lolesports/LolesportsPage.tsx'));
+const TennisApp = lazy(() => import('./components/tennis/TennisApp.tsx'));
 
 function Router() {
   const { user, loading } = useAuth();
@@ -27,6 +28,17 @@ function Router() {
   if (path === '/esports') return <EsportsPage />;
   if (path === '/weather') return <WeatherversePage />;
   if (path === '/mentions') return <MentionsPage />;
+  if (path === '/tennis' || path.startsWith('/tennis/')) {
+    return (
+      <Suspense fallback={
+        <div className="min-h-screen bg-[#08080a] flex items-center justify-center">
+          <span className="text-[11px] uppercase tracking-[0.22em] text-white/40">Loading tennis</span>
+        </div>
+      }>
+        <TennisApp />
+      </Suspense>
+    );
+  }
   if (path === '/lolesports') {
     return (
       <Suspense fallback={
