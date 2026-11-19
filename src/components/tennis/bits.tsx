@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { initials } from "../../lib/tennis/names";
 import { SHARE_URL } from "../../lib/tennis/methodology";
 import type { PlayerSummary } from "../../lib/tennis/types";
@@ -39,8 +39,9 @@ export function Flag({ player }: { player: PlayerSummary }) {
 }
 
 export function Portrait({ player }: { player: PlayerSummary }) {
-  if (player.photo?.url) {
-    return <img className="portrait" src={player.photo.url} alt={player.name} />;
+  const [broken, setBroken] = useState(false);
+  if (player.photo?.url && !broken) {
+    return <img className="portrait" src={player.photo.url} alt={player.name} onError={() => setBroken(true)} />;
   }
   return (
     <div className="portrait avatar" role="img" aria-label={`${player.name}, no photo on file`}>

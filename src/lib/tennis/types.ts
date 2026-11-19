@@ -13,7 +13,7 @@ export interface PhotoCredit {
   pageUrl: string | null;
   license: string | null;
   attribution: string | null;
-  source: "wikimedia";
+  source: "wikimedia" | "espn";
 }
 
 export interface PlayerSummary {
@@ -35,6 +35,13 @@ export interface PlayerSummary {
   serve: ServeLine | null;
   /** Recent-window meetings vs the opponent, not a career H2H. */
   recentH2h: { w: number; l: number; n: number } | null;
+  /**
+   * Rating built only from charted recent matches, on a 1500 start.
+   * Not Tennis Abstract Elo, and not mixed into a pick against a TA Elo.
+   */
+  resultRating: number | null;
+  resultRatingN: number | null;
+  resultRatingSource: string | null;
 }
 
 export interface ServeLine {
@@ -80,8 +87,8 @@ export interface LockedPick {
   inputs: {
     ratingA: number | null;
     ratingB: number | null;
-    ratingKindA: "surface-elo" | "overall-elo" | "rank-prior" | "none";
-    ratingKindB: "surface-elo" | "overall-elo" | "rank-prior" | "none";
+    ratingKindA: "surface-elo" | "overall-elo" | "rank-prior" | "result-elo" | "none";
+    ratingKindB: "surface-elo" | "overall-elo" | "rank-prior" | "result-elo" | "none";
     surface: Surface | null;
     formAdjA: number;
     formAdjB: number;
@@ -150,6 +157,12 @@ export interface RecordTotals {
   valueWins: number;
   valueLosses: number;
   valueSettled: number;
+  skillGapWins: number;
+  skillGapLosses: number;
+  skillGapSettled: number;
+  skillGapWinRate: number | null;
+  skillGapRoi: number | null;
+  skillGapPending: number;
   roi: number | null;
   brier: number | null;
   logLoss: number | null;
@@ -209,9 +222,26 @@ export interface BoardView {
   notes: string[];
 }
 
+export interface PlayerContext {
+  tournament: string;
+  tier: Tier;
+  level: string | null;
+  tour: Tour;
+  opponent: string;
+  opponentId: string;
+  status: MatchStatus;
+  startTime: string;
+  ownPrice: number | null;
+  opponentPrice: number | null;
+  surface: Surface | null;
+  polymarketUrl: string;
+  pickName: string | null;
+}
+
 export interface PlayerProfile {
   player: PlayerSummary;
   recent: RecentRow[];
   picks: PickRow[];
   generatedAt: string;
+  context?: PlayerContext | null;
 }

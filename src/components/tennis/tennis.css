@@ -270,6 +270,8 @@
 .blist .st { color: var(--mute); white-space: nowrap; }
 .blist .live { color: #ff7b8c; }
 .tag-v { color: var(--amber); font-size: 10px; font-weight: 600; margin-left: 6px; }
+.tag-sg { color: #8bb4ff; font-size: 10px; font-weight: 600; margin-left: 6px; letter-spacing: 0.04em; cursor: help; }
+.badge.skill { color: #8bb4ff; cursor: help; }
 
 .strip {
   margin: 8px 18px 0;

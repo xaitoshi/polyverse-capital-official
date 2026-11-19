@@ -29,6 +29,9 @@ export interface SideInput {
   firstInPct?: number | null;
   firstWonPct?: number | null;
   serveSample?: number | null;
+  /** Recent-window rating. Ignored unless useResultElo is set by the caller. */
+  resultElo?: number | null;
+  useResultElo?: boolean;
 }
 
 export interface PredictInput {
@@ -75,6 +78,9 @@ function baseRating(
   const surf = surfaceElo(p, surface);
   if (surf) return { rating: surf.value, kind: "surface-elo" };
   if (p.elo != null && Number.isFinite(p.elo)) return { rating: p.elo, kind: "overall-elo" };
+  if (p.useResultElo && p.resultElo != null && Number.isFinite(p.resultElo)) {
+    return { rating: p.resultElo, kind: "result-elo" };
+  }
   if (p.rank != null) {
     const prior = rankPrior(p.rank);
     if (prior != null) return { rating: prior, kind: "rank-prior" };
@@ -175,12 +181,15 @@ export function predict(input: PredictInput): PredictResult {
   const probA = eloWinProb(ratingA, ratingB);
   const bothSurface = aBase.kind === "surface-elo" && bBase.kind === "surface-elo";
   const anyRankOnly = aBase.kind === "rank-prior" || bBase.kind === "rank-prior";
-  const coverage: Coverage = anyRankOnly
+  const usesResult = aBase.kind === "result-elo" || bBase.kind === "result-elo";
+  const coverage: Coverage = usesResult
+    ? "mixed"
+    : anyRankOnly
     ? aBase.kind === "rank-prior" && bBase.kind === "rank-prior"
       ? "rank"
       : "mixed"
     : "elo";
-  const confidence: Confidence = bothSurface ? "high" : "medium";
+  const confidence: Confidence = usesResult ? "low" : bothSurface ? "high" : "medium";
 
   return {
     probA,

@@ -68,6 +68,12 @@ var SERVE_MIN_N = 5;
 var VALUE_EDGE = 0.05;
 var VALUE_PRICE_CAP = 0.93;
 var LOG_LOSS_CLIP = 1e-3;
+var SKILL_RANK_RATIO = 0.5;
+var SKILL_MIN_RANK_GAP = 50;
+var SKILL_MIN_ELO_GAP = 150;
+var SKILL_MIN_SAMPLE = 5;
+var SKILL_FORM_GAP = 0.2;
+var SKILL_SERVE_WON_GAP = 8;
 var METHODOLOGY_SECTIONS = [
   {
     heading: "What this book is",
@@ -88,6 +94,16 @@ var METHODOLOGY_SECTIONS = [
       `First-serve in and first-serve points won add a small gap between the two players (\xD7${FIRST_IN_PER_PP} and \xD7${FIRST_WON_PER_PP} per percentage point, each capped at \xB1${SERVE_CAP}) only when both samples have at least ${SERVE_MIN_N} matches. Hold% and return% are not invented from other columns.`,
       "If either player has neither Elo nor a rank, the match falls back to the Polymarket mid as the model probability. Confidence is low. The side above 50% is still picked. Edge is then about zero, so it is not marked VALUE.",
       "A tie at exactly 50% breaks to the better (lower) rank, then to the higher market price, then to side A. The tie-break is recorded as low confidence."
+    ]
+  },
+  {
+    heading: "Skill gap",
+    body: [
+      "Skill gap is separate from VALUE. A match can be both, either, or neither. It is not a pick by itself, and it is omitted when either player is missing the numbers for a criterion.",
+      `Placement: the better rank is at most ${SKILL_RANK_RATIO * 100}% of the other and at least ${SKILL_MIN_RANK_GAP} places better, or the Elo gap is at least ${SKILL_MIN_ELO_GAP} (surface Elo when both have the known surface, otherwise overall Elo). If rank and Elo name different players, there is no placement side.`,
+      `Results: with at least ${SKILL_MIN_SAMPLE} recent matches each, the better win rate is at least ${SKILL_FORM_GAP * 100} percentage points higher. If either sample is shorter than that, 1st-serve points won can be used instead when both samples have at least ${SKILL_MIN_SAMPLE} matches and the gap is at least ${SKILL_SERVE_WON_GAP} percentage points.`,
+      "The same player has to be ahead on placement and on results. The badge tooltip lists the figures, for example \u201C#42 vs #310, form 8\u20132 vs 3\u20137\u201D.",
+      "The record\u2019s skill-gap line counts only settled picks on matches that meet this test. Until some of those matches settle, that line stays blank."
     ]
   },
   {
@@ -191,6 +207,9 @@ function baseRating(p, surface) {
   const surf = surfaceElo(p, surface);
   if (surf) return { rating: surf.value, kind: "surface-elo" };
   if (p.elo != null && Number.isFinite(p.elo)) return { rating: p.elo, kind: "overall-elo" };
+  if (p.useResultElo && p.resultElo != null && Number.isFinite(p.resultElo)) {
+    return { rating: p.resultElo, kind: "result-elo" };
+  }
   if (p.rank != null) {
     const prior = rankPrior(p.rank);
     if (prior != null) return { rating: prior, kind: "rank-prior" };
@@ -275,8 +294,9 @@ function predict(input) {
   const probA = eloWinProb(ratingA, ratingB);
   const bothSurface = aBase.kind === "surface-elo" && bBase.kind === "surface-elo";
   const anyRankOnly = aBase.kind === "rank-prior" || bBase.kind === "rank-prior";
-  const coverage = anyRankOnly ? aBase.kind === "rank-prior" && bBase.kind === "rank-prior" ? "rank" : "mixed" : "elo";
-  const confidence = bothSurface ? "high" : "medium";
+  const usesResult = aBase.kind === "result-elo" || bBase.kind === "result-elo";
+  const coverage = usesResult ? "mixed" : anyRankOnly ? aBase.kind === "rank-prior" && bBase.kind === "rank-prior" ? "rank" : "mixed" : "elo";
+  const confidence = usesResult ? "low" : bothSurface ? "high" : "medium";
   return {
     probA,
     probB: 1 - probA,
@@ -487,7 +507,38 @@ var ISO3 = {
   uzb: "uz",
   slo: "si",
   cyp: "cy",
-  crc: "cr"
+  crc: "cr",
+  che: "ch",
+  chl: "cl",
+  ind: "in",
+  prt: "pt",
+  svn: "si",
+  phi: "ph",
+  mas: "my",
+  vie: "vn",
+  ksa: "sa",
+  uae: "ae",
+  pur: "pr",
+  dom: "do",
+  bol: "bo",
+  ven: "ve",
+  pak: "pk",
+  ban: "bd",
+  sri: "lk",
+  mda: "md",
+  arm: "am",
+  aze: "az",
+  bih: "ba",
+  mne: "me",
+  mkd: "mk",
+  alb: "al",
+  isl: "is",
+  lux: "lu",
+  mlt: "mt",
+  qat: "qa",
+  kgz: "kg",
+  tjk: "tj",
+  mon: "mn"
 };
 function toIso2(code) {
   if (!code) return null;
@@ -597,8 +648,16 @@ function classifyEvent(ev, nowMs) {
   if (!Number.isFinite(start)) return "ignore";
   const ageH = (nowMs - start) / 36e5;
   const period = (ev.period || "").toUpperCase();
+  if (ev.ended === true) {
+    if (ageH < 36 && ageH > -2) return "finished";
+    return "ignore";
+  }
   if (period === "FT") {
     if (ageH >= -1 && ageH < 30) return "finished";
+    return "ignore";
+  }
+  if (period === "CANC" || period === "VOID" || period === "RET") {
+    if (ageH < 48 && ageH > -6) return "void";
     return "ignore";
   }
   if (period === "SUS") {
@@ -609,12 +668,12 @@ function classifyEvent(ev, nowMs) {
     if (ageH < 30 && ageH > -3) return "live";
     return "ignore";
   }
-  if (period === "POST" || period === "CANC" || period === "VOID") {
-    if (ageH < 48 && ageH > -72) return "upcoming";
+  if (period === "POST") {
+    if (ageH < 0 && ageH > -24 * 10) return "upcoming";
     return "ignore";
   }
   if (ageH < 0 && ageH > -24 * 10) return "upcoming";
-  if (ageH >= 0 && ageH < 3) return "upcoming";
+  if (ageH >= 0 && ageH < 2) return "upcoming";
   return "ignore";
 }
 function tournamentFromTitle(title) {
@@ -628,11 +687,11 @@ function itfLevel(title) {
 }
 function countryFromFlagUrl(url) {
   if (!url) return null;
-  const m = url.match(/country-flags\/([a-z]{2})\.png/i) || url.match(/countries\/500\/([a-z]{2,3})\.png/i);
+  const m = url.match(/country-flags\/([a-z]{2,3})\.png/i) || url.match(/countries\/500\/([a-z]{2,3})\.png/i);
   if (!m) return null;
   const code = m[1].toLowerCase();
   if (code === "un") return null;
-  return code;
+  return toIso2(code);
 }
 function serverSide(ev, nameA, nameB) {
   const raw = (ev.server || ev.serving || "").trim();
@@ -714,7 +773,10 @@ function playerOf(name, logo, elo, rank) {
     photo: null,
     form: null,
     serve: null,
-    recentH2h: null
+    recentH2h: null,
+    resultRating: null,
+    resultRatingN: null,
+    resultRatingSource: null
   };
 }
 function toMatch(ev, now, ref) {

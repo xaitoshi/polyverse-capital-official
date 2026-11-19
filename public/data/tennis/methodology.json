@@ -23,6 +23,16 @@
       ]
     },
     {
+      "heading": "Skill gap",
+      "body": [
+        "Skill gap is separate from VALUE. A match can be both, either, or neither. It is not a pick by itself, and it is omitted when either player is missing the numbers for a criterion.",
+        "Placement: the better rank is at most 50% of the other and at least 50 places better, or the Elo gap is at least 150 (surface Elo when both have the known surface, otherwise overall Elo). If rank and Elo name different players, there is no placement side.",
+        "Results: with at least 5 recent matches each, the better win rate is at least 20 percentage points higher. If either sample is shorter than that, 1st-serve points won can be used instead when both samples have at least 5 matches and the gap is at least 8 percentage points.",
+        "The same player has to be ahead on placement and on results. The badge tooltip lists the figures, for example “#42 vs #310, form 8–2 vs 3–7”.",
+        "The record’s skill-gap line counts only settled picks on matches that meet this test. Until some of those matches settle, that line stays blank."
+      ]
+    },
+    {
       "heading": "VALUE flag",
       "body": [
         "VALUE means the locked model probability on the picked side exceeds the Polymarket mid by at least 5 percentage points.",

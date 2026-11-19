@@ -123,6 +123,9 @@ function playerOf(name: string, logo: string | undefined, elo: EloRef | null, ra
     form: null,
     serve: null,
     recentH2h: null,
+    resultRating: null,
+    resultRatingN: null,
+    resultRatingSource: null,
   };
 }
 

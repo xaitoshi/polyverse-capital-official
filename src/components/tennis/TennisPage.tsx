@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { boardMatches } from "../../lib/tennis/boardFilter";
 import { selectHero } from "../../lib/tennis/grade";
 import {
   caption,
@@ -18,6 +19,7 @@ import {
   whenLabel,
 } from "../../lib/tennis/format";
 import { lastName } from "../../lib/tennis/names";
+import { skillGap } from "../../lib/tennis/skillGap";
 import type { BoardView, MatchStatus, MatchView, PlayerSummary, Tier } from "../../lib/tennis/types";
 import { Flag, Nav, Portrait, ShareLink } from "./bits";
 import CourtSvg from "./CourtSvg";
@@ -30,11 +32,10 @@ const TIERS: { id: Tier | "all"; label: string }[] = [
   { id: "itf", label: "ITF" },
 ];
 
-const STATUSES: { id: MatchStatus | "all"; label: string }[] = [
+const STATUSES: { id: "all" | "live" | "upcoming"; label: string }[] = [
   { id: "all", label: "All" },
   { id: "live", label: "Live" },
   { id: "upcoming", label: "Upcoming" },
-  { id: "finished", label: "Finished" },
 ];
 
 function statusWord(s: MatchStatus): string {
@@ -117,37 +118,39 @@ function ScoreTable({ match }: { match: MatchView }) {
 }
 
 export default function TennisPage({ board }: { board: BoardView }) {
-  const hero = selectHero(board.matches);
+  const listed = useMemo(() => boardMatches(board.matches), [board.matches]);
+  const hero = selectHero(listed);
   const [matchId, setMatchId] = useState(hero?.id ?? "");
   const [tab, setTab] = useState<"court" | "odds" | "stats">("court");
   const [tier, setTier] = useState<(typeof TIERS)[number]["id"]>("all");
   const [status, setStatus] = useState<(typeof STATUSES)[number]["id"]>("all");
   const [valueOnly, setValueOnly] = useState(false);
+  const [skillOnly, setSkillOnly] = useState(false);
 
   const pool = useMemo(() => {
-    const live = board.matches.filter((m) => m.status === "live" || m.status === "suspended");
+    const live = listed.filter((m) => m.status === "live");
     if (live.length) return live;
-    return board.matches.filter((m) => m.status === "upcoming");
-  }, [board.matches]);
+    return listed.filter((m) => m.status === "upcoming");
+  }, [listed]);
 
-  const match = board.matches.find((m) => m.id === matchId) ?? hero;
+  const match = listed.find((m) => m.id === matchId) ?? hero;
   const idx = match ? pool.findIndex((m) => m.id === match.id) : -1;
 
-  const rows = board.matches.filter((m) => {
+  const rows = listed.filter((m) => {
     if (tier !== "all" && m.tier !== tier) return false;
-    if (status === "live" && m.status !== "live" && m.status !== "suspended") return false;
+    if (status === "live" && m.status !== "live") return false;
     if (status !== "all" && status !== "live" && m.status !== status) return false;
     if (valueOnly && !m.pick?.value) return false;
+    if (skillOnly && !skillGap(m)) return false;
     return true;
   });
 
-  const inPlay = board.matches.filter((m) => m.status === "live" || m.status === "suspended").slice(0, 3);
-  const soon = board.matches.filter((m) => m.status === "upcoming" && m.pick).slice(0, 4);
+  const inPlay = listed.filter((m) => m.status === "live").slice(0, 3);
+  const soon = listed.filter((m) => m.status === "upcoming" && m.pick).slice(0, 4);
   const book = [...inPlay, ...soon].slice(0, 7);
   const counts = {
-    live: board.matches.filter((m) => m.status === "live" || m.status === "suspended").length,
-    upcoming: board.matches.filter((m) => m.status === "upcoming").length,
-    finished: board.matches.filter((m) => m.status === "finished").length,
+    live: listed.filter((m) => m.status === "live").length,
+    upcoming: listed.filter((m) => m.status === "upcoming").length,
   };
 
   if (!match) {
@@ -163,6 +166,7 @@ export default function TennisPage({ board }: { board: BoardView }) {
   }
 
   const pickedSide = match.pick?.side ?? null;
+  const gap = skillGap(match);
   const modelLabel = match.pick
     ? `${match.pick.confidence} · ${match.pick.coverage}`
     : "No locked pick";
@@ -303,7 +307,10 @@ export default function TennisPage({ board }: { board: BoardView }) {
           <div className="card">
             <div className="card-h">
               Trade with Polyverse AI
-              <span className={`badge ${match.pick?.confidence ?? ""}`}>{match.pick ? match.pick.confidence : "Picks only"}</span>
+              <span style={{ display: "flex", gap: 6 }}>
+                {gap && <span className="badge skill" title={gap.note}>Skill gap</span>}
+                <span className={`badge ${match.pick?.confidence ?? ""}`}>{match.pick ? match.pick.confidence : "Picks only"}</span>
+              </span>
             </div>
             <h2>Match winner</h2>
             <div className="vsline">
@@ -329,6 +336,7 @@ export default function TennisPage({ board }: { board: BoardView }) {
                 <b>{match.pick ? (match.surface ? `Pre-match ${match.surface.toLowerCase()} Elo` : "Pre-match Elo") : "Not locked"}</b>
                 {match.pick ? `${cents(match.pick.marketPrice)} at pick · edge ${edgeText(match.pick.edgePp)}` : "Written only before the start"}
                 {match.pick?.value && <div className="tag-v">VALUE</div>}
+                {gap && <div className="tag-sg" title={gap.note}>SKILL GAP</div>}
               </div>
             </div>
             <div className="note">
@@ -372,6 +380,7 @@ export default function TennisPage({ board }: { board: BoardView }) {
                     {m.status === "upcoming" ? whenLabel(m.startTime) : statusWord(m.status)}
                     {m.pick ? ` · pick ${lastName(m.pick.playerName)}` : " · no pick"}
                     {m.pick?.value ? " · VALUE" : ""}
+                    {skillGap(m) ? " · skill gap" : ""}
                   </span>
                 </li>
               ))}
@@ -402,6 +411,10 @@ export default function TennisPage({ board }: { board: BoardView }) {
           <label>
             <input type="checkbox" checked={valueOnly} onChange={(e) => setValueOnly(e.target.checked)} />
             Value only
+          </label>
+          <label>
+            <input type="checkbox" checked={skillOnly} onChange={(e) => setSkillOnly(e.target.checked)} />
+            Skill gap
           </label>
           <span className="muted" style={{ fontSize: 12 }}>{rows.length} matches</span>
         </div>
@@ -438,6 +451,7 @@ export default function TennisPage({ board }: { board: BoardView }) {
                       <>
                         {lastName(m.pick.playerName)}
                         {m.pick.value && <span className="tag-v">VALUE</span>}
+                        {skillGap(m) && <span className="tag-sg" title={skillGap(m)!.note}>SKILL GAP</span>}
                         <div className="muted" style={{ fontSize: 10 }}>{m.pick.confidence}</div>
                       </>
                     ) : <span className="muted">—</span>}
@@ -472,7 +486,6 @@ export default function TennisPage({ board }: { board: BoardView }) {
             <div className="uni-grid">
               <div className="kpi"><div className="l">Live</div><div className="v">{counts.live}</div></div>
               <div className="kpi"><div className="l">Upcoming</div><div className="v">{counts.upcoming}</div></div>
-              <div className="kpi"><div className="l">Finished on board</div><div className="v">{counts.finished}</div></div>
               <div className="kpi"><div className="l">Featured volume</div><div className="v">{money(match.volume)}</div></div>
             </div>
             <p className="note">ATP + WTA + Challenger + ITF singles. Doubles excluded.</p>

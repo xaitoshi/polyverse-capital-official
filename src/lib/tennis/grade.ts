@@ -1,4 +1,5 @@
 import { LOG_LOSS_CLIP } from "./methodology";
+import { skillGap } from "./skillGap";
 import type {
   CalibrationBin,
   LockedPick,
@@ -94,6 +95,12 @@ export function emptyTotals(pending = 0): RecordTotals {
     valueWins: 0,
     valueLosses: 0,
     valueSettled: 0,
+    skillGapWins: 0,
+    skillGapLosses: 0,
+    skillGapSettled: 0,
+    skillGapWinRate: null,
+    skillGapRoi: null,
+    skillGapPending: 0,
     roi: null,
     brier: null,
     logLoss: null,
@@ -108,13 +115,19 @@ export function summarize(matches: MatchView[]): RecordTotals {
   let pending = 0;
   let valueWins = 0;
   let valueLosses = 0;
+  let skillGapWins = 0;
+  let skillGapLosses = 0;
+  let skillGapPending = 0;
   const pnls: number[] = [];
+  const skillPnls: number[] = [];
   const briers: number[] = [];
   const logs: number[] = [];
   for (const m of matches) {
     if (!m.pick) continue;
+    const gap = skillGap(m);
     if (!m.result) {
       if (m.status === "upcoming" || m.status === "live" || m.status === "suspended") pending += 1;
+      if (gap && (m.status === "upcoming" || m.status === "live")) skillGapPending += 1;
       continue;
     }
     if (m.result.kind === "void") {
@@ -124,11 +137,16 @@ export function summarize(matches: MatchView[]): RecordTotals {
     if (m.result.pickWon) {
       wins += 1;
       if (m.pick.value) valueWins += 1;
+      if (gap) skillGapWins += 1;
     } else if (m.result.pickWon === false) {
       losses += 1;
       if (m.pick.value) valueLosses += 1;
+      if (gap) skillGapLosses += 1;
     }
-    if (m.result.pnlFlat1u != null) pnls.push(m.result.pnlFlat1u);
+    if (m.result.pnlFlat1u != null) {
+      pnls.push(m.result.pnlFlat1u);
+      if (gap) skillPnls.push(m.result.pnlFlat1u);
+    }
     if (m.result.brier != null) briers.push(m.result.brier);
     if (m.result.logLoss != null) logs.push(m.result.logLoss);
   }
@@ -143,6 +161,12 @@ export function summarize(matches: MatchView[]): RecordTotals {
     valueWins,
     valueLosses,
     valueSettled: valueWins + valueLosses,
+    skillGapWins,
+    skillGapLosses,
+    skillGapSettled: skillGapWins + skillGapLosses,
+    skillGapWinRate: skillGapWins + skillGapLosses ? skillGapWins / (skillGapWins + skillGapLosses) : null,
+    skillGapRoi: skillPnls.length ? skillPnls.reduce((s, n) => s + n, 0) / skillPnls.length : null,
+    skillGapPending,
     roi: pnls.length ? pnls.reduce((s, n) => s + n, 0) / pnls.length : null,
     brier: mean(briers),
     logLoss: mean(logs),
@@ -243,7 +267,7 @@ function toPickRow(m: MatchView) {
 
 export function selectHero(matches: MatchView[]): MatchView | null {
   const tierRank: Record<string, number> = { atp: 0, wta: 1, challenger: 2, itf: 3 };
-  const live = matches.filter((m) => m.status === "live" || m.status === "suspended");
+  const live = matches.filter((m) => m.status === "live");
   if (live.length) {
     return [...live].sort((a, b) => {
       const t = (tierRank[a.tier] ?? 9) - (tierRank[b.tier] ?? 9);

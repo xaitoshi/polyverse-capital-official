@@ -37,6 +37,15 @@ export function lastName(name: string): string {
   return parts[parts.length - 1] || name;
 }
 
+/** Tennis Abstract jsfrag id, e.g. "Anna Kartseva" -> "AnnaKartseva". */
+export function taSlugCandidates(name: string): string[] {
+  const ascii = name.normalize("NFKD").replace(/\p{M}/gu, "");
+  const parts = ascii.replace(/[^A-Za-z]+/g, " ").trim().split(/\s+/).filter(Boolean);
+  if (!parts.length) return [];
+  const camel = parts.map((p) => p.charAt(0).toUpperCase() + p.slice(1).toLowerCase()).join("");
+  return camel ? [camel] : [];
+}
+
 export function initials(name: string): string {
   const parts = name
     .replace(/[()]/g, " ")
