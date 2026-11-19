@@ -290,7 +290,35 @@
 
 .below { padding: 14px 18px 28px; }
 .below h3 { font-size: 14px; font-weight: 600; margin: 8px 0 10px; }
-.filters { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 10px; }
+.filters { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 10px; scroll-margin-top: 96px; }
+.tour-chips {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  max-width: 100%;
+  min-width: 0;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.tour-chips::-webkit-scrollbar { display: none; }
+.tour-chip {
+  flex: 0 0 auto;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--mute);
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.tour-chip span { margin-left: 6px; font-weight: 500; color: var(--mute-2); }
+.tour-chip.on { background: #2a2a30; color: var(--text); border-color: transparent; }
+.tour-chip.on span { color: var(--mute); }
+@media (max-width: 700px) {
+  .tour-chips { width: 100%; order: -1; }
+}
 .filters select, .filters label {
   background: #141416; color: var(--text); border: 1px solid var(--line);
   border-radius: 999px; font-family: inherit; font-size: 12px; padding: 6px 10px;

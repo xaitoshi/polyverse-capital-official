@@ -5,6 +5,7 @@ import { isBoardMatch } from "../../src/lib/tennis/boardFilter.ts";
 import { classifyEvent, countryFromFlagUrl, outcomeMids, parseSets, setComplete } from "../../src/lib/tennis/parse.ts";
 import { namesMatch, playerId } from "../../src/lib/tennis/names.ts";
 import { skillGap } from "../../src/lib/tennis/skillGap.ts";
+import { readTennisFilters, writeTennisFilters } from "../../src/lib/tennis/urlState.ts";
 import type { MatchView, PlayerSummary } from "../../src/lib/tennis/types.ts";
 
 // 100 Elo points → ~64%, matching Tennis Abstract's own scale note.
@@ -317,5 +318,11 @@ const thin = skillGap({
 });
 assert.equal(thin?.side, "a");
 assert.match(thin?.note ?? "", /1st serve won/);
+
+const parsed = readTennisFilters("?tour=atp&skillGap=1&value=1&m=keep");
+assert.deepEqual(parsed, { tour: "atp", value: true, skillGap: true });
+assert.equal(readTennisFilters("?tour=bogus").tour, "all");
+assert.equal(writeTennisFilters("?m=keep", { tour: "atp", value: true, skillGap: true }), "?m=keep&tour=atp&value=1&skillGap=1");
+assert.equal(writeTennisFilters("?tour=wta&value=1", { tour: "all", value: false, skillGap: false }), "");
 
 console.log("tennis model tests OK");
