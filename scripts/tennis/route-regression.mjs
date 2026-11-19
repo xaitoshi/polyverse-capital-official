@@ -34,7 +34,9 @@ for (const source of ["/tennis", "/tennis/record", "/tennis/players/:id"]) {
 }
 assert.ok(vercel.crons?.some((c) => c.path.includes("/api/tennis-cron") && c.path.includes("job=all")));
 assert.ok(vercel.crons?.every((c) => !c.schedule.startsWith("*/")));
-assert.ok(readFileSync(join(root, "api/tennis-cron.ts"), "utf8").includes("CRON_SECRET") || readFileSync(join(root, "api/tennisStore.ts"), "utf8").includes("CRON_SECRET"));
+assert.ok(readFileSync(join(root, "src/server/tennis/store.ts"), "utf8").includes("CRON_SECRET"));
+assert.ok(readFileSync(join(root, "api/tennis.js"), "utf8").includes("unconfigured"));
+assert.equal(existsSync(join(root, "api/tennis.ts")), false, "api entries must be bundled js");
 
 const sql = readFileSync(join(root, "db/tennis/001_init.sql"), "utf8");
 assert.ok(sql.includes("ON CONFLICT") === false || sql.includes("tennis_picks"));

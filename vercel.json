@@ -125,11 +125,8 @@
     { "path": "/api/tennis-cron?job=all", "schedule": "0 6 * * *" }
   ],
   "functions": {
-    "api/tennis-cron.ts": {
-      "includeFiles": "{db/tennis/**,public/data/tennis/reference.json}"
-    },
-    "api/tennis.ts": {
-      "includeFiles": "db/tennis/**"
+    "api/tennis-cron.js": {
+      "includeFiles": "public/data/tennis/reference.json"
     }
   }
 }
