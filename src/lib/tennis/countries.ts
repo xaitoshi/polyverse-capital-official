@@ -25,6 +25,12 @@ const ISO3: Record<string, string> = {
   pol: "pl", por: "pt", rou: "ro", rsa: "za", rus: "ru", srb: "rs", sui: "ch",
   svk: "sk", swe: "se", tha: "th", tpe: "tw", tun: "tn", tur: "tr", ukr: "ua",
   uru: "uy", usa: "us", uzb: "uz", slo: "si", cyp: "cy", crc: "cr",
+  che: "ch", chl: "cl", ind: "in", prt: "pt", svn: "si",
+  phi: "ph", mas: "my", vie: "vn", ksa: "sa", uae: "ae", pur: "pr",
+  dom: "do", bol: "bo", ven: "ve", pak: "pk", ban: "bd", sri: "lk",
+  mda: "md", arm: "am", aze: "az", bih: "ba", mne: "me", mkd: "mk",
+  alb: "al", isl: "is", lux: "lu", mlt: "mt", qat: "qa", kgz: "kg",
+  tjk: "tj", mon: "mn",
 };
 
 export function toIso2(code: string | null | undefined): string | null {

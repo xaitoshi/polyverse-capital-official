@@ -24,6 +24,8 @@ export async function loadBoard(): Promise<BoardView> {
       record: {
         settled: 0, wins: 0, losses: 0, voids: 0, pending: 0,
         winRate: null, valueWins: 0, valueLosses: 0, valueSettled: 0,
+        skillGapWins: 0, skillGapLosses: 0, skillGapSettled: 0,
+        skillGapWinRate: null, skillGapRoi: null, skillGapPending: 0,
         roi: null, brier: null, logLoss: null,
         stake: "flat 1u at the pick-time price",
       },

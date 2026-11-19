@@ -1,3 +1,4 @@
+import { toIso2 } from "./countries";
 import type { MatchStatus, SetScore, Side, Surface, Tour } from "./types";
 
 const IN_PLAY = new Set(["S1", "S2", "S3", "S4", "S5", "LIVE"]);
@@ -30,6 +31,7 @@ export interface RawEvent {
   period?: string | null;
   score?: string | null;
   live?: boolean | null;
+  ended?: boolean | null;
   closed?: boolean;
   sport?: { sport?: string } | string | null;
   teams?: RawTeam[];
@@ -162,8 +164,17 @@ export function classifyEvent(ev: RawEvent, nowMs: number): MatchStatus | "ignor
   const ageH = (nowMs - start) / 3_600_000;
   const period = (ev.period || "").toUpperCase();
 
+  // Gamma sometimes leaves a set period up after the match is over.
+  if (ev.ended === true) {
+    if (ageH < 36 && ageH > -2) return "finished";
+    return "ignore";
+  }
   if (period === "FT") {
     if (ageH >= -1 && ageH < 30) return "finished";
+    return "ignore";
+  }
+  if (period === "CANC" || period === "VOID" || period === "RET") {
+    if (ageH < 48 && ageH > -6) return "void";
     return "ignore";
   }
   if (period === "SUS") {
@@ -174,13 +185,14 @@ export function classifyEvent(ev: RawEvent, nowMs: number): MatchStatus | "ignor
     if (ageH < 30 && ageH > -3) return "live";
     return "ignore";
   }
-  if (period === "POST" || period === "CANC" || period === "VOID") {
-    if (ageH < 48 && ageH > -72) return "upcoming";
+  if (period === "POST") {
+    if (ageH < 0 && ageH > -24 * 10) return "upcoming";
     return "ignore";
   }
   // Not started, or gamma has not posted a period.
   if (ageH < 0 && ageH > -24 * 10) return "upcoming";
-  if (ageH >= 0 && ageH < 3) return "upcoming";
+  // A start a couple of hours ago with no period is a delay, not a live match.
+  if (ageH >= 0 && ageH < 2) return "upcoming";
   return "ignore";
 }
 
@@ -205,11 +217,11 @@ export function surfaceFromText(text: string | null | undefined): Surface | null
 
 export function countryFromFlagUrl(url: string | null | undefined): string | null {
   if (!url) return null;
-  const m = url.match(/country-flags\/([a-z]{2})\.png/i) || url.match(/countries\/500\/([a-z]{2,3})\.png/i);
+  const m = url.match(/country-flags\/([a-z]{2,3})\.png/i) || url.match(/countries\/500\/([a-z]{2,3})\.png/i);
   if (!m) return null;
   const code = m[1]!.toLowerCase();
   if (code === "un") return null;
-  return code;
+  return toIso2(code);
 }
 
 export function serverSide(ev: RawEvent, nameA: string, nameB: string): Side | null {

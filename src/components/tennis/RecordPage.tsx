@@ -31,6 +31,10 @@ export default function RecordPage({ record }: { record: RecordView | null }) {
           <div className="kpi"><div className="l">W–L</div><div className="v">{t.settled ? recordText(t.wins, t.losses) : "—"}</div></div>
           <div className="kpi"><div className="l">Win rate</div><div className="v">{t.winRate == null ? "—" : pct(t.winRate, 1)}</div></div>
           <div className="kpi"><div className="l">Value W–L</div><div className="v">{t.valueSettled ? recordText(t.valueWins, t.valueLosses) : "—"}</div></div>
+          <div className="kpi" title="Settled picks on matches that meet the skill-gap test"><div className="l">Skill-gap W–L</div><div className="v">{t.skillGapSettled ? recordText(t.skillGapWins, t.skillGapLosses) : "—"}</div></div>
+          <div className="kpi"><div className="l">Skill-gap win rate</div><div className="v">{t.skillGapWinRate == null ? "—" : pct(t.skillGapWinRate, 1)}</div></div>
+          <div className="kpi"><div className="l">Skill-gap ROI</div><div className="v">{roiText(t.skillGapRoi)}</div></div>
+          <div className="kpi"><div className="l">Skill-gap open</div><div className="v">{t.skillGapPending ?? "—"}</div></div>
           <div className="kpi"><div className="l">Flat ROI</div><div className="v">{roiText(t.roi)}</div></div>
           <div className="kpi"><div className="l">Brier</div><div className="v">{t.brier == null ? "—" : t.brier.toFixed(3)}</div></div>
           <div className="kpi"><div className="l">Log loss</div><div className="v">{t.logLoss == null ? "—" : t.logLoss.toFixed(3)}</div></div>

@@ -8,11 +8,13 @@
 import { spawn } from "node:child_process";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { isBoardMatch } from "../../src/lib/tennis/boardFilter.ts";
 import { countryName, toIso2 } from "../../src/lib/tennis/countries.ts";
+import { coverageReport } from "../../src/lib/tennis/coverage.ts";
 import { buildRecord, gradePick, resolutionFromPrices, summarize } from "../../src/lib/tennis/grade.ts";
 import { INPUTS_VERSION, METHODOLOGY_SECTIONS } from "../../src/lib/tennis/methodology.ts";
-import { draftPick, type SideInput } from "../../src/lib/tennis/model.ts";
-import { compactName, foldName, namesMatch, playerId } from "../../src/lib/tennis/names.ts";
+import { draftPick, eloWinProb, rankPrior, type SideInput } from "../../src/lib/tennis/model.ts";
+import { compactName, foldName, namesMatch, playerId, taSlugCandidates } from "../../src/lib/tennis/names.ts";
 import {
   classifyEvent,
   countryFromFlagUrl,
@@ -34,6 +36,7 @@ import type {
   LockedPick,
   MatchView,
   PhotoCredit,
+  PlayerContext,
   PlayerProfile,
   PlayerSummary,
   RecentRow,
@@ -142,6 +145,7 @@ interface RankRow {
   countryCode: string | null;
   countryName: string | null;
   flagUrl: string | null;
+  headshotUrl: string | null;
   asOf: string | null;
 }
 
@@ -152,6 +156,7 @@ interface FragRow {
   surface: Surface | null;
   round: string | null;
   rank: number | null;
+  oppRank: number | null;
   opponent: string;
   opponentCountry: string | null;
   result: "W" | "L" | "unplayed";
@@ -257,6 +262,7 @@ function parseFrag(js: string): FragRow[] {
       surface,
       round: stripTags(tds[3] || "") || null,
       rank: num(stripTags(tds[4] || "")),
+      oppRank: num(stripTags(tds[5] || "")),
       opponent,
       opponentCountry: oppCountry ? toIso2(oppCountry) : null,
       result,
@@ -302,6 +308,27 @@ function formFrom(rows: FragRow[]): { w: number; l: number; n: number } | null {
     l: done.filter((r) => r.result === "L").length,
     n: done.length,
   };
+}
+
+/**
+ * Recent-window rating. Starts at 1500 and only moves on matches that name an
+ * opponent rank. Not comparable to Tennis Abstract Elo.
+ */
+function resultRatingFrom(rows: FragRow[]): { rating: number; n: number } | null {
+  const done = rows
+    .filter((r) => (r.result === "W" || r.result === "L") && r.oppRank != null && r.oppRank >= 1 && r.oppRank < 2500)
+    .slice(0, 20)
+    .reverse();
+  if (done.length < 8) return null;
+  let rating = 1500;
+  const k = 24;
+  for (const row of done) {
+    const opp = rankPrior(row.oppRank!);
+    if (opp == null) continue;
+    const expected = eloWinProb(rating, opp);
+    rating += k * ((row.result === "W" ? 1 : 0) - expected);
+  }
+  return { rating: Math.round(rating), n: done.length };
 }
 
 interface TourFile {
@@ -393,7 +420,7 @@ async function loadGamma(): Promise<RawEvent[]> {
 }
 
 async function loadEspn(tour: "atp" | "wta"): Promise<RankRow[]> {
-  const data = await fetchJson<{ rankings?: { update?: string; ranks?: { current?: number; athlete?: { displayName?: string; citizenshipCountry?: string; flagAltText?: string; flag?: string } }[] }[] }>(
+  const data = await fetchJson<{ rankings?: { update?: string; ranks?: { current?: number; athlete?: { displayName?: string; citizenshipCountry?: string; flagAltText?: string; flag?: string; headshot?: { href?: string } } }[] }[] }>(
     `https://site.web.api.espn.com/apis/site/v2/sports/tennis/${tour}/rankings`,
   );
   const block = data.rankings?.[0];
@@ -409,6 +436,7 @@ async function loadEspn(tour: "atp" | "wta"): Promise<RankRow[]> {
       countryCode: toIso2(r.athlete?.citizenshipCountry),
       countryName: r.athlete?.flagAltText ?? null,
       flagUrl: r.athlete?.flag ?? null,
+      headshotUrl: r.athlete?.headshot?.href ?? null,
       asOf,
     });
   }
@@ -542,7 +570,112 @@ async function wikiPhoto(name: string): Promise<PhotoCredit | null> {
   return credit;
 }
 
-function sideInput(p: PlayerSummary): SideInput {
+interface WtaHit {
+  countryCode: string | null;
+  rank: number | null;
+  rankAsOf: string | null;
+  form: { w: number; l: number; n: number } | null;
+}
+
+function formFromWta(matches: Record<string, unknown>[] | undefined, playerIdNum: number): { w: number; l: number; n: number } | null {
+  const cutoff = Date.now() - 540 * 86_400_000;
+  const rows = (matches ?? []).filter((m) => {
+    if (m.s_d_flag && m.s_d_flag !== "S") return false;
+    const start = Date.parse(String(m.StartDate ?? ""));
+    if (!Number.isFinite(start) || start < cutoff) return false;
+    const winner = Number(m.winner);
+    return winner === 1 || winner === 2;
+  }).slice(0, 10);
+  if (!rows.length) return null;
+  let w = 0;
+  let l = 0;
+  for (const m of rows) {
+    const p1 = Number(m.player_1);
+    const winner = Number(m.winner);
+    const won = p1 === playerIdNum ? winner === 1 : winner === 2;
+    if (won) w += 1;
+    else l += 1;
+  }
+  return { w, l, n: w + l };
+}
+
+async function loadWta(name: string): Promise<WtaHit | null> {
+  const cacheFile = path.join(CACHE, "wta", `${playerId(name)}.json`);
+  try {
+    const stat = await import("node:fs/promises").then((fs) => fs.stat(cacheFile));
+    if (Date.now() - stat.mtimeMs < 18 * 3600_000) {
+      return JSON.parse(await readFile(cacheFile, "utf8")) as WtaHit | null;
+    }
+  } catch {
+    /* fetch */
+  }
+  await sleep(200);
+  let hit: { id?: number; fullName?: string; countryCode?: string } | null = null;
+  try {
+    const data = await fetchJson<{ content?: { id?: number; fullName?: string; countryCode?: string }[] }>(
+      `https://api.wtatennis.com/tennis/players?name=${encodeURIComponent(name)}`,
+    );
+    hit = (data.content ?? []).find((p) => p.fullName && namesMatch(p.fullName, name)) ?? null;
+  } catch {
+    hit = null;
+  }
+  let profile: WtaHit | null = null;
+  if (hit?.id) {
+    await sleep(180);
+    try {
+      const ranking = await fetchJson<{ weeklyRankings?: { singlesRanking?: number; rankedAt?: string }[] }>(
+        `https://api.wtatennis.com/tennis/players/${hit.id}/ranking`,
+      );
+      const week = ranking.weeklyRankings?.[0];
+      const rawRank = week?.singlesRanking;
+      const rank = rawRank != null && rawRank > 0 && rawRank < 5000 ? rawRank : null;
+      await sleep(180);
+      const matches = await fetchJson<{ matches?: Record<string, unknown>[] }>(
+        `https://api.wtatennis.com/tennis/players/${hit.id}/matches?page=0&pageSize=20&sort=desc`,
+      );
+      profile = {
+        countryCode: toIso2(hit.countryCode),
+        rank,
+        rankAsOf: week?.rankedAt ?? null,
+        form: formFromWta(matches.matches, hit.id),
+      };
+    } catch {
+      profile = { countryCode: toIso2(hit.countryCode), rank: null, rankAsOf: null, form: null };
+    }
+  }
+  await mkdir(path.dirname(cacheFile), { recursive: true });
+  await writeFile(cacheFile, JSON.stringify(profile));
+  return profile;
+}
+
+function contextRank(ctx: PlayerContext | null): number {
+  if (!ctx) return 9;
+  if (ctx.status === "live") return 0;
+  if (ctx.status === "upcoming") return 1;
+  if (ctx.status === "suspended") return 2;
+  return 3;
+}
+
+function matchContext(m: MatchView, side: "a" | "b"): PlayerContext {
+  const other = side === "a" ? m.playerB : m.playerA;
+  return {
+    tournament: m.tournament,
+    tier: m.tier,
+    level: m.level,
+    tour: m.tour,
+    opponent: other.name,
+    opponentId: other.id,
+    status: m.status,
+    startTime: m.startTime,
+    ownPrice: side === "a" ? m.priceA : m.priceB,
+    opponentPrice: side === "a" ? m.priceB : m.priceA,
+    surface: m.surface,
+    polymarketUrl: m.polymarketUrl,
+    pickName: m.pick?.playerName ?? null,
+  };
+}
+
+function sideInput(p: PlayerSummary, useResult: boolean): SideInput {
   return {
     elo: p.elo,
     hElo: p.hElo,
@@ -553,6 +686,8 @@ function sideInput(p: PlayerSummary): SideInput {
     firstInPct: p.serve?.firstInPct ?? null,
     firstWonPct: p.serve?.firstWonPct ?? null,
     serveSample: p.serve?.sample ?? null,
+    resultElo: p.resultRating,
+    useResultElo: useResult,
   };
 }
 
@@ -630,13 +765,17 @@ async function main() {
     if (ml) for (const n of outcomeMids(ml).names) namesNeeded.add(n);
   }
 
-  const fragLimit = Number(process.env.TENNIS_FRAG_LIMIT || 180);
+  const fragLimit = Number(process.env.TENNIS_FRAG_LIMIT || 700);
   const slugByName = new Map<string, string>();
   for (const name of namesNeeded) {
     const elo = findByName(eloMap, eloRows, name);
     if (elo) slugByName.set(name, elo.slug);
+    else {
+      const guess = taSlugCandidates(name)[0];
+      if (guess) slugByName.set(name, guess);
+    }
   }
-  const slugTargets = [...new Set([...slugByName.entries()].map(([name, slug]) => ({ name, slug })))];
+  const slugTargets = [...slugByName.entries()].map(([name, slug]) => ({ name, slug }));
   console.log("frag targets", Math.min(slugTargets.length, fragLimit), "of", slugTargets.length);
 
   const frags = new Map<string, FragRow[]>();
@@ -645,19 +784,41 @@ async function main() {
     const file = path.join(CACHE, "frags", `${target.slug}.js`);
     try {
       const js = await cached(file, 18 * 3600_000, async () => {
-        await sleep(700);
+        await sleep(450);
         fetched += 1;
-        return fetchText(`https://www.tennisabstract.com/jsfrags/${encodeURIComponent(target.slug)}.js`);
+        try {
+          return await fetchText(`https://www.tennisabstract.com/jsfrags/${encodeURIComponent(target.slug)}.js`);
+        } catch {
+          return "/* missing */";
+        }
       });
-      frags.set(target.slug, parseFrag(js));
+      const rows = js.includes("player_frag") ? parseFrag(js) : [];
+      frags.set(compactName(target.name), rows);
+      frags.set(target.slug, rows);
     } catch (err) {
       console.warn("frag miss", target.slug, err instanceof Error ? err.message : err);
-      frags.set(target.slug, []);
+      frags.set(compactName(target.name), []);
     }
   }
-  console.log("frags fetched fresh", fetched);
+  console.log("frags fetched fresh", fetched, "with rows", [...frags.values()].filter((r) => r.length).length);
 
-  const photoLimit = Number(process.env.TENNIS_PHOTO_LIMIT || 90);
+  const women = new Set<string>();
+  for (const ev of kept) {
+    const title = ev.title || "";
+    const tour = eventTour(ev);
+    const womenEvent = tour === "wta" || /^W\d{2,3}\b/.test(title) || /\bW\d{2,3}\b/.test(title.split(":")[0] || "");
+    if (!womenEvent) continue;
+    for (const t of ev.teams ?? []) if (t.name) women.add(t.name);
+  }
+  const wtaByName = new Map<string, WtaHit>();
+  console.log("wta lookups", women.size);
+  for (const name of women) {
+    const hit = await loadWta(name);
+    if (hit) wtaByName.set(compactName(name), hit);
+  }
+  console.log("wta hits", wtaByName.size);
+
+  const photoLimit = Number(process.env.TENNIS_PHOTO_LIMIT || 120);
   const rankedNames = [...namesNeeded].filter((n) => slugByName.has(n) || findByName(rankMap, ranks, n));
   const liveNames: string[] = [];
   for (const ev of kept) {
@@ -700,8 +861,8 @@ async function main() {
     const eloB = findByName(eloMap, eloRows, nameB);
     const rankA = findByName(rankMap, ranks, nameA);
     const rankB = findByName(rankMap, ranks, nameB);
-    const rowsA = eloA ? frags.get(eloA.slug) ?? null : null;
-    const rowsB = eloB ? frags.get(eloB.slug) ?? null : null;
+    const rowsA = frags.get(compactName(nameA)) ?? (eloA ? frags.get(eloA.slug) ?? null : null);
+    const rowsB = frags.get(compactName(nameB)) ?? (eloB ? frags.get(eloB.slug) ?? null : null);
     const surf = surfaceForMatch(ev.startTime, tournament, rowsA, rowsB);
     const textSurf = surfaceFromText(ev.description);
     const surface = surf.surface || textSurf;
@@ -712,35 +873,58 @@ async function main() {
       return hit?.rank ?? null;
     };
 
-    const buildPlayer = (name: string, team: { logo?: string } | undefined, elo: EloRow | null, rank: RankRow | null, rows: FragRow[] | null, opponent: string): PlayerSummary => {
+    const buildPlayer = (name: string, team: { logo?: string } | undefined, elo: EloRow | null, rank: RankRow | null, rows: FragRow[] | null, opponent: string, womenEvent: boolean): PlayerSummary => {
       const fragRank = rankFromFrag(rows);
-      const countryCode = rank?.countryCode || countryFromFlagUrl(team?.logo) || null;
+      const wta = wtaByName.get(compactName(name)) ?? null;
+      const flagCode = countryFromFlagUrl(team?.logo);
+      const countryCode = flagCode || wta?.countryCode || rank?.countryCode || null;
       const serve = rows ? serveFrom(rows) : null;
+      const form = (rows && formFrom(rows)) || wta?.form || null;
+      const rankValue = rank?.rank ?? wta?.rank ?? fragRank;
+      const rankTour: "ATP" | "WTA" | null = rankValue == null ? null : womenEvent || rank?.tour === "wta" || wta ? "WTA" : "ATP";
+      const rankSource = rank
+        ? `ESPN ${rank.tour.toUpperCase()} rankings${rank.asOf ? ` ${rank.asOf}` : ""}`
+        : wta?.rank
+          ? `WTA singles ranking${wta.rankAsOf ? ` ${wta.rankAsOf.slice(0, 10)}` : ""}`
+          : fragRank
+            ? "Tennis Abstract recent-result rank column"
+            : null;
+      const rating = rows ? resultRatingFrom(rows) : null;
+      const wiki = photos.get(compactName(name)) ?? null;
+      const photo: PhotoCredit | null = wiki?.url
+        ? wiki
+        : rank?.headshotUrl
+          ? { url: rank.headshotUrl, pageUrl: null, license: null, attribution: "ESPN", source: "espn" }
+          : null;
       return {
         id: playerId(name),
         name,
         countryCode,
-        countryName: rank?.countryName || countryName(countryCode),
-        flagUrl: rank?.flagUrl || (countryCode && team?.logo && !team.logo.includes("/un.png") ? team.logo : null),
-        rank: rank?.rank ?? fragRank,
-        rankTour: rank ? (rank.tour === "wta" ? "WTA" : "ATP") : fragRank ? (tour === "wta" ? "WTA" : tour === "atp" ? "ATP" : null) : null,
-        rankSource: rank ? `ESPN ${rank.tour.toUpperCase()} rankings${rank.asOf ? ` ${rank.asOf}` : ""}` : fragRank ? "Tennis Abstract recent-result rank column" : null,
+        countryName: rank?.countryName && !flagCode && !wta?.countryCode ? rank.countryName : countryName(countryCode),
+        flagUrl: (countryCode && team?.logo && !team.logo.includes("/un.png") ? team.logo : null) || rank?.flagUrl || null,
+        rank: rankValue,
+        rankTour: rankValue == null ? null : rankTour,
+        rankSource,
         elo: elo?.elo ?? null,
         hElo: elo?.hElo ?? null,
         cElo: elo?.cElo ?? null,
         gElo: elo?.gElo ?? null,
         eloSource: elo ? `Tennis Abstract ${elo.tour.toUpperCase()} Elo${elo.updated ? `, updated ${elo.updated}` : ""}` : null,
-        photo: photos.get(compactName(name)) ?? null,
-        form: rows ? formFrom(rows) : null,
+        photo,
+        form,
         serve,
         recentH2h: rows ? h2h(rows, opponent) : null,
+        resultRating: rating?.rating ?? null,
+        resultRatingN: rating?.n ?? null,
+        resultRatingSource: rating ? `Polyverse recent-window rating from ${rating.n} Tennis Abstract matches with an opponent rank. Starts at 1500. Not Tennis Abstract Elo.` : null,
       };
     };
 
     const teamA = teams.find((t) => t.name && namesMatch(t.name, nameA));
     const teamB = teams.find((t) => t.name && namesMatch(t.name, nameB));
-    const playerA = buildPlayer(nameA, teamA, eloA, rankA, rowsA, nameB);
-    const playerB = buildPlayer(nameB, teamB, eloB, rankB, rowsB, nameA);
+    const womenEvent = tour === "wta" || Boolean(tierInfo.level?.startsWith("W"));
+    const playerA = buildPlayer(nameA, teamA, eloA, rankA, rowsA, nameB, womenEvent);
+    const playerB = buildPlayer(nameB, teamB, eloB, rankB, rowsB, nameA, womenEvent);
     const sets = parseSets(ev.score);
     const won = setsWon(sets, status);
     const marketClosed = Boolean(ml.closed || ev.closed);
@@ -780,12 +964,13 @@ async function main() {
     if (existing) {
       match.pick = existing;
     } else if (Date.parse(match.startTime) > now) {
+      const useResult = playerA.elo == null && playerB.elo == null && playerA.resultRating != null && playerB.resultRating != null;
       match.pick = draftPick({
         nowMs: now,
         startMs: Date.parse(match.startTime),
         surface: match.surface,
-        playerA: sideInput(playerA),
-        playerB: sideInput(playerB),
+        playerA: sideInput(playerA, useResult),
+        playerB: sideInput(playerB, useResult),
         priceA: match.priceA,
         priceB: match.priceB,
         playerAId: playerA.id,
@@ -813,21 +998,24 @@ async function main() {
 
   const notes = [
     "Singles match-winner markets only (Polymarket series ATP 10365, WTA 10366, ITF 11634). Doubles series are not queried.",
-    "Events with a start well in the past that are finished, or that never posted a live period, are dropped. Gamma often leaves those closed=false.",
+    "The live board lists only matches in play or still to start. Suspended, finished, voided, and events gamma marks ended are kept off this page. Finished results stay on /tennis/record.",
     "Picks are written only when startTime is still in the future at generation. A rebuild keeps any pick already stored for that event id.",
     `Model ${INPUTS_VERSION}. Surface Elo is used only when a Tennis Abstract recent row names this tournament and a surface. Otherwise overall Elo, then rank prior, then the market.`,
     ...rankNotes,
     `Tennis Abstract Elo rows: ATP ${atpElo.rows.length} (updated ${atpElo.updated ?? "unknown"}), WTA ${wtaElo.rows.length} (updated ${wtaElo.updated ?? "unknown"}).`,
-    "Photos are Wikimedia Commons when a Wikipedia page for that name describes a tennis player. Otherwise the initials avatar. No ESPN headshots are used.",
+    "Photos: Wikimedia Commons when the article is that tennis player, else an ESPN headshot from the rankings feed when one is published. Otherwise initials.",
+    "Country comes from the Polymarket team flag when it is not the unknown flag, else the WTA player record for women, else ESPN rankings.",
+    "A recent-window rating is stored only when at least 8 Tennis Abstract matches list an opponent rank. It is not Tennis Abstract Elo and is used in a pick only when neither player has a Tennis Abstract Elo.",
     "Serve lines are averages of up to 15 charted Tennis Abstract matches. Empty cells in the source stay out of the average. If there is no sample, the stat is omitted.",
     "No settled grade is stored unless the moneyline is closed at about 100¢ or voided at 50–50.",
   ];
 
+  const visible = matches.filter((m) => isBoardMatch(m, now));
   const board: BoardView = {
     generatedAt,
     inputsVersion: INPUTS_VERSION,
     source: "snapshot",
-    matches,
+    matches: visible,
     record: summarize(matches),
     sources: {
       markets: "https://gamma-api.polymarket.com/events?series_id={10365,10366,11634}",
@@ -841,16 +1029,17 @@ async function main() {
 
   const record = buildRecord(matches, generatedAt, INPUTS_VERSION);
 
-  const byPlayer = new Map<string, { summary: PlayerSummary; recent: RecentRow[]; picks: PlayerProfile["picks"] }>();
-  const remember = (p: PlayerSummary, rows: FragRow[] | null) => {
+  const byPlayer = new Map<string, { summary: PlayerSummary; recent: RecentRow[]; picks: PlayerProfile["picks"]; context: PlayerContext | null }>();
+  const remember = (p: PlayerSummary, rows: FragRow[] | null, context: PlayerContext) => {
     const cur = byPlayer.get(p.id);
-    if (!cur) byPlayer.set(p.id, { summary: p, recent: rows ? recentRows(rows) : [], picks: [] });
+    if (!cur) byPlayer.set(p.id, { summary: p, recent: rows ? recentRows(rows) : [], picks: [], context });
+    else if (contextRank(context) < contextRank(cur.context)) cur.context = context;
   };
   for (const m of matches) {
-    const eloA = findByName(eloMap, eloRows, m.playerA.name);
-    const eloB = findByName(eloMap, eloRows, m.playerB.name);
-    remember(m.playerA, eloA ? frags.get(eloA.slug) ?? null : null);
-    remember(m.playerB, eloB ? frags.get(eloB.slug) ?? null : null);
+    const rowsA = frags.get(compactName(m.playerA.name)) ?? null;
+    const rowsB = frags.get(compactName(m.playerB.name)) ?? null;
+    remember(m.playerA, rowsA, matchContext(m, "a"));
+    remember(m.playerB, rowsB, matchContext(m, "b"));
     if (m.pick) {
       const row = {
         matchId: m.id,
@@ -872,6 +1061,21 @@ async function main() {
 
   await writeFile(path.join(OUT, "board.json"), JSON.stringify(board));
   await writeFile(path.join(OUT, "record.json"), JSON.stringify(record));
+  const coverage = coverageReport(visible, generatedAt);
+  await writeFile(path.join(OUT, "coverage.json"), JSON.stringify(coverage, null, 2));
+  console.log("coverage");
+  for (const row of coverage.rows) {
+    console.log(
+      row.tier,
+      `n=${row.players}`,
+      `country ${row.countryPct}%`,
+      `photo ${row.photoPct}%`,
+      `rank ${row.rankPct}%`,
+      `elo ${row.eloPct}%`,
+      `form ${row.formPct}%`,
+      `serve ${row.servePct}%`,
+    );
+  }
   await writeFile(
     path.join(OUT, "methodology.json"),
     JSON.stringify({ version: INPUTS_VERSION, sections: METHODOLOGY_SECTIONS }, null, 2),
@@ -891,13 +1095,14 @@ async function main() {
       recent: body.recent,
       picks: body.picks,
       generatedAt,
+      context: body.context,
     };
     await writeFile(path.join(OUT, "players", `${id}.json`), JSON.stringify(profile));
   }
 
-  const picked = matches.filter((m) => m.pick).length;
-  const live = matches.filter((m) => m.status === "live" || m.status === "suspended").length;
-  console.log(`wrote ${matches.length} matches, ${picked} picks, ${live} live, players ${byPlayer.size}`);
+  const picked = visible.filter((m) => m.pick).length;
+  const live = visible.filter((m) => m.status === "live").length;
+  console.log(`wrote board ${visible.length} (live ${live}) of ${matches.length} kept, ${picked} board picks, players ${byPlayer.size}`);
 }
 
 main().catch((err) => {

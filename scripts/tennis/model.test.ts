@@ -1,9 +1,11 @@
 import assert from "node:assert/strict";
 import { draftPick, eloWinProb, isValue, predict, rankPrior } from "../../src/lib/tennis/model.ts";
 import { brier, flatStakePnl, gradePick, logLoss, resolutionFromPrices, summarize } from "../../src/lib/tennis/grade.ts";
-import { classifyEvent, outcomeMids, parseSets, setComplete } from "../../src/lib/tennis/parse.ts";
+import { isBoardMatch } from "../../src/lib/tennis/boardFilter.ts";
+import { classifyEvent, countryFromFlagUrl, outcomeMids, parseSets, setComplete } from "../../src/lib/tennis/parse.ts";
 import { namesMatch, playerId } from "../../src/lib/tennis/names.ts";
-import type { MatchView } from "../../src/lib/tennis/types.ts";
+import { skillGap } from "../../src/lib/tennis/skillGap.ts";
+import type { MatchView, PlayerSummary } from "../../src/lib/tennis/types.ts";
 
 // 100 Elo points → ~64%, matching Tennis Abstract's own scale note.
 const p = eloWinProb(2100, 2000);
@@ -169,6 +171,40 @@ assert.equal(
 );
 assert.equal(
   classifyEvent({
+    id: "4",
+    slug: "itf-a-b-2026-11-19",
+    title: "W15 Antalya: A vs B",
+    startTime: "2026-11-19T06:00:00Z",
+    period: "S2",
+    ended: true,
+    live: true,
+    sport: { sport: "itf" },
+    markets: [{ sportsMarketType: "moneyline", outcomes: "[\"A\",\"B\"]", outcomePrices: "[\"0.4\",\"0.6\"]" }],
+  }, now),
+  "finished",
+);
+assert.equal(
+  classifyEvent({
+    id: "5",
+    slug: "itf-a-b-2026-11-18",
+    title: "M15: A vs B",
+    startTime: "2026-11-18T12:00:00Z",
+    period: "SUS",
+    sport: { sport: "itf" },
+    markets: [{ sportsMarketType: "moneyline", outcomes: "[\"A\",\"B\"]", outcomePrices: "[\"0.4\",\"0.6\"]" }],
+  }, now),
+  "suspended",
+);
+assert.equal(isBoardMatch({ status: "live", startTime: "2026-11-19T07:00:00Z" }, now), true);
+assert.equal(isBoardMatch({ status: "upcoming", startTime: "2026-11-19T12:00:00Z" }, now), true);
+assert.equal(isBoardMatch({ status: "suspended", startTime: "2026-11-19T06:00:00Z" }, now), false);
+assert.equal(isBoardMatch({ status: "finished", startTime: "2026-11-19T04:00:00Z" }, now), false);
+assert.equal(isBoardMatch({ status: "upcoming", startTime: "2026-11-18T00:00:00Z" }, now), false);
+assert.equal(countryFromFlagUrl("https://polymarket-upload.s3.us-east-2.amazonaws.com/country-flags/usa.png"), "us");
+assert.equal(countryFromFlagUrl("https://polymarket-upload.s3.us-east-2.amazonaws.com/country-flags/un.png"), null);
+assert.equal(countryFromFlagUrl("https://polymarket-upload.s3.us-east-2.amazonaws.com/country-flags/es.png"), "es");
+assert.equal(
+  classifyEvent({
     id: "3",
     slug: "atp-doubles-a-b-2026-11-20",
     title: "Doubles",
@@ -202,5 +238,84 @@ assert.equal(totals.settled, 0);
 
 // Log loss is finite at a clipped extreme.
 assert.ok(Number.isFinite(logLoss(0, true)));
+
+function player(partial: Partial<PlayerSummary> & { name: string }): PlayerSummary {
+  return {
+    id: partial.name,
+    countryCode: null,
+    countryName: null,
+    flagUrl: null,
+    rank: null,
+    rankTour: null,
+    rankSource: null,
+    elo: null,
+    hElo: null,
+    cElo: null,
+    gElo: null,
+    eloSource: null,
+    photo: null,
+    form: null,
+    serve: null,
+    recentH2h: null,
+    resultRating: null,
+    resultRatingN: null,
+    resultRatingSource: null,
+    ...partial,
+  };
+}
+
+const gap = skillGap({
+  surface: null,
+  playerA: player({ name: "Better", rank: 42, form: { w: 8, l: 2, n: 10 } }),
+  playerB: player({ name: "Worse", rank: 310, form: { w: 3, l: 7, n: 10 } }),
+});
+assert.equal(gap?.side, "a");
+assert.match(gap?.note ?? "", /#42 vs #310/);
+assert.match(gap?.note ?? "", /form 8–2 vs 3–7/);
+
+assert.equal(
+  skillGap({
+    surface: "Hard",
+    playerA: player({ name: "A", rank: 42, hElo: 1800, form: { w: 4, l: 6, n: 10 } }),
+    playerB: player({ name: "B", rank: 310, hElo: 1500, form: { w: 8, l: 2, n: 10 } }),
+  }),
+  null,
+  "placement and form must name the same player",
+);
+
+assert.equal(
+  skillGap({
+    surface: null,
+    playerA: player({ name: "A", elo: 1700, form: { w: 8, l: 2, n: 10 } }),
+    playerB: player({ name: "B", form: { w: 3, l: 7, n: 10 } }),
+  }),
+  null,
+  "missing Elo on one side and no ranks is not a placement gap",
+);
+
+const eloGap = skillGap({
+  surface: null,
+  playerA: player({ name: "A", elo: 1700, form: { w: 9, l: 1, n: 10 } }),
+  playerB: player({ name: "B", elo: 1500, form: { w: 4, l: 6, n: 10 } }),
+});
+assert.equal(eloGap?.side, "a");
+
+const thin = skillGap({
+  surface: null,
+  playerA: player({
+    name: "A",
+    rank: 40,
+    form: { w: 2, l: 0, n: 2 },
+    serve: { sample: 8, acePct: null, dfPct: null, firstInPct: 60, firstWonPct: 78, secondWonPct: null, bpSavedPct: null, source: "test" },
+  }),
+  playerB: player({
+    name: "B",
+    rank: 200,
+    form: { w: 1, l: 1, n: 2 },
+    serve: { sample: 8, acePct: null, dfPct: null, firstInPct: 60, firstWonPct: 60, secondWonPct: null, bpSavedPct: null, source: "test" },
+  }),
+});
+assert.equal(thin?.side, "a");
+assert.match(thin?.note ?? "", /1st serve won/);
 
 console.log("tennis model tests OK");

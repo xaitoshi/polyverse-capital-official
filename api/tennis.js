@@ -57,6 +57,12 @@ var SERVE_MIN_N = 5;
 var VALUE_EDGE = 0.05;
 var VALUE_PRICE_CAP = 0.93;
 var LOG_LOSS_CLIP = 1e-3;
+var SKILL_RANK_RATIO = 0.5;
+var SKILL_MIN_RANK_GAP = 50;
+var SKILL_MIN_ELO_GAP = 150;
+var SKILL_MIN_SAMPLE = 5;
+var SKILL_FORM_GAP = 0.2;
+var SKILL_SERVE_WON_GAP = 8;
 var METHODOLOGY_SECTIONS = [
   {
     heading: "What this book is",
@@ -77,6 +83,16 @@ var METHODOLOGY_SECTIONS = [
       `First-serve in and first-serve points won add a small gap between the two players (\xD7${FIRST_IN_PER_PP} and \xD7${FIRST_WON_PER_PP} per percentage point, each capped at \xB1${SERVE_CAP}) only when both samples have at least ${SERVE_MIN_N} matches. Hold% and return% are not invented from other columns.`,
       "If either player has neither Elo nor a rank, the match falls back to the Polymarket mid as the model probability. Confidence is low. The side above 50% is still picked. Edge is then about zero, so it is not marked VALUE.",
       "A tie at exactly 50% breaks to the better (lower) rank, then to the higher market price, then to side A. The tie-break is recorded as low confidence."
+    ]
+  },
+  {
+    heading: "Skill gap",
+    body: [
+      "Skill gap is separate from VALUE. A match can be both, either, or neither. It is not a pick by itself, and it is omitted when either player is missing the numbers for a criterion.",
+      `Placement: the better rank is at most ${SKILL_RANK_RATIO * 100}% of the other and at least ${SKILL_MIN_RANK_GAP} places better, or the Elo gap is at least ${SKILL_MIN_ELO_GAP} (surface Elo when both have the known surface, otherwise overall Elo). If rank and Elo name different players, there is no placement side.`,
+      `Results: with at least ${SKILL_MIN_SAMPLE} recent matches each, the better win rate is at least ${SKILL_FORM_GAP * 100} percentage points higher. If either sample is shorter than that, 1st-serve points won can be used instead when both samples have at least ${SKILL_MIN_SAMPLE} matches and the gap is at least ${SKILL_SERVE_WON_GAP} percentage points.`,
+      "The same player has to be ahead on placement and on results. The badge tooltip lists the figures, for example \u201C#42 vs #310, form 8\u20132 vs 3\u20137\u201D.",
+      "The record\u2019s skill-gap line counts only settled picks on matches that meet this test. Until some of those matches settle, that line stays blank."
     ]
   },
   {
@@ -106,6 +122,78 @@ var METHODOLOGY_SECTIONS = [
   }
 ];
 
+// src/lib/tennis/skillGap.ts
+function placementSide(a, b, surface) {
+  let rankSide = null;
+  let rankNote = "";
+  if (a.rank != null && b.rank != null && a.rank !== b.rank) {
+    const side2 = a.rank < b.rank ? "a" : "b";
+    const better = side2 === "a" ? a.rank : b.rank;
+    const worse = side2 === "a" ? b.rank : a.rank;
+    if (better <= worse * SKILL_RANK_RATIO && worse - better >= SKILL_MIN_RANK_GAP) {
+      rankSide = side2;
+      rankNote = `#${better} vs #${worse}`;
+    }
+  }
+  const elo = (p) => {
+    if (surface === "Hard" && p.hElo != null) return p.hElo;
+    if (surface === "Clay" && p.cElo != null) return p.cElo;
+    if (surface === "Grass" && p.gElo != null) return p.gElo;
+    return p.elo;
+  };
+  const ea = elo(a);
+  const eb = elo(b);
+  let eloSide = null;
+  let eloNote = "";
+  if (ea != null && eb != null && Math.abs(ea - eb) >= SKILL_MIN_ELO_GAP) {
+    eloSide = ea > eb ? "a" : "b";
+    const label = surface === "Hard" && a.hElo != null && b.hElo != null ? "hard Elo" : surface === "Clay" && a.cElo != null && b.cElo != null ? "clay Elo" : surface === "Grass" && a.gElo != null && b.gElo != null ? "grass Elo" : "Elo";
+    const hi = eloSide === "a" ? ea : eb;
+    const lo = eloSide === "a" ? eb : ea;
+    eloNote = `${label} ${Math.round(hi)} vs ${Math.round(lo)}`;
+  }
+  if (rankSide && eloSide && rankSide !== eloSide) return null;
+  const side = rankSide ?? eloSide;
+  if (!side) return null;
+  return { side, note: [rankNote, eloNote].filter(Boolean).join(", ") };
+}
+function resultsSide(a, b) {
+  const af = a.form;
+  const bf = b.form;
+  if (af && bf && af.n >= SKILL_MIN_SAMPLE && bf.n >= SKILL_MIN_SAMPLE) {
+    const aw = af.w / af.n;
+    const bw = bf.w / bf.n;
+    if (Math.abs(aw - bw) < SKILL_FORM_GAP) return null;
+    const side = aw > bw ? "a" : "b";
+    const bwins = side === "a" ? af : bf;
+    const lwins = side === "a" ? bf : af;
+    return { side, note: `form ${bwins.w}\u2013${bwins.l} vs ${lwins.w}\u2013${lwins.l}` };
+  }
+  const as = a.serve;
+  const bs = b.serve;
+  if (as && bs && as.sample >= SKILL_MIN_SAMPLE && bs.sample >= SKILL_MIN_SAMPLE && as.firstWonPct != null && bs.firstWonPct != null && Math.abs(as.firstWonPct - bs.firstWonPct) >= SKILL_SERVE_WON_GAP) {
+    const side = as.firstWonPct > bs.firstWonPct ? "a" : "b";
+    const hi = side === "a" ? as.firstWonPct : bs.firstWonPct;
+    const lo = side === "a" ? bs.firstWonPct : as.firstWonPct;
+    return {
+      side,
+      note: `1st serve won ${hi.toFixed(0)}% vs ${lo.toFixed(0)}%`
+    };
+  }
+  return null;
+}
+function skillGap(match) {
+  const place = placementSide(match.playerA, match.playerB, match.surface);
+  const results = resultsSide(match.playerA, match.playerB);
+  if (!place || !results || place.side !== results.side) return null;
+  const player = place.side === "a" ? match.playerA : match.playerB;
+  return {
+    side: place.side,
+    playerName: player.name,
+    note: [place.note, results.note].filter(Boolean).join(", ")
+  };
+}
+
 // src/lib/tennis/grade.ts
 function mean(xs) {
   if (!xs.length) return null;
@@ -118,13 +206,19 @@ function summarize(matches) {
   let pending = 0;
   let valueWins = 0;
   let valueLosses = 0;
+  let skillGapWins = 0;
+  let skillGapLosses = 0;
+  let skillGapPending = 0;
   const pnls = [];
+  const skillPnls = [];
   const briers = [];
   const logs = [];
   for (const m of matches) {
     if (!m.pick) continue;
+    const gap = skillGap(m);
     if (!m.result) {
       if (m.status === "upcoming" || m.status === "live" || m.status === "suspended") pending += 1;
+      if (gap && (m.status === "upcoming" || m.status === "live")) skillGapPending += 1;
       continue;
     }
     if (m.result.kind === "void") {
@@ -134,11 +228,16 @@ function summarize(matches) {
     if (m.result.pickWon) {
       wins += 1;
       if (m.pick.value) valueWins += 1;
+      if (gap) skillGapWins += 1;
     } else if (m.result.pickWon === false) {
       losses += 1;
       if (m.pick.value) valueLosses += 1;
+      if (gap) skillGapLosses += 1;
     }
-    if (m.result.pnlFlat1u != null) pnls.push(m.result.pnlFlat1u);
+    if (m.result.pnlFlat1u != null) {
+      pnls.push(m.result.pnlFlat1u);
+      if (gap) skillPnls.push(m.result.pnlFlat1u);
+    }
     if (m.result.brier != null) briers.push(m.result.brier);
     if (m.result.logLoss != null) logs.push(m.result.logLoss);
   }
@@ -153,6 +252,12 @@ function summarize(matches) {
     valueWins,
     valueLosses,
     valueSettled: valueWins + valueLosses,
+    skillGapWins,
+    skillGapLosses,
+    skillGapSettled: skillGapWins + skillGapLosses,
+    skillGapWinRate: skillGapWins + skillGapLosses ? skillGapWins / (skillGapWins + skillGapLosses) : null,
+    skillGapRoi: skillPnls.length ? skillPnls.reduce((s, n) => s + n, 0) / skillPnls.length : null,
+    skillGapPending,
     roi: pnls.length ? pnls.reduce((s, n) => s + n, 0) / pnls.length : null,
     brier: mean(briers),
     logLoss: mean(logs),

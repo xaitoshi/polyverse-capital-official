@@ -45,6 +45,22 @@ export const VALUE_PRICE_CAP = 0.93;
 /** Probabilities are clipped here before log loss so 0/1 prices cannot explode. */
 export const LOG_LOSS_CLIP = 1e-3;
 
+/** Skill gap: better rank must be at most this fraction of the other rank. */
+export const SKILL_RANK_RATIO = 0.5;
+/** And the rank gap must be at least this many places. */
+export const SKILL_MIN_RANK_GAP = 50;
+/** Or the Elo gap (surface Elo when both have it, otherwise overall) must be at least this. */
+export const SKILL_MIN_ELO_GAP = 150;
+/** Minimum recent-match sample on each player for a form or serve comparison. */
+export const SKILL_MIN_SAMPLE = 5;
+/** Recent win-rate gap, in probability, required when both form samples are large enough. */
+export const SKILL_FORM_GAP = 0.2;
+/**
+ * When either form sample is under SKILL_MIN_SAMPLE, 1st-serve-points-won
+ * (percentage points) can stand in. Hold% is not invented.
+ */
+export const SKILL_SERVE_WON_GAP = 8;
+
 export const SHARE_URL = "https://share.xyz/r/polyverse";
 
 export const METHODOLOGY_SECTIONS: { heading: string; body: string[] }[] = [
@@ -67,6 +83,16 @@ export const METHODOLOGY_SECTIONS: { heading: string; body: string[] }[] = [
       `First-serve in and first-serve points won add a small gap between the two players (×${FIRST_IN_PER_PP} and ×${FIRST_WON_PER_PP} per percentage point, each capped at ±${SERVE_CAP}) only when both samples have at least ${SERVE_MIN_N} matches. Hold% and return% are not invented from other columns.`,
       "If either player has neither Elo nor a rank, the match falls back to the Polymarket mid as the model probability. Confidence is low. The side above 50% is still picked. Edge is then about zero, so it is not marked VALUE.",
       "A tie at exactly 50% breaks to the better (lower) rank, then to the higher market price, then to side A. The tie-break is recorded as low confidence.",
+    ],
+  },
+  {
+    heading: "Skill gap",
+    body: [
+      "Skill gap is separate from VALUE. A match can be both, either, or neither. It is not a pick by itself, and it is omitted when either player is missing the numbers for a criterion.",
+      `Placement: the better rank is at most ${SKILL_RANK_RATIO * 100}% of the other and at least ${SKILL_MIN_RANK_GAP} places better, or the Elo gap is at least ${SKILL_MIN_ELO_GAP} (surface Elo when both have the known surface, otherwise overall Elo). If rank and Elo name different players, there is no placement side.`,
+      `Results: with at least ${SKILL_MIN_SAMPLE} recent matches each, the better win rate is at least ${SKILL_FORM_GAP * 100} percentage points higher. If either sample is shorter than that, 1st-serve points won can be used instead when both samples have at least ${SKILL_MIN_SAMPLE} matches and the gap is at least ${SKILL_SERVE_WON_GAP} percentage points.`,
+      "The same player has to be ahead on placement and on results. The badge tooltip lists the figures, for example “#42 vs #310, form 8–2 vs 3–7”.",
+      "The record’s skill-gap line counts only settled picks on matches that meet this test. Until some of those matches settle, that line stays blank.",
     ],
   },
   {

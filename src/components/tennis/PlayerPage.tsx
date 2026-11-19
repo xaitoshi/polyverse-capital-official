@@ -1,4 +1,4 @@
-import { cents, eloText, formText, pct, rankLabel, statPct, whenLabel } from "../../lib/tennis/format";
+import { cents, eloText, formText, pct, rankLabel, statPct, tierLabel, whenLabel } from "../../lib/tennis/format";
 import { lastName } from "../../lib/tennis/names";
 import type { PlayerProfile } from "../../lib/tennis/types";
 import { Flag, Nav, Portrait } from "./bits";
@@ -19,6 +19,19 @@ export default function PlayerPage({ id, profile }: { id: string; profile: Playe
     );
   }
   const p = profile.player;
+  const ctx = profile.context;
+  const stats: { label: string; value: string; note?: string }[] = [];
+  if (p.elo != null) stats.push({ label: "Overall Elo", value: eloText(p.elo), note: p.eloSource ?? undefined });
+  if (p.hElo != null) stats.push({ label: "Hard Elo", value: eloText(p.hElo) });
+  if (p.cElo != null) stats.push({ label: "Clay Elo", value: eloText(p.cElo) });
+  if (p.gElo != null) stats.push({ label: "Grass Elo", value: eloText(p.gElo) });
+  if (p.resultRating != null) stats.push({ label: "Recent-window rating", value: eloText(p.resultRating), note: p.resultRatingSource ?? undefined });
+  if (p.form && p.form.n > 0) stats.push({ label: "Recent W–L", value: formText(p.form) });
+  if (p.serve?.firstInPct != null) stats.push({ label: "1st serve in", value: statPct(p.serve.firstInPct), note: p.serve.source });
+  if (p.serve?.firstWonPct != null) stats.push({ label: "1st serve won", value: statPct(p.serve.firstWonPct) });
+  if (p.serve?.acePct != null) stats.push({ label: "Ace %", value: statPct(p.serve.acePct) });
+  if (p.serve?.bpSavedPct != null) stats.push({ label: "Break pts saved", value: statPct(p.serve.bpSavedPct) });
+  const limited = !p.countryCode || p.rank == null || p.elo == null || !p.form || !p.serve;
   return (
     <div className="tennis-root">
       <Nav active="player" />
@@ -28,16 +41,16 @@ export default function PlayerPage({ id, profile }: { id: string; profile: Playe
           <div>
             <h1>{p.name}</h1>
             <div className="meta-line">
-              <Flag player={p} />
-              <span>{p.countryName || "Country —"}</span>
-              <span>·</span>
-              <span>{rankLabel(p)}</span>
+              {p.countryCode && <Flag player={p} />}
+              {p.countryName && <span>{p.countryName}</span>}
+              {p.rank != null && <span>{p.countryName ? "·" : ""} {rankLabel(p)}</span>}
               {p.rankSource && <span className="muted">({p.rankSource})</span>}
             </div>
             {p.photo && (
               <div className="credit">
-                Photo: {p.photo.attribution || "Wikimedia Commons"}
+                Photo: {p.photo.attribution || (p.photo.source === "espn" ? "ESPN" : "Wikimedia Commons")}
                 {p.photo.license ? ` · ${p.photo.license}` : ""}
+                {p.photo.source === "espn" ? " · ESPN headshot" : ""}
                 {p.photo.pageUrl && (
                   <>
                     {" · "}
@@ -46,21 +59,42 @@ export default function PlayerPage({ id, profile }: { id: string; profile: Playe
                 )}
               </div>
             )}
-            {!p.photo && <div className="credit">No Wikimedia portrait on file. Initials stand in for a photo.</div>}
           </div>
         </div>
 
-        <div className="stat-grid">
-          <div className="kpi"><div className="l">Overall Elo</div><div className="v">{eloText(p.elo)}</div></div>
-          <div className="kpi"><div className="l">Hard Elo</div><div className="v">{eloText(p.hElo)}</div></div>
-          <div className="kpi"><div className="l">Clay Elo</div><div className="v">{eloText(p.cElo)}</div></div>
-          <div className="kpi"><div className="l">Grass Elo</div><div className="v">{eloText(p.gElo)}</div></div>
-          <div className="kpi"><div className="l">Recent W–L</div><div className="v">{formText(p.form)}</div></div>
-          <div className="kpi"><div className="l">1st serve in</div><div className="v">{statPct(p.serve?.firstInPct)}</div></div>
-          <div className="kpi"><div className="l">1st serve won</div><div className="v">{statPct(p.serve?.firstWonPct)}</div></div>
-          <div className="kpi"><div className="l">Break pts saved</div><div className="v">{statPct(p.serve?.bpSavedPct)}</div></div>
-        </div>
-        <p className="note">{p.eloSource || "No Tennis Abstract Elo row for this name."} {p.serve?.source || "No serve sample."}</p>
+        {ctx && (
+          <div className="card" style={{ marginTop: 16 }}>
+            <div className="card-h">
+              Current match
+              <span className="badge">{ctx.status}</span>
+            </div>
+            <h2 style={{ fontSize: 18 }}>{p.name} vs <a href={`/tennis/players/${ctx.opponentId}`}>{ctx.opponent}</a></h2>
+            <p className="vsline">{tierLabel(ctx.tier)}{ctx.level ? ` ${ctx.level}` : ""} · {ctx.tournament}{ctx.surface ? ` · ${ctx.surface}` : ""} · {whenLabel(ctx.startTime)}</p>
+            <div className="prices">
+              <div className="ptile"><div className="who">{lastName(p.name)}</div><div className="px">{cents(ctx.ownPrice)}</div></div>
+              <div className="ptile"><div className="who">{lastName(ctx.opponent)}</div><div className="px">{cents(ctx.opponentPrice)}</div></div>
+            </div>
+            <p className="note">{ctx.pickName ? `Locked pick: ${ctx.pickName}` : "No pre-start pick stored for this match."}</p>
+            <p className="note"><a href={ctx.polymarketUrl} target="_blank" rel="noopener noreferrer">Polymarket market</a></p>
+          </div>
+        )}
+
+        {limited && (
+          <p className="note" style={{ marginTop: 14 }}>Limited data for this player (source coverage). Figures below are only the ones a source actually published.</p>
+        )}
+        {stats.length > 0 && (
+          <div className="stat-grid">
+            {stats.map((s) => (
+              <div className="kpi" key={s.label} title={s.note}>
+                <div className="l">{s.label}</div>
+                <div className="v">{s.value}</div>
+              </div>
+            ))}
+          </div>
+        )}
+        {stats.some((s) => s.note) && (
+          <p className="note">{stats.map((s) => s.note).filter(Boolean).filter((v, i, a) => a.indexOf(v) === i).join(" ")}</p>
+        )}
 
         <h2 style={{ fontSize: 16, marginTop: 22 }}>Our picks on this player</h2>
         {!profile.picks.length ? (
@@ -91,10 +125,8 @@ export default function PlayerPage({ id, profile }: { id: string; profile: Playe
           </div>
         )}
 
-        <h2 style={{ fontSize: 16, marginTop: 22 }}>Recent matches</h2>
-        {!profile.recent.length ? (
-          <p className="note">Tennis Abstract did not return a recent-results table for this player.</p>
-        ) : (
+        {profile.recent.length > 0 && <h2 style={{ fontSize: 16, marginTop: 22 }}>Recent matches</h2>}
+        {profile.recent.length > 0 && (
           <div className="picks-wrap">
             <table className="picks">
               <thead>

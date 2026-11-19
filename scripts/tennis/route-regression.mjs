@@ -45,6 +45,8 @@ assert.ok(sql.includes("CREATE TABLE IF NOT EXISTS tennis_picks"));
 const board = JSON.parse(readFileSync(join(root, "public/data/tennis/board.json"), "utf8"));
 assert.equal(board.inputsVersion, "polyverse-tennis-v1");
 assert.ok(Array.isArray(board.matches));
+const offBoard = board.matches.filter((m) => m.status !== "live" && m.status !== "upcoming");
+assert.equal(offBoard.length, 0, "board.json must only contain live and upcoming matches");
 const doubles = board.matches.filter((m) => /doubles/i.test(m.slug) || /doubles/i.test(m.title));
 assert.equal(doubles.length, 0, "doubles leaked into the board");
 for (const m of board.matches) {
