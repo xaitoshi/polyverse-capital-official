@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { boardMatches } from "../../lib/tennis/boardFilter";
 import { selectHero } from "../../lib/tennis/grade";
 import {
@@ -20,12 +20,13 @@ import {
 } from "../../lib/tennis/format";
 import { lastName } from "../../lib/tennis/names";
 import { skillGap } from "../../lib/tennis/skillGap";
-import type { BoardView, MatchStatus, MatchView, PlayerSummary, Tier } from "../../lib/tennis/types";
+import { readTennisFilters, writeTennisFilters, type TourFilter } from "../../lib/tennis/urlState";
+import type { BoardView, MatchStatus, MatchView, PlayerSummary } from "../../lib/tennis/types";
 import { Flag, Nav, Portrait, ShareLink } from "./bits";
 import CourtSvg from "./CourtSvg";
 
-const TIERS: { id: Tier | "all"; label: string }[] = [
-  { id: "all", label: "All tiers" },
+const TOURS: { id: TourFilter; label: string }[] = [
+  { id: "all", label: "All" },
   { id: "atp", label: "ATP" },
   { id: "wta", label: "WTA" },
   { id: "challenger", label: "Challenger" },
@@ -118,32 +119,62 @@ function ScoreTable({ match }: { match: MatchView }) {
 }
 
 export default function TennisPage({ board }: { board: BoardView }) {
+  const initialFilters = readTennisFilters(window.location.search);
   const listed = useMemo(() => boardMatches(board.matches), [board.matches]);
-  const hero = selectHero(listed);
-  const [matchId, setMatchId] = useState(hero?.id ?? "");
+  const [matchId, setMatchId] = useState(() => selectHero(listed)?.id ?? "");
   const [tab, setTab] = useState<"court" | "odds" | "stats">("court");
-  const [tier, setTier] = useState<(typeof TIERS)[number]["id"]>("all");
+  const [tier, setTier] = useState<TourFilter>(initialFilters.tour);
   const [status, setStatus] = useState<(typeof STATUSES)[number]["id"]>("all");
-  const [valueOnly, setValueOnly] = useState(false);
-  const [skillOnly, setSkillOnly] = useState(false);
+  const [valueOnly, setValueOnly] = useState(initialFilters.value);
+  const [skillOnly, setSkillOnly] = useState(initialFilters.skillGap);
 
-  const pool = useMemo(() => {
-    const live = listed.filter((m) => m.status === "live");
-    if (live.length) return live;
-    return listed.filter((m) => m.status === "upcoming");
-  }, [listed]);
-
-  const match = listed.find((m) => m.id === matchId) ?? hero;
-  const idx = match ? pool.findIndex((m) => m.id === match.id) : -1;
-
-  const rows = listed.filter((m) => {
-    if (tier !== "all" && m.tier !== tier) return false;
+  const passesExtras = (m: MatchView) => {
     if (status === "live" && m.status !== "live") return false;
-    if (status !== "all" && status !== "live" && m.status !== status) return false;
+    if (status === "upcoming" && m.status !== "upcoming") return false;
     if (valueOnly && !m.pick?.value) return false;
     if (skillOnly && !skillGap(m)) return false;
     return true;
-  });
+  };
+
+  const toured = useMemo(
+    () => (tier === "all" ? listed : listed.filter((m) => m.tier === tier)),
+    [listed, tier],
+  );
+  const pool = useMemo(() => {
+    const live = toured.filter((m) => m.status === "live");
+    if (live.length) return live;
+    return toured.filter((m) => m.status === "upcoming");
+  }, [toured]);
+
+  useEffect(() => {
+    if (toured.some((m) => m.id === matchId)) return;
+    setMatchId(selectHero(toured)?.id ?? "");
+  }, [toured, matchId]);
+
+  useEffect(() => {
+    const next = writeTennisFilters(window.location.search, {
+      tour: tier,
+      value: valueOnly,
+      skillGap: skillOnly,
+    });
+    const url = `${window.location.pathname}${next}`;
+    if (`${window.location.pathname}${window.location.search}` !== url) {
+      window.history.replaceState(null, "", url);
+    }
+  }, [tier, valueOnly, skillOnly]);
+
+  const match = toured.find((m) => m.id === matchId) ?? selectHero(toured);
+  const idx = match ? pool.findIndex((m) => m.id === match.id) : -1;
+
+  const rows = toured.filter(passesExtras);
+  const counted = listed.filter(passesExtras);
+  const tourCounts: Record<TourFilter, number> = {
+    all: counted.length,
+    atp: counted.filter((m) => m.tier === "atp").length,
+    wta: counted.filter((m) => m.tier === "wta").length,
+    challenger: counted.filter((m) => m.tier === "challenger").length,
+    itf: counted.filter((m) => m.tier === "itf").length,
+  };
 
   const inPlay = listed.filter((m) => m.status === "live").slice(0, 3);
   const soon = listed.filter((m) => m.status === "upcoming" && m.pick).slice(0, 4);
@@ -153,7 +184,38 @@ export default function TennisPage({ board }: { board: BoardView }) {
     upcoming: listed.filter((m) => m.status === "upcoming").length,
   };
 
-  if (!match) {
+  const filterBar = (
+    <div className="filters">
+      <div className="tour-chips" role="tablist" aria-label="Tour">
+        {TOURS.map((t) => (
+          <button
+            key={t.id}
+            type="button"
+            role="tab"
+            aria-selected={tier === t.id}
+            className={tier === t.id ? "tour-chip on" : "tour-chip"}
+            onClick={() => setTier(t.id)}
+          >
+            {t.label}
+            <span>{tourCounts[t.id]}</span>
+          </button>
+        ))}
+      </div>
+      <select aria-label="Status" value={status} onChange={(e) => setStatus(e.target.value as typeof status)}>
+        {STATUSES.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
+      </select>
+      <label>
+        <input type="checkbox" checked={valueOnly} onChange={(e) => setValueOnly(e.target.checked)} />
+        Value only
+      </label>
+      <label>
+        <input type="checkbox" checked={skillOnly} onChange={(e) => setSkillOnly(e.target.checked)} />
+        Skill gap
+      </label>
+    </div>
+  );
+
+  if (!listed.length) {
     return (
       <div className="tennis-root">
         <Nav active="tennis" />
@@ -161,6 +223,19 @@ export default function TennisPage({ board }: { board: BoardView }) {
           <h1>No open singles matches</h1>
           <p>{board.notes[0] || "The book is empty. Markets show up after ingest, and only with the numbers each source actually returned."}</p>
         </div>
+      </div>
+    );
+  }
+
+  if (!match) {
+    return (
+      <div className="tennis-root">
+        <Nav active="tennis" />
+        <section className="below">
+          <h3>Today’s picks</h3>
+          {filterBar}
+          <p className="note">No matches in this tour.</p>
+        </section>
       </div>
     );
   }
@@ -401,23 +476,7 @@ export default function TennisPage({ board }: { board: BoardView }) {
 
       <section className="below">
         <h3>Today’s picks</h3>
-        <div className="filters">
-          <select aria-label="Tier" value={tier} onChange={(e) => setTier(e.target.value as typeof tier)}>
-            {TIERS.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
-          </select>
-          <select aria-label="Status" value={status} onChange={(e) => setStatus(e.target.value as typeof status)}>
-            {STATUSES.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
-          </select>
-          <label>
-            <input type="checkbox" checked={valueOnly} onChange={(e) => setValueOnly(e.target.checked)} />
-            Value only
-          </label>
-          <label>
-            <input type="checkbox" checked={skillOnly} onChange={(e) => setSkillOnly(e.target.checked)} />
-            Skill gap
-          </label>
-          <span className="muted" style={{ fontSize: 12 }}>{rows.length} matches</span>
-        </div>
+        {filterBar}
         <div className="picks-wrap">
           <table className="picks">
             <thead>
