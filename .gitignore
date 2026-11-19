@@ -6,4 +6,5 @@ coverage/
 *.log
 .env*
 !.env.example
+data/tennis-cache/
 __pycache__/

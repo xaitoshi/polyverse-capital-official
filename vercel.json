@@ -61,6 +61,18 @@
       "destination": "/index.html"
     },
     {
+      "source": "/tennis",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/tennis/record",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/tennis/players/:id",
+      "destination": "/index.html"
+    },
+    {
       "source": "/visualise",
       "destination": "/index.html"
     },
@@ -108,5 +120,13 @@
       "source": "/api/clob/:path*",
       "destination": "https://clob.polymarket.com/:path*"
     }
-  ]
+  ],
+  "crons": [
+    { "path": "/api/tennis-cron?job=all", "schedule": "0 6 * * *" }
+  ],
+  "functions": {
+    "api/tennis-cron.js": {
+      "includeFiles": "public/data/tennis/reference.json"
+    }
+  }
 }

@@ -49,3 +49,36 @@ Searchable team cards built from Oracle's Elixir public yearly CSVs.
 - OE public Drive often quota-blocks; user Drive OE copy must be newer than local before replacing.
 - Tests: `npm run test:lolesports`
 
+## Tennis (`/tennis`)
+
+Public singles board for every open Polymarket tennis match-winner market (ATP, WTA, Challenger, ITF). Doubles are excluded. Polyverse does not send orders. Every control in the trade card and every row's Trade link opens https://share.xyz/r/polyverse in a new tab.
+
+- `/tennis` — live court, today's picks, record strip
+- `/tennis/players/:id` — rank, Elo, recent Tennis Abstract matches, picks on that player
+- `/tennis/record` — settled and pending picks, ROI, Brier, log loss, tier and surface splits, calibration, methodology
+
+The model is `polyverse-tennis-v1` (`src/lib/tennis/methodology.ts`). A pick is written once, before start, and is never edited. Matches that are already live when the book first sees them stay without a pick. Missing stats render as —.
+
+Data, free stack:
+
+- Markets and scores: Polymarket gamma, series `10365` (ATP), `10366` (WTA), `11634` (ITF). `Accept-Encoding: gzip` on pages over 50.
+- Rankings: ESPN `site.web.api.espn.com` ATP and WTA rankings (the `site.api.espn.com` host returns 403).
+- Elo and recent serve lines: Tennis Abstract. Node's fetch is Cloudflare-challenged from some hosts; `scripts/tennis/build_snapshot.ts` uses Python urllib for those URLs and waits between player files.
+- Photos: Wikimedia Commons when the Wikipedia page is a tennis player, with license and attribution. Otherwise initials.
+
+Rebuild the committed snapshot (this is what preview serves when `DATABASE_URL` is unset):
+
+```bash
+npm run build:tennis-data
+```
+
+Storage and cron, when configured:
+
+- `DATABASE_URL` — Postgres. Schema `db/tennis/001_init.sql` is applied by the cron on first run.
+- `CRON_SECRET` — required. `GET /api/tennis-cron?job=ingest|picks|settle|all` with `Authorization: Bearer $CRON_SECRET`. The checked-in Vercel schedule is daily (`0 6 * * *`, job `all`) because this project is on the Hobby plan, which rejects a 10-minute cron. The same route is safe to call every 10 minutes from any scheduler, or from Vercel Cron after a Pro upgrade.
+- `API_TENNIS_KEY` — reserved. The `ApiTennisProvider` class throws until a paid adapter is wired. It is not used to fill gaps.
+
+Without `DATABASE_URL` the read API returns `source: "unconfigured"` and the page uses `public/data/tennis/`. An empty book is an empty state, not fake matches.
+
+Tests: `npm run test:tennis`
+
