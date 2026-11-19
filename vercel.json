@@ -122,18 +122,14 @@
     }
   ],
   "crons": [
-    { "path": "/api/tennis-cron?job=ingest", "schedule": "*/10 * * * *" },
-    { "path": "/api/tennis-cron?job=picks", "schedule": "*/10 * * * *" },
-    { "path": "/api/tennis-cron?job=settle", "schedule": "*/15 * * * *" }
+    { "path": "/api/tennis-cron?job=all", "schedule": "0 6 * * *" }
   ],
   "functions": {
     "api/tennis-cron.ts": {
-      "includeFiles": "{db/tennis/**,public/data/tennis/reference.json}",
-      "maxDuration": 60
+      "includeFiles": "{db/tennis/**,public/data/tennis/reference.json}"
     },
     "api/tennis.ts": {
-      "includeFiles": "db/tennis/**",
-      "maxDuration": 30
+      "includeFiles": "db/tennis/**"
     }
   }
 }

@@ -75,7 +75,7 @@ npm run build:tennis-data
 Storage and cron, when configured:
 
 - `DATABASE_URL` — Postgres. Schema `db/tennis/001_init.sql` is applied by the cron on first run.
-- `CRON_SECRET` — required. Vercel Cron calls `/api/tennis-cron?job=ingest|picks|settle` with `Authorization: Bearer $CRON_SECRET`. Schedules are every 10 minutes for ingest and picks, every 15 for settlement. A Hobby plan only allows a daily cron; the routes themselves are safe to call on that cadence from any scheduler.
+- `CRON_SECRET` — required. `GET /api/tennis-cron?job=ingest|picks|settle|all` with `Authorization: Bearer $CRON_SECRET`. The checked-in Vercel schedule is daily (`0 6 * * *`, job `all`) because this project is on the Hobby plan, which rejects a 10-minute cron. The same route is safe to call every 10 minutes from any scheduler, or from Vercel Cron after a Pro upgrade.
 - `API_TENNIS_KEY` — reserved. The `ApiTennisProvider` class throws until a paid adapter is wired. It is not used to fill gaps.
 
 Without `DATABASE_URL` the read API returns `source: "unconfigured"` and the page uses `public/data/tennis/`. An empty book is an empty state, not fake matches.

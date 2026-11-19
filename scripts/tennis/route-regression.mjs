@@ -32,7 +32,8 @@ const vercel = JSON.parse(readFileSync(join(root, "vercel.json"), "utf8"));
 for (const source of ["/tennis", "/tennis/record", "/tennis/players/:id"]) {
   assert.ok(vercel.rewrites.some((r) => r.source === source && r.destination === "/index.html"), source);
 }
-assert.ok(vercel.crons?.some((c) => c.path.includes("/api/tennis-cron") && c.path.includes("ingest")));
+assert.ok(vercel.crons?.some((c) => c.path.includes("/api/tennis-cron") && c.path.includes("job=all")));
+assert.ok(vercel.crons?.every((c) => !c.schedule.startsWith("*/")));
 assert.ok(readFileSync(join(root, "api/tennis-cron.ts"), "utf8").includes("CRON_SECRET") || readFileSync(join(root, "api/tennisStore.ts"), "utf8").includes("CRON_SECRET"));
 
 const sql = readFileSync(join(root, "db/tennis/001_init.sql"), "utf8");
