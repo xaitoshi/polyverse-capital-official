@@ -120,7 +120,10 @@ function ScoreTable({ match }: { match: MatchView }) {
 
 export default function TennisPage({ board }: { board: BoardView }) {
   const initialFilters = readTennisFilters(window.location.search);
-  const listed = useMemo(() => boardMatches(board.matches), [board.matches]);
+  const listed = useMemo(
+    () => boardMatches(board.matches, Date.now(), board.source),
+    [board.matches, board.source],
+  );
   const [matchId, setMatchId] = useState(() => selectHero(listed)?.id ?? "");
   const [tab, setTab] = useState<"court" | "odds" | "stats">("court");
   const [tier, setTier] = useState<TourFilter>(initialFilters.tour);

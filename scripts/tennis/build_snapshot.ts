@@ -127,6 +127,25 @@ async function cached(file: string, maxAgeMs: number, loader: () => Promise<stri
   return text;
 }
 
+/** Rankings and Elo are optional. A failed fetch keeps the previous cache, then an empty string. */
+async function cachedOrStale(file: string, maxAgeMs: number, url: string, notes: string[]): Promise<string> {
+  try {
+    return await cached(file, maxAgeMs, () => fetchText(url));
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    try {
+      const stale = await readFile(file, "utf8");
+      console.warn("source miss, using cache", url, message);
+      notes.push(`${url} failed (${message}). Used the cached copy.`);
+      return stale;
+    } catch {
+      console.warn("source miss", url, message);
+      notes.push(`${url} failed (${message}). That source is omitted for this snapshot.`);
+      return "";
+    }
+  }
+}
+
 interface EloRow {
   tour: Tour;
   name: string;
@@ -731,10 +750,11 @@ async function main() {
   console.log("events", events.length);
 
   console.log("fetching tennis abstract index + elo…");
-  const home = await cached(path.join(CACHE, "ta-home.html"), 12 * 3600_000, () => fetchText("https://www.tennisabstract.com/"));
+  const sourceNotes: string[] = [];
+  const home = await cachedOrStale(path.join(CACHE, "ta-home.html"), 12 * 3600_000, "https://www.tennisabstract.com/", sourceNotes);
   const files = parseTourFiles(home);
-  const atpEloHtml = await cached(path.join(CACHE, "atp-elo.html"), 12 * 3600_000, () => fetchText("https://www.tennisabstract.com/reports/atp_elo_ratings.html"));
-  const wtaEloHtml = await cached(path.join(CACHE, "wta-elo.html"), 12 * 3600_000, () => fetchText("https://www.tennisabstract.com/reports/wta_elo_ratings.html"));
+  const atpEloHtml = await cachedOrStale(path.join(CACHE, "atp-elo.html"), 12 * 3600_000, "https://www.tennisabstract.com/reports/atp_elo_ratings.html", sourceNotes);
+  const wtaEloHtml = await cachedOrStale(path.join(CACHE, "wta-elo.html"), 12 * 3600_000, "https://www.tennisabstract.com/reports/wta_elo_ratings.html", sourceNotes);
   const atpElo = parseElo(atpEloHtml, "atp");
   const wtaElo = parseElo(wtaEloHtml, "wta");
   console.log("elo", atpElo.rows.length, wtaElo.rows.length, "updated", atpElo.updated, wtaElo.updated);
@@ -1008,9 +1028,14 @@ async function main() {
     "A recent-window rating is stored only when at least 8 Tennis Abstract matches list an opponent rank. It is not Tennis Abstract Elo and is used in a pick only when neither player has a Tennis Abstract Elo.",
     "Serve lines are averages of up to 15 charted Tennis Abstract matches. Empty cells in the source stay out of the average. If there is no sample, the stat is omitted.",
     "No settled grade is stored unless the moneyline is closed at about 100¢ or voided at 50–50.",
+    "This file is a snapshot. The page hides a live row whose start is more than 12 hours ago when source is snapshot. A Postgres board is not filtered that way.",
+    ...sourceNotes,
   ];
 
-  const visible = matches.filter((m) => isBoardMatch(m, now));
+  const visible = matches.filter((m) => isBoardMatch(m, now, "snapshot"));
+  if (!visible.length) {
+    throw new Error("refusing to replace the tennis board with an empty snapshot");
+  }
   const board: BoardView = {
     generatedAt,
     inputsVersion: INPUTS_VERSION,
