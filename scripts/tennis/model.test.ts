@@ -201,6 +201,12 @@ assert.equal(isBoardMatch({ status: "upcoming", startTime: "2026-11-19T12:00:00Z
 assert.equal(isBoardMatch({ status: "suspended", startTime: "2026-11-19T06:00:00Z" }, now), false);
 assert.equal(isBoardMatch({ status: "finished", startTime: "2026-11-19T04:00:00Z" }, now), false);
 assert.equal(isBoardMatch({ status: "upcoming", startTime: "2026-11-18T00:00:00Z" }, now), false);
+// A frozen snapshot must not keep yesterday's live rows. Postgres still shows them.
+assert.equal(isBoardMatch({ status: "live", startTime: "2026-11-18T18:00:00Z" }, now, "snapshot"), false);
+assert.equal(isBoardMatch({ status: "live", startTime: "2026-11-18T18:00:00Z" }, now, "postgres"), true);
+assert.equal(isBoardMatch({ status: "live", startTime: "2026-11-18T18:00:00Z" }, now), true);
+assert.equal(isBoardMatch({ status: "live", startTime: "2026-11-19T02:00:00Z" }, now, "snapshot"), true);
+assert.equal(isBoardMatch({ status: "upcoming", startTime: "2026-11-19T01:00:00Z" }, now, "snapshot"), false);
 assert.equal(countryFromFlagUrl("https://polymarket-upload.s3.us-east-2.amazonaws.com/country-flags/usa.png"), "us");
 assert.equal(countryFromFlagUrl("https://polymarket-upload.s3.us-east-2.amazonaws.com/country-flags/un.png"), null);
 assert.equal(countryFromFlagUrl("https://polymarket-upload.s3.us-east-2.amazonaws.com/country-flags/es.png"), "es");

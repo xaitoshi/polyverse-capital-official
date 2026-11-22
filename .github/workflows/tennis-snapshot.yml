@@ -1,0 +1,73 @@
+# Refresh the committed tennis board and push it to main so Vercel production
+# redeploys. Schedule is 02:00 UTC, which is 10:00 Asia/Singapore.
+#
+# GitHub runs this only from the default branch. The push uses
+# TENNIS_COMMIT_TOKEN (a fine-grained PAT with Contents: Read and write on
+# this repo). The default GITHUB_TOKEN does not trigger the Vercel Git
+# webhook, so production would not pick up the new snapshot.
+name: Refresh tennis snapshot
+
+on:
+  schedule:
+    - cron: "0 2 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: tennis-snapshot
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Require a push token Vercel can see
+        env:
+          TOKEN: ${{ secrets.TENNIS_COMMIT_TOKEN }}
+        run: |
+          if [ -z "$TOKEN" ]; then
+            echo "TENNIS_COMMIT_TOKEN is not set."
+            echo "Add a fine-grained personal access token as an Actions secret."
+            echo "Repository: xaitoshi/polyverse-capital-official. Permission: Contents Read and write."
+            echo "Pushes with the default GITHUB_TOKEN do not trigger a Vercel production deploy."
+            exit 1
+          fi
+
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          token: ${{ secrets.TENNIS_COMMIT_TOKEN }}
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Restore the polite fetch cache
+        uses: actions/cache@v4
+        with:
+          path: data/tennis-cache
+          key: tennis-cache-${{ github.run_id }}
+          restore-keys: |
+            tennis-cache-
+
+      - run: npm ci
+      - run: npm run build:tennis-data
+
+      - name: Commit the snapshot to main
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/data/tennis
+          if git diff --staged --quiet; then
+            echo "Snapshot unchanged."
+            exit 0
+          fi
+          git commit -m "chore(tennis): refresh the public board snapshot"
+          git fetch origin main
+          git rebase origin/main
+          git push origin HEAD:main

@@ -67,25 +67,37 @@ Data, free stack:
 - Elo and recent serve lines: Tennis Abstract, including guessed `jsfrags/{CamelName}.js` pages that cover many ITF and Challenger players. Node's fetch is Cloudflare-challenged; the snapshot script uses Python urllib and waits between player files.
 - Photos: Wikimedia Commons when the article is that tennis player, else the ESPN rankings headshot. Otherwise initials.
 
-The site you see at `/tennis` is the committed snapshot in `public/data/tennis/` whenever `DATABASE_URL` is unset. Refresh that file and ship it:
+The site you see at `/tennis` is the committed snapshot in `public/data/tennis/` whenever `DATABASE_URL` is unset. The page prefers `/api/tennis` only when that route returns `source: "postgres"`.
+
+Refresh the snapshot by hand with:
 
 ```bash
 npm run build:tennis-data
 ```
 
-Then deploy (a preview, or a merge). The cron route cannot rewrite those static files on Vercel.
+`.github/workflows/tennis-snapshot.yml` runs that command every day at 02:00 UTC (10:00 in Singapore, cron `0 2 * * *`) and commits `public/data/tennis/` to `main`. Vercel production for this project tracks `main`, so that push is what publishes the new board. The Vercel cron cannot rewrite these static files, and Hobby still only allows a daily cron, so the refresh does not depend on a paid plan.
 
-Storage and cron, when configured:
+The workflow push has to use a personal access token. A push made with the default `GITHUB_TOKEN` does not fire the Vercel Git webhook, and production would stay on the previous snapshot.
 
-- `DATABASE_URL` — Postgres. Schema `db/tennis/001_init.sql` is applied by the cron on first run. The page then prefers `/api/tennis` over the snapshot.
-- `CRON_SECRET` — required. This project is on Vercel's Hobby plan, so the checked-in schedule is once a day at 06:00 UTC (`job=all`). A 10-minute cron is rejected by the platform. Call the same route yourself on whatever cadence you want:
+Add this Actions secret (repo Settings → Secrets and variables → Actions). It is not a Vercel env var:
+
+- `TENNIS_COMMIT_TOKEN` — fine-grained PAT for the GitHub user who can write to `xaitoshi/polyverse-capital-official`, with Contents: Read and write on this repo only. No other scopes.
+
+Until that secret exists, the scheduled run stops before it writes and the board stays on the last snapshot that was merged. Merging a pull request to `main` still deploys through the existing Vercel Git integration and does not need the token. `main` is not branch-protected, so the token can push the snapshot commit directly. You can also run the workflow by hand with "Run workflow" after the secret is saved.
+
+A snapshot freezes the live flag. The page hides a `live` row whose scheduled start is more than 12 hours ago when `source` is `snapshot`. Upcoming rows already drop out 6 hours after start. Rows from Postgres are not hidden that way: once `DATABASE_URL` is set, that book is the live one.
+
+Storage and cron, kept for when a database is configured later:
+
+- `DATABASE_URL` — Postgres. Schema `db/tennis/001_init.sql` is applied by the cron on first run. The page then prefers `/api/tennis` over the snapshot. Production does not have this variable today.
+- `CRON_SECRET` — required for `/api/tennis-cron`. The checked-in Vercel schedule is once a day at 02:00 UTC (`0 2 * * *`, `job=all`), the same time as the snapshot workflow. A 10-minute cron is rejected on Hobby. Call the route yourself on whatever cadence you want:
 
 ```bash
 curl -fsS -H "Authorization: Bearer $CRON_SECRET" \
   "https://polyverse.capital/api/tennis-cron?job=all"
 ```
 
-`job` is `ingest`, `picks`, `settle`, or `all`. Without `CRON_SECRET` the route is 401. Without `DATABASE_URL` it returns 200 and does not write anything. Picks already stored are not updated.
+`job` is `ingest`, `picks`, `settle`, or `all`. Without `CRON_SECRET` the route is 401. Without `DATABASE_URL` it returns 200 and does not write anything. Neither variable is set in production, and this repo does not add them. Picks already stored are not updated.
 
 - `API_TENNIS_KEY` — reserved. The `ApiTennisProvider` class throws until a paid adapter is wired. It is not used to fill gaps.
 

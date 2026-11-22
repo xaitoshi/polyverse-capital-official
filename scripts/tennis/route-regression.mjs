@@ -32,8 +32,14 @@ const vercel = JSON.parse(readFileSync(join(root, "vercel.json"), "utf8"));
 for (const source of ["/tennis", "/tennis/record", "/tennis/players/:id"]) {
   assert.ok(vercel.rewrites.some((r) => r.source === source && r.destination === "/index.html"), source);
 }
-assert.ok(vercel.crons?.some((c) => c.path.includes("/api/tennis-cron") && c.path.includes("job=all")));
+assert.ok(vercel.crons?.some((c) => c.path.includes("/api/tennis-cron") && c.path.includes("job=all") && c.schedule === "0 2 * * *"));
 assert.ok(vercel.crons?.every((c) => !c.schedule.startsWith("*/")));
+const workflow = readFileSync(join(root, ".github/workflows/tennis-snapshot.yml"), "utf8");
+assert.ok(workflow.includes('cron: "0 2 * * *"'), "snapshot workflow runs at 02:00 UTC");
+assert.ok(workflow.includes("TENNIS_COMMIT_TOKEN"), "snapshot push needs a token Vercel can see");
+assert.ok(workflow.includes("npm run build:tennis-data"), "snapshot workflow rebuilds the board");
+assert.ok(readFileSync(join(root, "src/lib/tennis/boardFilter.ts"), "utf8").includes('source === "snapshot"'));
+assert.ok(readFileSync(join(root, "src/components/tennis/TennisPage.tsx"), "utf8").includes("board.source"));
 assert.ok(readFileSync(join(root, "src/server/tennis/store.ts"), "utf8").includes("CRON_SECRET"));
 assert.ok(readFileSync(join(root, "api/tennis.js"), "utf8").includes("unconfigured"));
 assert.equal(existsSync(join(root, "api/tennis.ts")), false, "api entries must be bundled js");
